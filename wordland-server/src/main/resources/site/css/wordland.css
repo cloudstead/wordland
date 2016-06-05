@@ -1,0 +1,18 @@
+html, body {
+    font-family: Tahoma,sans-serif;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.dialogContainer {
+    font-family: Tahoma,sans-serif;
+    z-index: -1;
+    background-color: whitesmoke;
+    overflow: hidden;
+    pointer-events: visible;
+    border: 2px solid black;
+    padding: 5px;
+}
+

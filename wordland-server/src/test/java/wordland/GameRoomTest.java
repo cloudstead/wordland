@@ -7,7 +7,9 @@ import wordland.model.json.GameRoomSettings;
 import wordland.model.support.GameRoomJoinRequest;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static wordland.ApiConstants.EP_JOIN;
+import static wordland.ApiConstants.GAME_ROOMS_ENDPOINT;
 
 public class GameRoomTest extends ApiClientTestBase {
 
@@ -46,6 +48,12 @@ public class GameRoomTest extends ApiClientTestBase {
         apiDocs.startRecording(DOC_TARGET, "join a game room and play a few moves, then leave");
         final GameRoom room = findOrCreateStandardRoom();
         assertNotNull(room);
+
+        apiDocs.addNote("list available rooms");
+        final GameRoom[] rooms = get(GAME_ROOMS_ENDPOINT, GameRoom[].class);
+        assertTrue(rooms.length > 0);
+
+        apiDocs.addNote("join game");
         final GameRoomJoinRequest joinRequest = new GameRoomJoinRequest();
         final GamePlayer player = post(STANDARD_ROOM_URI+EP_JOIN, joinRequest, GamePlayer.class);
         assertNotNull(player);
