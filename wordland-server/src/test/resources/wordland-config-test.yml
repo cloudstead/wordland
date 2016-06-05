@@ -3,6 +3,9 @@
 
 serverName: wordland-api
 
+# Less secure but faster for tests
+bcryptRounds: 4
+
 # This is set in ApiClientTestBase.onStart, after the random listen port has been selected
 #publicUriBase: http://127.0.0.1
 #publicUriBase: {{PUBLIC_BASE_URI}}
