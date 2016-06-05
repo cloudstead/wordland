@@ -1,26 +1,31 @@
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="/css/jquery-ui.css"/>
-    <link rel="stylesheet" type="text/css" href="/css/wordland.css"/>
-    <meta charset="utf-8">
+  <title>wordland.io</title>
+  <link rel="stylesheet" type="text/css" href="/css/jquery-ui.css"/>
+  <link rel="stylesheet" type="text/css" href="/css/wordland.css"/>
+  <meta charset="utf-8">
 </head>
 
 <body>
 
-<h3>wordland.io</h3>
+<h5 class="h5title">wordland.io</h5>
 
 <div id="wordland_global_error"></div>
 
 <div id="lobbyContainer" class="dialogContainer">
-    name: <input type="text" id="player_name" name="player_name"/>
-    <select id="room_to_join" name="room_to_join">
-    </select>
-    <button onclick="Wordland.join($('#room_to_join').find(':selected').text(), {name: $('#player_name').val()});">join</button>
+  name: <input type="text" id="player_name" name="player_name"/>
+  <select id="room_to_join" name="room_to_join"></select>
+  <button onclick="Wordland.join($('#room_to_join').find(':selected').text(), {name: $('#player_name').val()});">join</button>
 </div>
 
 <div id="gameRoomContainer" class="dialogContainer">
   <div id="status_panel">
+    <span id="current_room_name" class="roomName"></span> /
+    <span id="current_player_name" class="playerName"></span> /
+    <span id="current_player_score" class="playerScore"></span>
+    <div id="quit_button" class="quitButton">
       <button onclick="Wordland.quit();">quit</button>
+    </div>
   </div>
   <div id="game_board"></div>
 </div>
@@ -30,6 +35,7 @@
 <script src="lib/jquery.js"></script>
 <script src="js/util.js"></script>
 <script src="js/api.js"></script>
+<script src="js/wordland_status.js"></script>
 <script src="js/wordland_lobby.js"></script>
 <script src="js/wordland.js"></script>
 </html>
