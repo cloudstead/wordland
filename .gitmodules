@@ -1,0 +1,6 @@
+[submodule "utils/cobbzilla-utils"]
+	path = utils/cobbzilla-utils
+	url = https://github.com/cobbzilla/cobbzilla-utils.git
+[submodule "utils/cobbzilla-wizard"]
+	path = utils/cobbzilla-wizard
+	url = https://github.com/cobbzilla/cobbzilla-wizard.git
