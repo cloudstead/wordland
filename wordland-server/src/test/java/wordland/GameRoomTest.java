@@ -2,9 +2,12 @@ package wordland;
 
 import org.junit.Test;
 import wordland.model.*;
+import wordland.model.game.GamePlayer;
 import wordland.model.json.GameRoomSettings;
+import wordland.model.support.GameRoomJoinRequest;
 
 import static org.junit.Assert.assertNotNull;
+import static wordland.ApiConstants.EP_JOIN;
 
 public class GameRoomTest extends ApiClientTestBase {
 
@@ -43,6 +46,10 @@ public class GameRoomTest extends ApiClientTestBase {
         apiDocs.startRecording(DOC_TARGET, "join a game room and play a few moves, then leave");
         final GameRoom room = findOrCreateStandardRoom();
         assertNotNull(room);
+        final GameRoomJoinRequest joinRequest = new GameRoomJoinRequest();
+        final GamePlayer player = post(STANDARD_ROOM_URI+EP_JOIN, joinRequest, GamePlayer.class);
+        assertNotNull(player);
+        assertNotNull(player.getName());
     }
 
 }

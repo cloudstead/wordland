@@ -19,6 +19,7 @@ public class GameRoomSettings {
     @Getter @Setter private PointSystem pointSystem;
     @Getter @Setter private GameBoard board;
 
-    @Getter @Setter private int maxPlayers;
+    @Getter @Setter private boolean teamPlay = false;
+    @Getter @Setter private int maxPlayers = 100;
 
 }

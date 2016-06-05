@@ -36,7 +36,7 @@ public class GameRoom extends NamedIdentityBase {
 
         final Iterator<String> picker = distribution.getPicker();
 
-        final GameState gameState = new GameState(board.getLength(), board.getWidth());
+        final GameState gameState = new GameState(board.getLength(), board.getWidth(), getSettings().getMaxPlayers());
 
         for (int x=0; x<board.getLength(); x++) {
             for (int y=0; y<board.getWidth(); y++) {

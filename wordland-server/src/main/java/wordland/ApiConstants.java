@@ -26,5 +26,6 @@ public class ApiConstants {
 
     public static final String GAME_BOARDS_ENDPOINT = "/boards";
     public static final String GAME_ROOMS_ENDPOINT = "/rooms";
+    public static final String EP_JOIN = "/join";
 
 }

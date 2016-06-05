@@ -97,6 +97,7 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
 
     public static final String STANDARD_SYMBOLS_URI = SYMBOL_SETS_ENDPOINT + "/standard";
     public static final String STANDARD_DISTRIBUTION_URI = STANDARD_SYMBOLS_URI + "/" + EP_DISTRIBUTIONS + "/standard";
+    public static final String STANDARD_ROOM_URI = GAME_ROOMS_ENDPOINT + "/standard";
 
     public GameRoom createRoom(String name, GameRoomSettings roomSettings) throws Exception {
         return put(GAME_ROOMS_ENDPOINT, new GameRoom(name).setSettings(roomSettings));
@@ -119,7 +120,7 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
     }
 
     public GameRoom findOrCreateStandardRoom() throws Exception {
-        final RestResponse response = doGet(GAME_ROOMS_ENDPOINT + "/standard");
+        final RestResponse response = doGet(STANDARD_ROOM_URI);
         if (response.status == 200) return json(response.json, GameRoom.class);
         if (response.status != 404) throw new ApiException(response);
 

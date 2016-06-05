@@ -47,4 +47,13 @@ public class GameDaemon extends SimpleDaemon {
         }
     }
 
+    public void addPlayer(GamePlayer player) {
+        synchronized (gameState) {
+            gameState.get().addPlayer(player);
+        }
+    }
+
+    public GamePlayer findPlayer(GamePlayer player) {
+        return gameState.get().getPlayer(player.getAccount());
+    }
 }
