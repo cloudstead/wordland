@@ -1,10 +1,12 @@
 package wordland.model.game;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@NoArgsConstructor
 public class GameState {
 
     @Getter private GameTileState[][] tiles;
@@ -20,12 +22,12 @@ public class GameState {
         players = new ConcurrentHashMap<>(maxPlayers);
     }
 
-    public void setTileSymbol(int x, int y, String symbol) {
-        tiles[x][y].setSymbol(symbol);
-    }
+    public void setTileSymbol(int x, int y, String symbol) { tiles[x][y].setSymbol(symbol); }
 
     public GamePlayer getPlayer(String account) { return players.get(account); }
 
-    public void addPlayer(GamePlayer player) { players.put(player.getAccount(), player); }
+    public void addPlayer(GamePlayer player) { players.put(player.getId(), player); }
+
+    public void removePlayer(String uuid) { players.remove(uuid); }
 
 }

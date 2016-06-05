@@ -9,12 +9,14 @@ import wordland.model.Account;
 import wordland.model.support.GameRoomJoinRequest;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
+import static org.cobbzilla.wizard.model.StrongIdentifiableBase.newStrongUuid;
 import static wordland.WordConstants.ADJECTIVES;
 import static wordland.WordConstants.FRUITS;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class GamePlayer {
 
+    @Getter @Setter private String id;
     @Getter @Setter private String account;
     @Getter @Setter private String name;
     @Getter @Setter private String team;
@@ -26,6 +28,7 @@ public class GamePlayer {
     @JsonIgnore public long getTimeSinceLastMove () { return now() - lastMove; }
 
     public GamePlayer(Account account, GameRoomJoinRequest request) {
+        this.id = newStrongUuid();
         this.account = account == null ? uuid() : account.getUuid();
         this.name = request.hasName() ? request.getName() : randomName();
         this.team = request.getTeam();

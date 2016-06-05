@@ -20,10 +20,10 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import static org.cobbzilla.wizard.resources.ResourceUtil.notFound;
 import static org.cobbzilla.wizard.resources.ResourceUtil.ok;
 import static org.cobbzilla.wizard.resources.ResourceUtil.optionalUserPrincipal;
-import static wordland.ApiConstants.EP_JOIN;
-import static wordland.ApiConstants.GAME_ROOMS_ENDPOINT;
+import static wordland.ApiConstants.*;
 
 @Path(GAME_ROOMS_ENDPOINT)
 @Service @Slf4j
@@ -46,6 +46,18 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
 
         gamesMaster.addPlayer(room, player);
         return ok(player);
+    }
+
+    @POST
+    @Path("/{name}"+EP_QUIT)
+    public Response quit (@Context HttpContext ctx,
+                          @PathParam("name") String room,
+                          String id) {
+        final GamePlayer found = gamesMaster.findPlayer(room, id);
+        if (found == null) return notFound(id);
+
+        gamesMaster.removePlayer(room, id);
+        return ok();
     }
 
 }

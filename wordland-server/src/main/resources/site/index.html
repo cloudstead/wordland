@@ -9,14 +9,27 @@
 
 <h3>wordland.io</h3>
 
+<div id="wordland_global_error"></div>
+
 <div id="lobbyContainer" class="dialogContainer">
+    name: <input type="text" id="player_name" name="player_name"/>
+    <select id="room_to_join" name="room_to_join">
+    </select>
+    <button onclick="Wordland.join($('#room_to_join').find(':selected').text(), {name: $('#player_name').val()});">join</button>
 </div>
 
 <div id="gameRoomContainer" class="dialogContainer">
-  <div id="status_panel"></div>
+  <div id="status_panel">
+      <button onclick="Wordland.quit();">quit</button>
+  </div>
   <div id="game_board"></div>
 </div>
 
 </body>
 
+<script src="lib/jquery.js"></script>
+<script src="js/util.js"></script>
+<script src="js/api.js"></script>
+<script src="js/wordland_lobby.js"></script>
+<script src="js/wordland.js"></script>
 </html>

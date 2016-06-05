@@ -17,6 +17,7 @@ public class ApiConstants {
 
     public static final String ERR_CAPTCHA_INCORRECT = "err.captcha.incorrect";
     public static final String ANONYMOUS_EMAIL = "anonymous-#STAMP#@example.com";
+    public static final String STANDARD = "standard";
 
     public static String anonymousEmail() { return ANONYMOUS_EMAIL.replace("#STAMP#", randomAlphanumeric(10)+"-"+now()); }
 
@@ -27,5 +28,6 @@ public class ApiConstants {
     public static final String GAME_BOARDS_ENDPOINT = "/boards";
     public static final String GAME_ROOMS_ENDPOINT = "/rooms";
     public static final String EP_JOIN = "/join";
+    public static final String EP_QUIT = "/quit";
 
 }

@@ -28,9 +28,25 @@ public class GamesMaster {
         gameDaemon.startGame(room.randomizeTiles());
     }
 
-    private GameDaemon getGameDaemon(String roomName) {
+    public void initRoom(GameRoom room) {
+        if (!rooms.containsKey(room.getName())) {
+            final GameDaemon gameDaemon = configuration.autowire(new GameDaemon(room.getName()));
+            rooms.put(room.getName(), gameDaemon);
+            boolean restored = false;
+            try {
+                restored = gameDaemon.restore();
+            } catch (Exception e) {
+                log.warn("initRoom: error restoring (starting fresh instead): "+e, e);
+            }
+            if (!restored) gameDaemon.startGame(room.randomizeTiles());
+        }
+    }
+
+    private GameDaemon getGameDaemon(String roomName) { return getGameDaemon(roomName, true); }
+
+    private GameDaemon getGameDaemon(String roomName, boolean throwNotFoundEx) {
         final GameDaemon daemon = rooms.get(roomName);
-        if (daemon == null) throw notFoundEx(roomName);
+        if (daemon == null && throwNotFoundEx) throw notFoundEx(roomName);
         return daemon;
     }
 
@@ -39,6 +55,16 @@ public class GamesMaster {
     }
 
     public GamePlayer findPlayer(String roomName, GamePlayer player) {
-        return getGameDaemon(roomName).findPlayer(player);
+        final GameDaemon daemon = getGameDaemon(roomName, false);
+        return daemon == null ? null : daemon.findPlayer(player);
+    }
+    public GamePlayer findPlayer(String roomName, String uuid) {
+        final GameDaemon daemon = getGameDaemon(roomName, false);
+        return daemon == null ? null : daemon.findPlayer(uuid);
+    }
+
+    public void removePlayer(String roomName, String uuid) {
+        final GameDaemon daemon = getGameDaemon(roomName, false);
+        if (daemon != null) daemon.removePlayer(uuid);
     }
 }

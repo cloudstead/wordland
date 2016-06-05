@@ -8,15 +8,19 @@ import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.NamedIdentityBase;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
-import wordland.dao.AccountDAO;
+import wordland.dao.*;
 import wordland.model.*;
+import wordland.model.json.GameRoomSettings;
+import wordland.service.GamesMaster;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStringOrDie;
 import static org.cobbzilla.util.json.JsonUtil.fromJsonOrDie;
 import static org.cobbzilla.util.reflect.ReflectionUtil.arrayClass;
+import static wordland.ApiConstants.STANDARD;
 
 @Slf4j
 public class DbSeedListener extends RestServerLifecycleListenerBase<WordlandConfiguration> {
@@ -58,6 +62,20 @@ public class DbSeedListener extends RestServerLifecycleListenerBase<WordlandConf
                     log.info("Created superuser account " + name + ": " + created.getUuid());
                 }
             }
+        }
+
+        final GameRoomDAO roomDAO = configuration.getBean(GameRoomDAO.class);
+        final List<GameRoom> rooms = roomDAO.findAll();
+        if (rooms.isEmpty()) {
+            final GameRoomSettings roomSettings = new GameRoomSettings()
+                    .setBoard(configuration.getBean(GameBoardDAO.class).findByName(STANDARD))
+                    .setSymbolSet(configuration.getBean(SymbolSetDAO.class).findByName(STANDARD))
+                    .setPointSystem(configuration.getBean(PointSystemDAO.class).findByName(STANDARD))
+                    .setDefaultDistribution(configuration.getBean(SymbolDistributionDAO.class).findByName(STANDARD));
+            configuration.getBean(GameRoomDAO.class).create(new GameRoom(STANDARD).setSettings(roomSettings));
+        } else {
+            final GamesMaster gamesMaster = configuration.getBean(GamesMaster.class);
+            for (GameRoom room : rooms) gamesMaster.initRoom(room);
         }
         super.onStart(server);
     }

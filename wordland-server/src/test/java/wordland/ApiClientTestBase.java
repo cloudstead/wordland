@@ -134,7 +134,7 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
         loginSuperuser();
 
         apiDocs.addNote("create standard game room, then logout superuser");
-        final GameRoom standard = createRoom("standard", roomSettings);
+        final GameRoom standard = createRoom(STANDARD, roomSettings);
 
         popToken(); // logout superuser
         return standard;

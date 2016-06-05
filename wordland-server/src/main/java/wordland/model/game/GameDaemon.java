@@ -41,9 +41,12 @@ public class GameDaemon extends SimpleDaemon {
         return this;
     }
 
-    private void restore() {
+    public boolean restore() {
         synchronized (gameState) {
-            gameState.set(json(getRedis().get("backup"), GameState.class));
+            final String backup = getRedis().get("backup");
+            if (backup == null || backup.trim().length() == 0) return false;
+            gameState.set(json(backup, GameState.class));
+            return true;
         }
     }
 
@@ -55,5 +58,15 @@ public class GameDaemon extends SimpleDaemon {
 
     public GamePlayer findPlayer(GamePlayer player) {
         return gameState.get().getPlayer(player.getAccount());
+    }
+
+    public GamePlayer findPlayer(String uuid) {
+        return gameState.get().getPlayer(uuid);
+    }
+
+    public void removePlayer(String uuid) {
+        synchronized (gameState) {
+            gameState.get().removePlayer(uuid);
+        }
     }
 }

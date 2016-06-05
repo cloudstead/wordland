@@ -1,14 +1,17 @@
 package wordland;
 
+import org.cobbzilla.util.http.HttpStatusCodes;
 import org.junit.Test;
 import wordland.model.*;
 import wordland.model.game.GamePlayer;
 import wordland.model.json.GameRoomSettings;
 import wordland.model.support.GameRoomJoinRequest;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static wordland.ApiConstants.EP_JOIN;
+import static wordland.ApiConstants.EP_QUIT;
 import static wordland.ApiConstants.GAME_ROOMS_ENDPOINT;
 
 public class GameRoomTest extends ApiClientTestBase {
@@ -58,6 +61,9 @@ public class GameRoomTest extends ApiClientTestBase {
         final GamePlayer player = post(STANDARD_ROOM_URI+EP_JOIN, joinRequest, GamePlayer.class);
         assertNotNull(player);
         assertNotNull(player.getName());
+
+        apiDocs.addNote("quit game");
+        assertEquals(HttpStatusCodes.OK, doPost(STANDARD_ROOM_URI+EP_QUIT, player.getId()).status);
     }
 
 }

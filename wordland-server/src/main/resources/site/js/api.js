@@ -49,8 +49,7 @@ Api = {
         return result;
     },
 
-    _update: function (method, url, data, success, fail, skipTokenCheck) {
-        if (get_token() == NO_TOKEN && (typeof skipTokenCheck == "undefined" || skipTokenCheck == false)) Api.create_anonymous_session();
+    _update: function (method, url, data, success, fail) {
         var result = null;
         $.ajax({
             type: method,
@@ -71,7 +70,7 @@ Api = {
         return result;
     },
 
-    _post: function(url, data, success, fail, skipTokenCheck) { return Api._update('POST', url, data, success, fail, skipTokenCheck); },
+    _post: function(url, data, success, fail) { return Api._update('POST', url, data, success, fail); },
     _put:  function(url, data, success, fail) { return Api._update('PUT', url, data, success, fail); },
 
     _delete: function (url, success, fail) {
@@ -125,7 +124,7 @@ Api = {
         return Api._get('configs/'+name, success, fail);
     },
 
-    list_rooms: function (room_name, player_info, success, fail) {
+    list_rooms: function (success, fail) {
         Api._get('rooms', success, fail);
     },
 
@@ -133,36 +132,7 @@ Api = {
         Api._post('rooms/' + room_name + '/join', player_info, success, fail);
     },
 
-    // Bookmark endpoints
-    get_bookmarks: function (success, fail) {
-        Api._get('bookmarks', success, fail);
-    },
-    get_bookmark: function (name, success, fail) {
-        Api._get('bookmarks/'+encodeURIComponent(name), success, fail);
-    },
-    add_bookmark: function (name, state, success, fail) {
-        Api._put('bookmarks/'+encodeURIComponent(name), state, success, fail);
-    },
-    update_bookmark: function (name, state, success, fail) {
-        Api._post('bookmarks/'+encodeURIComponent(name), state, success, fail);
-    },
-    remove_bookmark: function (name, success, fail) {
-        Api._delete('bookmarks/'+encodeURIComponent(name), success, fail);
-    },
-    make_permalink: function (name, success, fail) {
-        Api._get('bookmarks/'+encodeURIComponent(name)+'/permalink', success, fail);
-    },
-    get_permalink: function (link_id, success, fail) {
-        Api._get('permalinks/'+encodeURIComponent(link_id), success, fail);
-    },
-    get_standard_permalinks: function (success, fail) {
-        Api._get('permalinks', success, fail);
-    },
-
-    transform_image: function (src, width, height) {
-        return src.replace("/public/image/", "/public/transform/w_"+width+"-h_"+height+"/");
+    quit_game: function (room_name, id, success, fail) {
+        Api._post('rooms/' + room_name + '/quit', id, success, fail);
     }
-
-    //addRegion: function (email, password) { return Api._post('/api/accounts/' + email, {'name': email, 'password': password}); }
-
 };
