@@ -5,29 +5,28 @@ import wordland.model.*;
 import wordland.model.json.GameRoomSettings;
 
 import static org.junit.Assert.assertNotNull;
-import static wordland.ApiConstants.*;
 
-public class GameTest extends ApiClientTestBase {
+public class GameRoomTest extends ApiClientTestBase {
 
-    private static final String DOC_TARGET = "Games";
+    public static final String DOC_TARGET = "Games";
 
     @Test public void testCreateGameRoom () throws Exception {
         apiDocs.startRecording(DOC_TARGET, "create a game room with standard rules");
 
-        final GameBoard board = get(GAME_BOARDS_ENDPOINT+"/standard", GameBoard.class);
+        apiDocs.addNote("lookup standard game board");
+        final GameBoard board = getStandardGameBoard();
 
-        final String symbolSetUri = SYMBOL_SETS_ENDPOINT + "/standard";
         apiDocs.addNote("lookup standard symbol set");
-        final SymbolSet symbolSet = get(symbolSetUri, SymbolSet.class);
+        final SymbolSet symbolSet = getStandardSymbolSet();
 
         apiDocs.addNote("lookup standard letter distribution set");
-        final SymbolDistribution defaultDistribution = get(symbolSetUri+"/"+EP_DISTRIBUTIONS+"/standard", SymbolDistribution.class);
+        final SymbolDistribution defaultDistribution = getStandardDistribution();
 
         apiDocs.addNote("lookup standard point system");
-        final PointSystem pointSystem = get(symbolSetUri+"/"+EP_POINT_SYSTEMS+"/standard", PointSystem.class);
+        final PointSystem pointSystem = getStandardPointSystem();
 
         final GameRoomSettings roomSettings = new GameRoomSettings()
-                .setBoardSettings(board.getSettings())
+                .setBoard(board)
                 .setSymbolSet(symbolSet)
                 .setPointSystem(pointSystem)
                 .setDefaultDistribution(defaultDistribution);
@@ -36,7 +35,13 @@ public class GameTest extends ApiClientTestBase {
         loginSuperuser();
 
         apiDocs.addNote("create a game room");
-        final GameRoom room = put(GAME_ROOMS_ENDPOINT, new GameRoom("FFA").setSettings(roomSettings));
+        final GameRoom room = createRoom("FFA", roomSettings);
+        assertNotNull(room);
+    }
+
+    @Test public void testJoinRoomAndPlay () throws Exception {
+        apiDocs.startRecording(DOC_TARGET, "join a game room and play a few moves, then leave");
+        final GameRoom room = findOrCreateStandardRoom();
         assertNotNull(room);
     }
 
