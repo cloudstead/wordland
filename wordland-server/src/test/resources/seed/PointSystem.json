@@ -1,0 +1,36 @@
+[
+  {
+    "name": "standard",
+    "symbolSet": "standard",
+    "settings": {
+      "symbolScoring": [
+        {"symbol": "a", "points": 1},
+        {"symbol": "b", "points": 3},
+        {"symbol": "c", "points": 3},
+        {"symbol": "d", "points": 2},
+        {"symbol": "e", "points": 1},
+        {"symbol": "f", "points": 3},
+        {"symbol": "g", "points": 3},
+        {"symbol": "h", "points": 1},
+        {"symbol": "i", "points": 1},
+        {"symbol": "j", "points": 5},
+        {"symbol": "k", "points": 4},
+        {"symbol": "l", "points": 2},
+        {"symbol": "m", "points": 3},
+        {"symbol": "n", "points": 1},
+        {"symbol": "o", "points": 1},
+        {"symbol": "p", "points": 3},
+        {"symbol": "q", "points": 5},
+        {"symbol": "r", "points": 1},
+        {"symbol": "s", "points": 1},
+        {"symbol": "t", "points": 2},
+        {"symbol": "u", "points": 3},
+        {"symbol": "v", "points": 4},
+        {"symbol": "w", "points": 3},
+        {"symbol": "x", "points": 5},
+        {"symbol": "y", "points": 3},
+        {"symbol": "z", "points": 5}
+      ]
+    }
+  }
+]

@@ -1,0 +1,87 @@
+# Things in {{CURLIES}} will be read from the process environment when the server starts up.
+# The jrun launcher will typically load these from ~/.wordland.env
+
+serverName: wordland-api
+
+#publicUriBase: https://127.0.0.1
+publicUriBase: {{PUBLIC_BASE_URI}}
+
+database:
+  driver: org.postgresql.Driver
+  url: jdbc:postgresql://127.0.0.1:5432/wordland
+  user: wordland
+  password: {{WORDLAND_DB_PASS}}
+
+  encryptionEnabled: true
+  encryptionKey: '{{WORDLAND_DB_ENCRYPTION_KEY}}'
+  encryptorPoolSize: 5
+
+  hibernate:
+    entityPackages:
+    - wordland.model
+    - org.cobbzilla.wizard.model.crypto   # for encrypted column support
+    - org.cobbzilla.wizard.model.json     # for JSONB column support
+    dialect: org.cobbzilla.wizard.model.json.JSONBPostgreSQLDialect
+    showSql: false
+    hbm2ddlAuto: validate
+    validationMode: ddl
+
+staticAssets:
+  baseUri: /
+  assetRoot: site/
+  localOverride: {{ASSETS_DIR}}
+  mustacheCacheEnabled: false
+  mustacheResourceRoot: site/
+  utilPaths:
+    INDEX_PATH: /index.html
+    INDEX_ALIASES: /:/index.php
+    LOCALIZE: /localize
+  substitutions:
+    /signup.html:
+      recaptcha: {{RECAPTCHA_PUBLIC_KEY}}
+
+http:
+  port: {{WORDLAND_SERVER_PORT}}
+  baseUri: /api
+
+jersey:
+  resourcePackages: [ wordland.resources, org.cobbzilla.wizard.server, org.cobbzilla.wizard.filters, org.cobbzilla.wizard.exceptionmappers ]
+  requestFilters: [ wordland.auth.WordlandAuthFilter ]
+  responseFilters: [ org.cobbzilla.wizard.filters.ScrubbableScrubber ]
+
+emailTemplateRoot: {{EMAIL_TEMPLATE_ROOT}}
+
+emailSenderNames:
+  welcome:
+    fromName:  {{WELCOME_SENDER_NAME}}
+    fromEmail: {{WELCOME_SENDER_EMAIL}}
+  reset_password:
+    fromName: {{RESET_PASSWORD_SENDER_NAME}}
+    fromEmail: {{RESET_PASSWORD_SENDER_EMAIL}}
+
+smtp:
+  host: {{WORDLAND_SMTP_SERVER}}
+  port: {{WORDLAND_SMTP_PORT}}
+  user: {{WORDLAND_SMTP_USER}}
+  password: {{WORDLAND_SMTP_PASS}}
+  tlsEnabled: true
+
+redis:
+  key: '{{WORDLAND_REDIS_ENCRYPTION_KEY}}'
+  prefix: wordland
+
+assetStorage:
+  type: s3
+  config:
+    accessKey: {{ASSETS_S3_ACCESS_KEY}}
+    secretKey: {{ASSETS_S3_SECRET_KEY}}
+    bucket: {{ASSETS_S3_BUCKET}}
+    prefix: {{ASSETS_S3_PREFIX}}
+    localCache: {{ASSETS_LOCAL_CACHE_DIR}}
+
+recaptcha:
+  publicKey: {{RECAPTCHA_PUBLIC_KEY}}
+  privateKey: {{RECAPTCHA_PRIVATE_KEY}}
+
+legal:
+  base: {{LEGAL_INFO}}

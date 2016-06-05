@@ -1,0 +1,143 @@
+[
+
+  {
+    "name": "easy",
+    "symbolSet": "standard",
+    "settings": {
+      "weights": [
+        {"symbol": "a", "weight": 20},
+        {"symbol": "b", "weight": 1},
+        {"symbol": "c", "weight": 1},
+        {"symbol": "d", "weight": 10},
+        {"symbol": "e", "weight": 28},
+        {"symbol": "f", "weight": 3},
+        {"symbol": "g", "weight": 5},
+        {"symbol": "h", "weight": 12},
+        {"symbol": "i", "weight": 15},
+        {"symbol": "j", "weight": 0},
+        {"symbol": "k", "weight": 0},
+        {"symbol": "l", "weight": 10},
+        {"symbol": "m", "weight": 4},
+        {"symbol": "n", "weight": 15},
+        {"symbol": "o", "weight": 15},
+        {"symbol": "p", "weight": 3},
+        {"symbol": "q", "weight": 0},
+        {"symbol": "r", "weight": 13},
+        {"symbol": "s", "weight": 14},
+        {"symbol": "t", "weight": 20},
+        {"symbol": "u", "weight": 5},
+        {"symbol": "v", "weight": 0},
+        {"symbol": "w", "weight": 3},
+        {"symbol": "x", "weight": 0},
+        {"symbol": "y", "weight": 3},
+        {"symbol": "z", "weight": 0}
+      ]
+    }
+  },
+
+  {
+    "name": "standard",
+    "symbolSet": "standard",
+    "settings": {
+      "weights": [
+        {"symbol": "a", "weight": 17},
+        {"symbol": "b", "weight": 3},
+        {"symbol": "c", "weight": 5},
+        {"symbol": "d", "weight": 9},
+        {"symbol": "e", "weight": 25},
+        {"symbol": "f", "weight": 4},
+        {"symbol": "g", "weight": 5},
+        {"symbol": "h", "weight": 12},
+        {"symbol": "i", "weight": 14},
+        {"symbol": "j", "weight": 1},
+        {"symbol": "k", "weight": 1},
+        {"symbol": "l", "weight": 8},
+        {"symbol": "m", "weight": 5},
+        {"symbol": "n", "weight": 12},
+        {"symbol": "o", "weight": 15},
+        {"symbol": "p", "weight": 4},
+        {"symbol": "q", "weight": 1},
+        {"symbol": "r", "weight": 12},
+        {"symbol": "s", "weight": 12},
+        {"symbol": "t", "weight": 18},
+        {"symbol": "u", "weight": 5},
+        {"symbol": "v", "weight": 2},
+        {"symbol": "w", "weight": 4},
+        {"symbol": "x", "weight": 1},
+        {"symbol": "y", "weight": 4},
+        {"symbol": "z", "weight": 1}
+      ]
+    }
+  },
+
+  {
+    "name": "hard",
+    "symbolSet": "standard",
+    "settings": {
+      "weights": [
+        {"symbol": "a", "weight": 14},
+        {"symbol": "b", "weight": 5},
+        {"symbol": "c", "weight": 7},
+        {"symbol": "d", "weight": 8},
+        {"symbol": "e", "weight": 18},
+        {"symbol": "f", "weight": 5},
+        {"symbol": "g", "weight": 6},
+        {"symbol": "h", "weight": 10},
+        {"symbol": "i", "weight": 10},
+        {"symbol": "j", "weight": 3},
+        {"symbol": "k", "weight": 4},
+        {"symbol": "l", "weight": 7},
+        {"symbol": "m", "weight": 7},
+        {"symbol": "n", "weight": 9},
+        {"symbol": "o", "weight": 9},
+        {"symbol": "p", "weight": 6},
+        {"symbol": "q", "weight": 3},
+        {"symbol": "r", "weight": 10},
+        {"symbol": "s", "weight": 8},
+        {"symbol": "t", "weight": 14},
+        {"symbol": "u", "weight": 8},
+        {"symbol": "v", "weight": 5},
+        {"symbol": "w", "weight": 9},
+        {"symbol": "x", "weight": 4},
+        {"symbol": "y", "weight": 8},
+        {"symbol": "z", "weight": 3}
+      ]
+    }
+  },
+
+  {
+    "name": "insane",
+    "symbolSet": "standard",
+    "settings": {
+      "weights": [
+        {"symbol": "a", "weight": 12},
+        {"symbol": "b", "weight": 7},
+        {"symbol": "c", "weight": 7},
+        {"symbol": "d", "weight": 8},
+        {"symbol": "e", "weight": 15},
+        {"symbol": "f", "weight": 8},
+        {"symbol": "g", "weight": 6},
+        {"symbol": "h", "weight": 8},
+        {"symbol": "i", "weight": 8},
+        {"symbol": "j", "weight": 5},
+        {"symbol": "k", "weight": 8},
+        {"symbol": "l", "weight": 7},
+        {"symbol": "m", "weight": 7},
+        {"symbol": "n", "weight": 7},
+        {"symbol": "o", "weight": 7},
+        {"symbol": "p", "weight": 7},
+        {"symbol": "q", "weight": 5},
+        {"symbol": "r", "weight": 8},
+        {"symbol": "s", "weight": 6},
+        {"symbol": "t", "weight": 10},
+        {"symbol": "u", "weight": 8},
+        {"symbol": "v", "weight": 8},
+        {"symbol": "w", "weight": 8},
+        {"symbol": "x", "weight": 7},
+        {"symbol": "y", "weight": 8},
+        {"symbol": "z", "weight": 5}
+      ]
+    }
+  }
+
+]

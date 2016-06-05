@@ -1,0 +1,28 @@
+package wordland.model;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+import org.cobbzilla.wizard.model.NamedIdentityBase;
+import org.hibernate.annotations.Type;
+import wordland.model.json.GameRoomSettings;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+
+@Entity @NoArgsConstructor @Accessors(chain=true)
+public class GameRoom extends NamedIdentityBase {
+
+    public GameRoom (GameRoom other) { super(other.getName()); setSettings(other.getSettings()); }
+
+    public GameRoom (String name) { super(name); }
+
+    @Override public NamedIdentityBase update(NamedIdentityBase other) {
+        return setSettings(((GameRoom) other).getSettings());
+    }
+
+    @Type(type=GameRoomSettings.JSONB_TYPE) @Column(nullable=false, updatable=false)
+    @Getter @Setter private GameRoomSettings settings;
+
+}
