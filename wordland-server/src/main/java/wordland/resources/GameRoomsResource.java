@@ -10,10 +10,12 @@ import wordland.dao.GameRoomDAO;
 import wordland.model.Account;
 import wordland.model.GameRoom;
 import wordland.model.game.GamePlayer;
+import wordland.model.game.GameState;
 import wordland.model.support.GameRoomJoinRequest;
 import wordland.service.GamesMaster;
 
 import javax.validation.Valid;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -58,6 +60,14 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
 
         gamesMaster.removePlayer(room, id);
         return ok();
+    }
+
+    @GET
+    @Path("/{name}"+EP_STATE)
+    public Response state (@Context HttpContext ctx,
+                           @PathParam("name") String room) {
+        final GameState state = gamesMaster.getGameState(room);
+        return state == null ? notFound(room) : ok(state);
     }
 
 }

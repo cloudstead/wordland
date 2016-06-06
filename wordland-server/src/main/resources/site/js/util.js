@@ -48,6 +48,13 @@ String.prototype.hashCode = function() {
     return hash;
 };
 
+// Array Remove - By John Resig (MIT Licensed)
+Array.prototype.remove = function(from, to) {
+    var rest = this.slice((to || from) + 1 || this.length);
+    this.length = from < 0 ? this.length + from : from;
+    return this.push.apply(this, rest);
+};
+
 function is_array (x) {
     return Object.prototype.toString.call( x ) === '[object Array]'
 }

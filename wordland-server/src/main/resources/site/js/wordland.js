@@ -40,8 +40,7 @@ Wordland = {
             Api.join_game(room, player_info, function (data) {
                 Wordland.room = room;
                 Wordland.player = data;
-                WordlandStatus.reset();
-                Wordland.showScreen('gameRoomContainer');
+                WLGame.start();
 
             }, Wordland.apiError("error joining game"));
         }

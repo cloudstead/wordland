@@ -27,7 +27,16 @@
       <button onclick="Wordland.quit();">quit</button>
     </div>
   </div>
-  <div id="game_board"></div>
+  <div id="game_board">
+      <div id="game_tray">
+          <table><tr id="game_tray_tr" class="gameTray"></tr></table>
+          <button class="trayButton" onclick="WLTray.clear()">clear</button>
+          <button class="trayButton" onclick="WLTray.submit()">submit</button>
+      </div>
+      <table>
+          <tbody id="game_tbody"></tbody>
+      </table>
+  </div>
 </div>
 
 </body>
@@ -35,7 +44,9 @@
 <script src="lib/jquery.js"></script>
 <script src="js/util.js"></script>
 <script src="js/api.js"></script>
-<script src="js/wordland_status.js"></script>
 <script src="js/wordland_lobby.js"></script>
+<script src="js/wordland_status.js"></script>
+<script src="js/wordland_tray.js"></script>
+<script src="js/wordland_game.js"></script>
 <script src="js/wordland.js"></script>
 </html>

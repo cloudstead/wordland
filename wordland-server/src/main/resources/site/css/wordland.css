@@ -48,3 +48,36 @@ html, body {
     font-size: smaller;
     color: darkgreen;
 }
+
+.gameCell {
+    font-family: Tahoma,sans-serif;
+    font-size: large;
+    color: black;
+    width: 20px;
+    height: 16px;
+    border:1px solid blue;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    pointer-events: visible;
+    background-color: whitesmoke;
+    text-align: center;
+}
+
+.gameTray {
+    text-align: center;
+    height: 21px;
+}
+
+.usedInTray {
+    border: 2px solid darkblue;
+}
+
+.trayButtons {
+    font-family: Tahoma,sans-serif;
+}
+
+.trayButton {
+    font-family: Tahoma,sans-serif;
+    visibility: hidden;
+}
+

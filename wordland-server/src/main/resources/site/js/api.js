@@ -134,5 +134,10 @@ Api = {
 
     quit_game: function (room_name, id, success, fail) {
         Api._post('rooms/' + room_name + '/quit', id, success, fail);
+    },
+
+    get_game_state: function (room_name, success, fail) {
+        Api._get('rooms/' + room_name + '/state', success, fail);
     }
+
 };

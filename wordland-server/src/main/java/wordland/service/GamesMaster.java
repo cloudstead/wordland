@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import wordland.model.GameRoom;
 import wordland.model.game.GameDaemon;
 import wordland.model.game.GamePlayer;
+import wordland.model.game.GameState;
 import wordland.server.WordlandConfiguration;
 
 import java.util.Map;
@@ -67,4 +68,9 @@ public class GamesMaster {
         final GameDaemon daemon = getGameDaemon(roomName, false);
         if (daemon != null) daemon.removePlayer(uuid);
     }
+
+    public GameState getGameState(String roomName) {
+        return getGameDaemon(roomName).getGameState();
+    }
+
 }

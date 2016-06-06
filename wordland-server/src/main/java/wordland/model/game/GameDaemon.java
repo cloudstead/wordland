@@ -16,6 +16,12 @@ public class GameDaemon extends SimpleDaemon {
     private String name;
     private final AtomicReference<GameState> gameState = new AtomicReference<>();
 
+    public GameState getGameState () {
+        synchronized (gameState) {
+            return new GameState(gameState.get());
+        }
+    }
+
     public GameDaemon(String name) { this.name = name; }
 
     @Autowired private RedisService redisService;
@@ -24,13 +30,14 @@ public class GameDaemon extends SimpleDaemon {
 
     private static final long SLEEP_TIME = TimeUnit.SECONDS.toMillis(5);
 
-    // periodically back up game state to redis
     @Override protected long getSleepTime() { return SLEEP_TIME; }
 
     @Override protected void process() {
+        // periodically back up game state to redis
         synchronized (gameState) {
             getRedis().set("backup", json(gameState.get()));
         }
+        // todo: check for players who have timed-out, remove them from the game
     }
 
     public GameDaemon startGame(GameState state) {
