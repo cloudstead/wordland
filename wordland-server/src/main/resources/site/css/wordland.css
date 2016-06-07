@@ -92,6 +92,7 @@ html, body {
 
 .trayButtons {
     font-family: Tahoma,sans-serif;
+    float: left;
 }
 
 .trayButton {
@@ -99,3 +100,14 @@ html, body {
     visibility: hidden;
 }
 
+#gameRoomContainer {
+    text-align: center;
+}
+
+#gameTray {
+    text-align: center;
+}
+
+#gameBoard {
+    text-align: center;
+}

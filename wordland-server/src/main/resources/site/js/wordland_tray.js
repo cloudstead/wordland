@@ -43,6 +43,8 @@ TrayItem.prototype.newCell = function () {
 
 WLTray = {
 
+    board_kb_target: { x: 0, y: 0 },
+
     /**
      * an array of TrayItems representing the items in the tray.
      */
@@ -69,6 +71,9 @@ WLTray = {
      * @param id the DOM ID of the cell on the board
      */
     add: function (id) {
+        // update KB target to new select location
+        WLTray.board_kb_target = { x: WLGame.cells[id].x, y: WLGame.cells[id].y };
+
         // ensure item is not already in tray
         if (WLTray.contains(id)) return;
 
@@ -130,13 +135,20 @@ WLTray = {
      */
     submit: function () {
 
+    },
+
+    selectNearest: function (xOrigin, yOrigin, keyCode) {
+        var x = xOrigin;
+        var y = yOrigin;
+        //var
     }
 
 };
 
 $(function () {
-    $('.trayTile').on('click', function (event) {
-        $(this).css({zIndex: 5});
+    $('.trayTile').on('mousedown', function (event) {
+        $('.trayTile').css({zIndex: 1});
+        $(this).css({zIndex: 2});
     });
     function dragMoveListener (event) {
         $('#e_px').html(event.pageX);
@@ -204,4 +216,9 @@ $(function () {
                 WLTray.redraw();
             }
         });
+
+    window.addEventListener("keyup", function (event) {
+        console.log('event.keyCode='+event.keyCode+', and target='+JSON.stringify(WLTray.board_kb_target));
+        WLTray.selectNearest(WLTray.board_kb_target.x, WLTray.board_kb_target.y, event.keyCode);
+    })
 });
