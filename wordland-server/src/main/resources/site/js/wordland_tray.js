@@ -143,8 +143,9 @@ WLTray = {
     selectNearest: function (xOrigin, yOrigin, keyCode) {
         var sym = String.fromCharCode(keyCode);
         var distances = [];
-        for (var i=0; i<WLGame.length; i++) {
-            for (var j=0; j<WLGame.length; j++) {
+        var maxSearchDist = 25;
+        for (var i=Math.max(0, xOrigin-maxSearchDist); i<Math.min(WLGame.length, xOrigin+maxSearchDist); i++) {
+            for (var j=Math.max(0, yOrigin-maxSearchDist); j<Math.min(WLGame.width, yOrigin+maxSearchDist); j++) {
                 var deltaX = Math.abs(i - xOrigin);
                 var deltaY = Math.abs(j - yOrigin);
                 distances.push({
