@@ -1,12 +1,18 @@
 WLGame = {
 
     cells: {},   // map by ID
+    cellsByCoordinates: {},
+
+    length: 0,
+    width: 0,
 
     start: function () {
         WLStatus.reset();
         Api.get_game_state(Wordland.room, function (data) {
 
             Wordland.cells = {};
+            WLGame.width = data.width;
+            WLGame.length = data.length;
 
             var tbody = $('#game_tbody');
             for (var x=0; x<data.width; x++) {
@@ -21,6 +27,7 @@ WLGame = {
                     var cell = $('<td class="gameCell" id="td_'+tile.id+'">'+tile.symbol+'</td>');
                     cell.on('click', WLGame.addToTrayFunc(tile.id));
                     WLGame.cells[tile.id] = tile;
+                    WLGame.cellsByCoordinates[''+x+','+y] = tile;
 
                     row.append(cell);
                 }
@@ -29,6 +36,8 @@ WLGame = {
 
         }, Wordland.apiError("error getting game state"));
     },
+
+    cellAt: function (x, y) { return WLGame.cellsByCoordinates[''+x+','+y]; },
 
     addToTrayFunc: function (id) {
         return function () { WLTray.add(id); }

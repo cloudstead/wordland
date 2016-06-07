@@ -70,12 +70,14 @@ WLTray = {
      * Add a cell from the board to the tray. Highlight the board cell.
      * @param id the DOM ID of the cell on the board
      */
-    add: function (id) {
+    add: function (id, update_kb) {
         // update KB target to new select location
-        WLTray.board_kb_target = { x: WLGame.cells[id].x, y: WLGame.cells[id].y };
+        if (typeof update_kb == 'undefined' || update_kb) {
+            WLTray.board_kb_target = { x: WLGame.cells[id].x, y: WLGame.cells[id].y };
+        }
 
         // ensure item is not already in tray
-        if (WLTray.contains(id)) return;
+        if (WLTray.contains(id)) return false;
 
         var trayItem = new TrayItem(id);
 
@@ -85,6 +87,7 @@ WLTray = {
 
         var rect = trayRow[0].getBoundingClientRect();
         $('#tbounds').html('top:'+rect.top+', bottom:'+rect.bottom+', left:'+rect.left+', right:'+rect.right);
+        return true;
     },
 
     /**
@@ -116,7 +119,7 @@ WLTray = {
         var oldItems = WLTray.items.slice(0);
         WLTray.items = [];
         for (var i=0; i<oldItems.length; i++) {
-            WLTray.add(oldItems[i].id);
+            WLTray.add(oldItems[i].id, false);
         }
     },
 
@@ -138,9 +141,24 @@ WLTray = {
     },
 
     selectNearest: function (xOrigin, yOrigin, keyCode) {
-        var x = xOrigin;
-        var y = yOrigin;
-        //var
+        var sym = String.fromCharCode(keyCode);
+        var distances = [];
+        for (var i=0; i<WLGame.length; i++) {
+            for (var j=0; j<WLGame.length; j++) {
+                var deltaX = Math.abs(i - xOrigin);
+                var deltaY = Math.abs(j - yOrigin);
+                distances.push({
+                    tile: WLGame.cellAt(i, j),
+                    distance: Math.sqrt((deltaX*deltaX) + (deltaY*deltaY))
+                });
+            }
+        }
+        distances.sort(function (a, b) { return a.distance - b.distance; });
+        for (var k=0; k<distances.length; k++) {
+            if (distances[k].tile.symbol.toUpperCase() == sym.toUpperCase()) {
+                if (WLTray.add(distances[k].tile.id, false)) return;
+            }
+        }
     }
 
 };
@@ -171,9 +189,9 @@ $(function () {
 
     function findDropTargetTraySlot(x, y) {
         var trayBounds = $('#game_tray_tr')[0].getBoundingClientRect();
-        if (x < trayBounds.left || x > trayBounds.right) return null;
-        if (y < trayBounds.top || y > trayBounds.bottom) return null;
-        // todo: determine % between start and end. use that to discern an index in items array, return that slot number
+        if (x < trayBounds.left) return 0;
+        if (x > trayBounds.right) return WLTray.items.length-1;
+        //if (y < trayBounds.top || y > trayBounds.bottom) return null;
         var trayLength = trayBounds.right - trayBounds.left;
         var pct = (x - trayBounds.left) / trayLength;
         return parseInt(WLTray.items.length * pct);
@@ -217,8 +235,25 @@ $(function () {
             }
         });
 
-    window.addEventListener("keyup", function (event) {
-        console.log('event.keyCode='+event.keyCode+', and target='+JSON.stringify(WLTray.board_kb_target));
-        WLTray.selectNearest(WLTray.board_kb_target.x, WLTray.board_kb_target.y, event.keyCode);
+    $(document).unbind('keydown').bind('keydown', function (event) {
+        switch (event.keyCode) {
+            case 27:         // escape
+                WLTray.clear();
+                event.preventDefault();
+                break;
+            case 13:         // enter
+                WLTray.submit();
+                event.preventDefault();
+                break;
+
+            case 8: case 46: // backspace or delete
+                if (WLTray.items.length > 0) WLTray.remove(WLTray.items[WLTray.items.length-1].id);
+                event.preventDefault();
+                break;
+
+            default:
+                WLTray.selectNearest(WLTray.board_kb_target.x, WLTray.board_kb_target.y, event.keyCode);
+                break;
+        }
     })
 });

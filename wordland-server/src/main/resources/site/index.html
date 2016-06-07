@@ -7,9 +7,9 @@
 </head>
 
 <body>
-event.pageX=<span id="e_px"></span><br/>
-event.pageY=<span id="e_py"></span><br/>
-tray bounds=<span id="tbounds"></span><br/>
+<!--event.pageX=<span id="e_px"></span><br/>-->
+<!--event.pageY=<span id="e_py"></span><br/>-->
+<!--tray bounds=<span id="tbounds"></span><br/>-->
 
 <h5 class="h5title">wordland.io</h5>
 
@@ -31,29 +31,36 @@ tray bounds=<span id="tbounds"></span><br/>
     </div>
   </div>
   <div id="game_board">
+      <table align="center">
+          <tbody>
+          <tr><td>
+
       <div id="game_tray">
-          <table>
+          <table align="center">
               <tbody>
                <tr>
+                   <td><button class="trayButton" onclick="WLTray.clear()">clear</button></td>
                 <td>
                   <table>
                     <tbody id="game_tray_tbody">
                       <tr id="game_tray_tr" class="gameTray"></tr>
                     </tbody>
                   </table>
-                </td>
-               </tr><tr>
-                <td>
-                  <button class="trayButton" onclick="WLTray.clear()">clear</button>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <button class="trayButton" onclick="WLTray.submit()">submit</button>
+                   <td><button class="trayButton" onclick="WLTray.submit()">submit</button></td>
                 </td>
                </tr>
               </tbody>
           </table>
       </div>
-      <table width="100%" cellspacing="5px">
+
+          </td></tr><tr><td>
+
+      <table cellspacing="2px">
           <tbody id="game_tbody"></tbody>
+      </table>
+
+          </td></tr>
+          </tbody>
       </table>
   </div>
 </div>
