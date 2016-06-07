@@ -231,3 +231,7 @@ The following third-party software is used by histori.city, in accordance with t
 # JSONB support for PostgreSQL + Hibernate
   * Site: [https://github.com/pires/hibernate-postgres-jsonb](https://github.com/pires/hibernate-postgres-jsonb)
   * License: [https://raw.githubusercontent.com/pires/hibernate-postgres-jsonb/master/LICENSE](https://raw.githubusercontent.com/pires/hibernate-postgres-jsonb/master/LICENSE)
+
+# interact.js
+  * Site: [http://interactjs.io/](http://interactjs.io/)
+  * License: [https://raw.githubusercontent.com/taye/interact.js/master/LICENSE](https://raw.githubusercontent.com/taye/interact.js/master/LICENSE)
