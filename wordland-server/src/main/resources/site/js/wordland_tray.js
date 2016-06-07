@@ -6,19 +6,39 @@
 var TrayItem = function (id) {
     this.id = id;
     this.slotId = guid();
-    this.tile = WLGame.cells[id];
+    this.tile = WLGame.cells[this.id];
+    this.init();
+};
 
-    this.div = $('<div class="trayTile" id="tray_div_'+id+'">'+this.tile.symbol+'</div>');
+TrayItem.prototype.reinit = function () {
+    this.div.remove();
+    this.cell.remove();
+    this.init();
+    return this;
+};
 
-    this.cell = $('<td class="traySlot" id="tray_slot_'+this.slotId+'"></td>');
+TrayItem.prototype.init = function () {
+
+    this.div = this.newDiv();
+    this.cell = this.newCell();
     this.cell.append(this.div);
 
+    const self = this;
     this.cell.on('click', function () {
-        WLTray.remove(id);
+        WLTray.remove(self.id);
     });
 
-    $('#td_'+id).addClass('usedInTray');
+    $('#td_'+this.id).addClass('usedInTray');
+    this.index = WLTray.items.length;
     WLTray.items.push(this);
+    return this;
+};
+
+TrayItem.prototype.newDiv = function () {
+    return $('<div class="trayTile" id="tray_div_'+this.id+'">'+this.tile.symbol+'</div>')
+};
+TrayItem.prototype.newCell = function () {
+    return $('<td class="traySlot" id="tray_slot_'+this.slotId+'"></td>');
 };
 
 WLTray = {
@@ -78,26 +98,20 @@ WLTray = {
         }
     },
 
-    /**
-     * Move a cell in the tray from one position to another
-     * @param from the cell to move
-     * @param to the index of the cell, in the current list, that it should appear *before*. if it would appear before itself, it remains in the same position.
-     */
-    move: function (from, to) {
-        var fromItem = WLTray.items[from];
-        var toItem = WLTray.items[to];
-        WLTray.items[to] = fromItem;
-        WLTray.items[from] = toItem;
-
-        // redraw tray
-        WLTray.redraw();
-    },
-
     redraw: function () {
         var trayRow = $('#game_tray_tr');
-        trayRow.empty();
-        for (var i=0; i<WLTray.items.length; i++) {
-            trayRow.append(WLTray.items[i].cell.clone());
+        if (typeof trayRow == 'undefined' || trayRow.length == 0) {
+            trayRow = $('<tr id="game_tray_tr" class="gameTray"></tr>');
+            var trayTbody = $('#game_tray_tbody');
+            trayTbody.empty();
+            trayTbody.append(trayRow);
+        } else {
+            trayRow.empty();
+        }
+        var oldItems = WLTray.items.slice(0);
+        WLTray.items = [];
+        for (var i=0; i<oldItems.length; i++) {
+            WLTray.add(oldItems[i].id);
         }
     },
 
@@ -121,6 +135,9 @@ WLTray = {
 };
 
 $(function () {
+    $('.trayTile').on('click', function (event) {
+        $(this).css({zIndex: 5});
+    });
     function dragMoveListener (event) {
         $('#e_px').html(event.pageX);
         $('#e_py').html(event.pageY);
@@ -130,6 +147,7 @@ $(function () {
             y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
 
         // translate the element
+        target.style.zIndex = 5;
         target.style.webkitTransform =
             target.style.transform =
                 'translate(' + x + 'px, ' + y + 'px)';
@@ -139,15 +157,23 @@ $(function () {
         target.setAttribute('data-y', y);
     }
 
-    function findTraySlot(x, y) {
+    function findDropTargetTraySlot(x, y) {
         var trayBounds = $('#game_tray_tr')[0].getBoundingClientRect();
         if (x < trayBounds.left || x > trayBounds.right) return null;
         if (y < trayBounds.top || y > trayBounds.bottom) return null;
         // todo: determine % between start and end. use that to discern an index in items array, return that slot number
         var trayLength = trayBounds.right - trayBounds.left;
         var pct = (x - trayBounds.left) / trayLength;
-        var pos = parseInt(WLTray.items.length * pct);
-        console.log('pos='+pos);
+        return parseInt(WLTray.items.length * pct);
+    }
+
+    function findDraggedTraySlot(id) {
+        for (var i=0; i<WLTray.items.length; i++) {
+            if (id.indexOf(WLTray.items[i].id) != -1) {
+                return { index: i, item: WLTray.items[i] };
+            }
+        }
+        return null;
     }
 
     interact('.trayTile')
@@ -167,11 +193,15 @@ $(function () {
             onmove: dragMoveListener,
             // call this function on every dragend event
             onend: function (event) {
-                var slot = findTraySlot(event.pageX, event.pageY, '.traySlot');
+                var slot = findDropTargetTraySlot(event.pageX, event.pageY, '.traySlot');
                 if (slot != null) {
-                    // todo: move event.target div into slot, slide everything else down one
-                    console.log("found slot: "+JSON.stringify(slot));
+                    var draggedSlot = findDraggedTraySlot(event.target.id);
+                    if (draggedSlot != null) {
+                        WLTray.items.remove(draggedSlot.index);
+                        WLTray.items.splice(slot, 0, draggedSlot.item);
+                    }
                 }
+                WLTray.redraw();
             }
         });
 });
