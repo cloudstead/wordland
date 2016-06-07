@@ -7,6 +7,9 @@
 </head>
 
 <body>
+event.pageX=<span id="e_px"></span><br/>
+event.pageY=<span id="e_py"></span><br/>
+tray bounds=<span id="tbounds"></span><br/>
 
 <h5 class="h5title">wordland.io</h5>
 
@@ -29,9 +32,24 @@
   </div>
   <div id="game_board">
       <div id="game_tray">
-          <table><tr id="game_tray_tr" class="gameTray"></tr></table>
-          <button class="trayButton" onclick="WLTray.clear()">clear</button>
-          <button class="trayButton" onclick="WLTray.submit()">submit</button>
+          <table>
+              <tbody>
+               <tr>
+                <td>
+                  <table>
+                    <tbody>
+                      <tr id="game_tray_tr" class="gameTray"></tr>
+                    </tbody>
+                  </table>
+                </td>
+                <td>
+                  <button class="trayButton" onclick="WLTray.clear()">clear</button>
+                  <button class="trayButton" onclick="WLTray.submit()">submit</button>
+                  <button class="trayButton" onclick="WLTray.redraw()">redraw</button>
+                </td>
+               </tr>
+              </tbody>
+          </table>
       </div>
       <table>
           <tbody id="game_tbody"></tbody>
@@ -42,6 +60,8 @@
 </body>
 
 <script src="lib/jquery.js"></script>
+<script src="lib/jquery-ui.js"></script>
+<script src="lib/interact.min.js"></script>
 <script src="js/util.js"></script>
 <script src="js/api.js"></script>
 <script src="js/wordland_lobby.js"></script>

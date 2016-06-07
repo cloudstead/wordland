@@ -18,7 +18,7 @@ WLGame = {
                     tile.y = y;
                     tile.id = 'cell_'+guid();
 
-                    var cell = $('<td class="gameCell" id="'+tile.id+'">'+tile.symbol+'</td>');
+                    var cell = $('<td class="gameCell" id="td_'+tile.id+'">'+tile.symbol+'</td>');
                     cell.on('click', WLGame.addToTrayFunc(tile.id));
                     WLGame.cells[tile.id] = tile;
 
