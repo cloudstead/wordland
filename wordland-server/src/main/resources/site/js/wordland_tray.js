@@ -165,10 +165,6 @@ WLTray = {
 };
 
 $(function () {
-    $('.trayTile').on('mousedown', function (event) {
-        $('.trayTile').css({zIndex: 1});
-        $(this).css({zIndex: 2});
-    });
     function dragMoveListener (event) {
         $('#e_px').html(event.pageX);
         $('#e_py').html(event.pageY);
@@ -190,12 +186,11 @@ $(function () {
 
     function findDropTargetTraySlot(x, y) {
         var trayBounds = $('#game_tray_tr')[0].getBoundingClientRect();
-        if (x < trayBounds.left) return 0;
-        if (x > trayBounds.right) return WLTray.items.length-1;
-        //if (y < trayBounds.top || y > trayBounds.bottom) return null;
         var trayLength = trayBounds.right - trayBounds.left;
         var pct = (x - trayBounds.left) / trayLength;
-        return parseInt(WLTray.items.length * pct);
+        var index = parseInt(WLTray.items.length * pct);
+        index = Math.min(Math.max(0, index), WLTray.items.length);
+        return index;
     }
 
     function findDraggedTraySlot(id) {
@@ -213,7 +208,7 @@ $(function () {
             inertia: true,
             // keep the element within the area of it's parent
             restrict: {
-                restriction: ".gameTray",
+                restriction: "#wordland_body",
                 endOnly: true,
                 elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
             },
@@ -221,15 +216,23 @@ $(function () {
             autoScroll: true,
 
             // call this function on every dragmove event
+            onstart: function (event) {
+                $('#'+event.target.id).addClass('dragging');
+                WLTray.numItemsAtDrag = WLTray.items.length;
+                WLTray.draggedSlot = findDraggedTraySlot(event.target.id);
+            },
             onmove: dragMoveListener,
-            // call this function on every dragend event
             onend: function (event) {
+                $('#'+event.target.id).removeClass('dragging');
                 var slot = findDropTargetTraySlot(event.pageX, event.pageY, '.traySlot');
                 if (slot != null) {
-                    var draggedSlot = findDraggedTraySlot(event.target.id);
-                    if (draggedSlot != null) {
-                        WLTray.items.remove(draggedSlot.index);
-                        WLTray.items.splice(slot, 0, draggedSlot.item);
+                    if (WLTray.draggedSlot != null) {
+                        if (WLTray.numItemsAtDrag == WLTray.items.length) {
+                            WLTray.items.remove(WLTray.draggedSlot.index);
+                        }
+                        WLTray.items.splice(slot, 0, WLTray.draggedSlot.item);
+                        WLTray.draggedSlot = null;
+                        WLTray.numItemsAtDrag = WLTray.items.length;
                     }
                 }
                 WLTray.redraw();
