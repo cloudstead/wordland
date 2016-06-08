@@ -43,6 +43,8 @@ TrayItem.prototype.newCell = function () {
 
 WLTray = {
 
+    max_items: 30,
+
     board_kb_target: { x: 0, y: 0 },
 
     /**
@@ -71,6 +73,8 @@ WLTray = {
      * @param id the DOM ID of the cell on the board
      */
     add: function (id, update_kb) {
+        if (WLTray.items.length >= WLTray.max_items) return false;
+
         // update KB target to new select location
         if (typeof update_kb == 'undefined' || update_kb) {
             WLTray.board_kb_target = { x: WLGame.cells[id].x, y: WLGame.cells[id].y };
@@ -141,6 +145,7 @@ WLTray = {
     },
 
     selectNearest: function (xOrigin, yOrigin, keyCode) {
+        if (WLTray.items.length >= WLTray.max_items) return;
         var sym = String.fromCharCode(keyCode);
         var distances = [];
         var maxSearchDist = 25;
