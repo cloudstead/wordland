@@ -13,7 +13,8 @@ public class WordlandServer extends RestServerBase<WordlandConfiguration> {
 
     public static final String[] API_CONFIG_YML = {"wordland-config.yml"};
 
-    @Override protected String getListenAddress() { return LOCALHOST; }
+//    @Override protected String getListenAddress() { return LOCALHOST; }
+    @Override protected String getListenAddress() { return ALL_ADDRS; }
 
     // args are ignored, config is loaded from the classpath
     public static void main(String[] args) throws Exception {

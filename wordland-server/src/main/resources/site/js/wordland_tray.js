@@ -105,9 +105,10 @@ WLTray = {
                 $('#td_'+id).removeClass('usedInTray'); // un-highlight tile on board
                 WLTray.items.remove(i, i);   // remove from tiles array
                 if (WLTray.items.length == 0) WLTray.clear();
-                return;
+                return true;
             }
         }
+        return false;
     },
 
     redraw: function () {
@@ -191,6 +192,7 @@ $(function () {
 
     function findDropTargetTraySlot(x, y) {
         var trayBounds = $('#game_tray_tr')[0].getBoundingClientRect();
+        if (y > trayBounds.bottom + 20) return null; // remove from tray
         var trayLength = trayBounds.right - trayBounds.left;
         var pct = (x - trayBounds.left) / trayLength;
         var index = parseInt(WLTray.items.length * pct);
@@ -224,22 +226,26 @@ $(function () {
             onstart: function (event) {
                 $('#'+event.target.id).addClass('dragging');
                 WLTray.numItemsAtDrag = WLTray.items.length;
-                WLTray.draggedSlot = findDraggedTraySlot(event.target.id);
+                WLTray.draggingSlot = findDraggedTraySlot(event.target.id);
             },
             onmove: dragMoveListener,
             onend: function (event) {
                 $('#'+event.target.id).removeClass('dragging');
                 var slot = findDropTargetTraySlot(event.pageX, event.pageY, '.traySlot');
                 if (slot != null) {
-                    if (WLTray.draggedSlot != null) {
+                    if (WLTray.draggingSlot != null) {
                         if (WLTray.numItemsAtDrag == WLTray.items.length) {
-                            WLTray.items.remove(WLTray.draggedSlot.index);
+                            WLTray.items.remove(WLTray.draggingSlot.index);
                         }
-                        WLTray.items.splice(slot, 0, WLTray.draggedSlot.item);
-                        WLTray.draggedSlot = null;
-                        WLTray.numItemsAtDrag = WLTray.items.length;
+                        WLTray.items.splice(slot, 0, WLTray.draggingSlot.item);
+                    }
+                } else {
+                    if (WLTray.draggingSlot != null) {
+                        WLTray.remove(WLTray.draggingSlot.item.id);
                     }
                 }
+                WLTray.draggingSlot = null;
+                WLTray.numItemsAtDrag = WLTray.items.length;
                 WLTray.redraw();
             }
         });
