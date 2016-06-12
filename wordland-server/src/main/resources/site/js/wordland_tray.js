@@ -29,6 +29,7 @@ TrayItem.prototype.init = function () {
     });
 
     $('#td_'+this.id).addClass('usedInTray');
+    WLGame.notifyInTray(this.id);
     this.index = WLTray.items.length;
     WLTray.items.push(this);
     return this;
@@ -91,6 +92,7 @@ WLTray = {
 
         var rect = trayRow[0].getBoundingClientRect();
         $('#tbounds').html('top:'+rect.top+', bottom:'+rect.bottom+', left:'+rect.left+', right:'+rect.right);
+        $('#game_tray_help').remove();
         return true;
     },
 
@@ -103,6 +105,7 @@ WLTray = {
             if (WLTray.items[i].id == id) {
                 $('#tray_slot_'+WLTray.items[i].slotId).remove(); // remove td from tray row
                 $('#td_'+id).removeClass('usedInTray'); // un-highlight tile on board
+                WLGame.notifyOutOfTray(id);
                 WLTray.items.remove(i, i);   // remove from tiles array
                 if (WLTray.items.length == 0) WLTray.clear();
                 return true;
@@ -142,7 +145,15 @@ WLTray = {
      * Submit the tray.
      */
     submit: function () {
-
+        var tiles = [];
+        var word = '';
+        for (var i=0; i<WLTray.items.length; i++) {
+            var tile = WLTray.items[i].tile;
+            tiles.push({x: tile.x, y: tile.y, symbol: tile.symbol });
+            word += tile.symbol;
+        }
+        $('.usedInTray').css({'border-style': 'double'});
+        if (tiles.length > 0) Wordland.send({tiles: tiles, word: word, stateChange: 'word_played'});
     },
 
     selectNearest: function (xOrigin, yOrigin, keyCode) {

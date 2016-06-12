@@ -46,6 +46,8 @@ public class WordlandConfiguration extends RestServerConfiguration
         return redis;
     }
 
+    @Getter @Setter private int atmospherePort = 9099;
+
     @Getter @Setter private SmtpMailConfig smtp;
     @Getter @Setter private Map<String, SimpleEmailMessage> emailSenderNames = new HashMap<>();
     @Getter @Setter private String emailTemplateRoot;

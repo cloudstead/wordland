@@ -18,6 +18,7 @@
     <logger name="org.springframework" level="WARN" />
     <logger name="org.cobbzilla.util.yml" level="ERROR" />
     <logger name="org.cobbzilla.wizard.server" level="WARN" />
+    <logger name="org.cobbzilla.wizard.server" level="WARN" />
     <logger name="wordland" level="INFO" />
 
     <root level="INFO">

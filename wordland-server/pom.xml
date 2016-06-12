@@ -72,6 +72,21 @@ For commercial use, please contact cloudstead.io
             <groupId>cloudstead</groupId>
             <artifactId>cloudos-lib</artifactId>
             <version>1.0.0-SNAPSHOT</version>
+            <exclusions>
+                <!-- exclude duplicate servlet-api dependency -->
+                <exclusion>
+                    <groupId>org.eclipse.jetty.orbit</groupId>
+                    <artifactId>javax.servlet</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -94,6 +109,30 @@ For commercial use, please contact cloudstead.io
             <groupId>org.glassfish.grizzly</groupId>
             <artifactId>grizzly-http-servlet</artifactId>
             <version>${grizzly.version}</version>
+        </dependency>
+
+        <!-- async support for game events service -->
+        <dependency>
+            <groupId>org.atmosphere</groupId>
+            <artifactId>nettosphere</artifactId>
+            <version>2.4.9</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>ch.qos.logback</artifactId>
+                    <groupId>logback-core</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <!-- http://mvnrepository.com/artifact/org.eclipse.jetty/jetty-websocket -->
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-websocket</artifactId>
+            <version>8.1.19.v20160209</version>
         </dependency>
 
         <dependency>

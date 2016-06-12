@@ -49,7 +49,11 @@ http:
   baseUri: /api
 
 jersey:
-  resourcePackages: [ wordland.resources, org.cobbzilla.wizard.server, org.cobbzilla.wizard.filters, org.cobbzilla.wizard.exceptionmappers ]
+  resourcePackages:
+   - wordland.resources
+   - org.cobbzilla.wizard.server
+   - org.cobbzilla.wizard.filters
+   - org.cobbzilla.wizard.exceptionmappers
   requestFilters: [ wordland.auth.WordlandAuthFilter ]
   responseFilters: [ org.cobbzilla.wizard.filters.ScrubbableScrubber ]
 

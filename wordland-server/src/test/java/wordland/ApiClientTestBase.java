@@ -17,7 +17,7 @@ import wordland.auth.AccountAuthResponse;
 import wordland.model.*;
 import wordland.model.json.GameRoomSettings;
 import wordland.model.support.RegistrationRequest;
-import wordland.server.DbSeedListener;
+import wordland.server.WordlandLifecycleListener;
 import wordland.server.WordlandConfiguration;
 import wordland.server.WordlandServer;
 
@@ -48,7 +48,7 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
         // disable captcha for tests
         final WordlandConfiguration config = server.getConfiguration();
         config.setRecaptcha(DummyRecaptchaConfig.instance);
-        new DbSeedListener().seed(server, seedTestData());
+        new WordlandLifecycleListener().seed(server, seedTestData());
         super.onStart(server);
     }
 

@@ -1,10 +1,17 @@
-package wordland.model.game;
+package wordland.service;
 
 import lombok.Getter;
 import org.cobbzilla.util.daemon.SimpleDaemon;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
+import wordland.model.game.GamePlayer;
+import wordland.model.game.GamePlayerState;
+import wordland.model.game.GameState;
+import wordland.model.game.GameStateChange;
+import wordland.model.support.PlayedTile;
 
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -14,7 +21,11 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 public class GameDaemon extends SimpleDaemon {
 
     private String name;
+    private AtmosphereEventsService eventService;
+
     private final AtomicReference<GameState> gameState = new AtomicReference<>();
+    private final AtomicReference<ArrayList<GameStateChange>> deltas = new AtomicReference<>(new ArrayList<GameStateChange>());
+    private final AtomicReference<ConcurrentHashMap<String, GamePlayerState>> playerStates = new AtomicReference<>(new ConcurrentHashMap<String, GamePlayerState>());
 
     public GameState getGameState () {
         synchronized (gameState) {
@@ -22,7 +33,10 @@ public class GameDaemon extends SimpleDaemon {
         }
     }
 
-    public GameDaemon(String name) { this.name = name; }
+    public GameDaemon(String name, AtmosphereEventsService eventService) {
+        this.name = name;
+        this.eventService = eventService;
+    }
 
     @Autowired private RedisService redisService;
     @Getter(lazy=true) private final RedisService redis = initRedis();
@@ -58,9 +72,13 @@ public class GameDaemon extends SimpleDaemon {
     }
 
     public void addPlayer(GamePlayer player) {
+        final GameStateChange stateChange;
         synchronized (gameState) {
-            gameState.get().addPlayer(player);
+            stateChange = gameState.get().addPlayer(player).setRoom(name);
+            deltas.get().add(stateChange);
+            playerStates.get().put(player.getId(), new GamePlayerState());
         }
+        eventService.getBroadcaster().broadcast(stateChange);
     }
 
     public GamePlayer findPlayer(GamePlayer player) {
@@ -71,9 +89,24 @@ public class GameDaemon extends SimpleDaemon {
         return gameState.get().getPlayer(uuid);
     }
 
-    public void removePlayer(String uuid) {
+    public void removePlayer(String id) {
+        final GameStateChange stateChange;
         synchronized (gameState) {
-            gameState.get().removePlayer(uuid);
+            stateChange = gameState.get().removePlayer(id);
+            deltas.get().add(stateChange);
+            playerStates.get().remove(id);
         }
+        eventService.getBroadcaster().broadcast(stateChange);
+    }
+
+    public GameStateChange playWord(GamePlayer player, String word, PlayedTile[] tiles) {
+        final GameStateChange stateChange;
+        synchronized (gameState) {
+            stateChange = gameState.get().playWord(player, word, tiles);
+        }
+        if (stateChange != null) {
+            eventService.getBroadcaster().broadcast(stateChange);
+        }
+        return stateChange;
     }
 }

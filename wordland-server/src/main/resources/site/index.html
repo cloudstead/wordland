@@ -7,18 +7,15 @@
 </head>
 
 <body id="wordland_body">
-<!--event.pageX=<span id="e_px"></span><br/>-->
-<!--event.pageY=<span id="e_py"></span><br/>-->
-<!--tray bounds=<span id="tbounds"></span><br/>-->
-
-<h5 class="h5title">wordland.io</h5>
 
 <div id="wordland_global_error"></div>
 
+<h5 class="h5title">wordland.io</h5>
+
 <div id="lobbyContainer" class="dialogContainer">
-  name: <input type="text" id="player_name" name="player_name"/>
-  <select id="room_to_join" name="room_to_join"></select>
-  <button onclick="Wordland.join($('#room_to_join').find(':selected').text(), {name: $('#player_name').val()});">join</button>
+  name: <input type="text" id="player_name" name="player_name" class="lobbyControl"/>
+  <select id="room_to_join" name="room_to_join" class="lobbyControl"></select>
+  <button class="lobbyControl" onclick="Wordland.join( $('#room_to_join').find(':selected').text(), {name: $('#player_name').val()} );">join</button>
 </div>
 
 <div id="gameRoomContainer" class="dialogContainer">
@@ -33,27 +30,30 @@
   <div id="game_board">
       <table align="center" border="1">
           <tbody>
-          <tr><td>
+          <tr><td height="50">
 
       <div id="game_tray">
           <table align="center">
               <tbody>
                <tr>
-                   <td><button class="trayButton" onclick="WLTray.clear()">clear</button></td>
+                <td><button class="trayButton" onclick="WLTray.clear()">clear</button></td>
                 <td>
                   <table>
                     <tbody id="game_tray_tbody">
-                      <tr id="game_tray_tr" class="gameTray"></tr>
+                      <tr id="game_tray_tr" class="gameTray"><td class="game_tray_help">
+                          <span id="game_tray_help">pick some letters, or start typing</span>
+                      </td></tr>
                     </tbody>
                   </table>
-                   <td><button class="trayButton" onclick="WLTray.submit()">submit</button></td>
                 </td>
+                <td><button class="trayButton" onclick="WLTray.submit()">submit</button></td>
                </tr>
               </tbody>
           </table>
       </div>
 
-          </td></tr><tr><td>
+          </td></tr>
+          <tr><td>
 
       <table cellspacing="2px" align="center">
           <tbody id="game_tbody"></tbody>
@@ -70,6 +70,7 @@
 <script src="lib/jquery.js"></script>
 <script src="lib/jquery-ui.js"></script>
 <script src="lib/interact.min.js"></script>
+<script src="lib/atmosphere.js"></script>
 <script src="js/util.js"></script>
 <script src="js/api.js"></script>
 <script src="js/wordland_lobby.js"></script>

@@ -132,8 +132,8 @@ Api = {
         Api._post('rooms/' + room_name + '/join', player_info, success, fail);
     },
 
-    quit_game: function (room_name, id, success, fail) {
-        Api._post('rooms/' + room_name + '/quit', id, success, fail);
+    quit_game: function (room_name, id, secret, success, fail) {
+        Api._post('rooms/' + room_name + '/quit', {id: id, secret: secret, type: 'player_left'}, success, fail);
     },
 
     get_game_state: function (room_name, success, fail) {

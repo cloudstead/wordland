@@ -11,7 +11,9 @@ import wordland.model.Account;
 import wordland.model.GameRoom;
 import wordland.model.game.GamePlayer;
 import wordland.model.game.GameState;
+import wordland.model.game.GameStateChangeType;
 import wordland.model.support.GameRoomJoinRequest;
+import wordland.model.support.GameRuntimeEvent;
 import wordland.service.GamesMaster;
 
 import javax.validation.Valid;
@@ -22,9 +24,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import static org.cobbzilla.wizard.resources.ResourceUtil.notFound;
-import static org.cobbzilla.wizard.resources.ResourceUtil.ok;
-import static org.cobbzilla.wizard.resources.ResourceUtil.optionalUserPrincipal;
+import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static wordland.ApiConstants.*;
 
 @Path(GAME_ROOMS_ENDPOINT)
@@ -47,18 +47,22 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (found != null) return ok(found);
 
         gamesMaster.addPlayer(room, player);
-        return ok(player);
+        return ok(player.getCredentials());
     }
 
     @POST
     @Path("/{name}"+EP_QUIT)
     public Response quit (@Context HttpContext ctx,
                           @PathParam("name") String room,
-                          String id) {
-        final GamePlayer found = gamesMaster.findPlayer(room, id);
-        if (found == null) return notFound(id);
+                          @Valid GameRuntimeEvent request) {
 
-        gamesMaster.removePlayer(room, id);
+        if (request.getStateChange() != GameStateChangeType.player_left) return invalid("err.type.invalid", request.getStateChange().name());
+
+        final GamePlayer found = gamesMaster.findPlayer(room, request.getId());
+        if (found == null) return notFound(request.getId());
+        if (!found.getApiKey().equals(request.getApiKey())) return forbidden();
+
+        gamesMaster.removePlayer(room, found.getId());
         return ok();
     }
 

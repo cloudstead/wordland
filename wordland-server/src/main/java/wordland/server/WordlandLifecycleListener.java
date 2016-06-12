@@ -1,6 +1,9 @@
 package wordland.server;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.atmosphere.nettosphere.Config;
+import org.atmosphere.nettosphere.Nettosphere;
 import org.cobbzilla.wizard.dao.DAO;
 import org.cobbzilla.wizard.dao.NamedIdentityBaseDAO;
 import org.cobbzilla.wizard.model.HashedPassword;
@@ -11,10 +14,12 @@ import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
 import wordland.dao.*;
 import wordland.model.*;
 import wordland.model.json.GameRoomSettings;
+import wordland.service.AtmosphereEventsService;
 import wordland.service.GamesMaster;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStringOrDie;
@@ -23,7 +28,7 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.arrayClass;
 import static wordland.ApiConstants.STANDARD;
 
 @Slf4j
-public class DbSeedListener extends RestServerLifecycleListenerBase<WordlandConfiguration> {
+public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<WordlandConfiguration> {
 
     private static final Class<? extends Identifiable>[] SEED_CLASSES = new Class[]{
             SymbolSet.class,
@@ -31,8 +36,26 @@ public class DbSeedListener extends RestServerLifecycleListenerBase<WordlandConf
             PointSystem.class,
             GameBoard.class
     };
+    private static final long INIT_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
 
-    @Override public void onStart(RestServer server) { seed(server, false); }
+    @Getter private WordlandConfiguration configuration;
+
+    @Override public void onStart(RestServer server) {
+
+        this.configuration = (WordlandConfiguration) server.getConfiguration();
+
+        // start nettosphere event server
+        final Nettosphere nettosphere = new Nettosphere.Builder().config(
+                new Config.Builder()
+                        .host("127.0.0.1")
+                        .port(configuration.getAtmospherePort())
+                        .resource(AtmosphereEventsService.class)
+                        .build())
+                .build();
+        nettosphere.start();
+
+        seed(server, false);
+    }
 
     public void seed(RestServer server, boolean includeTestData) {
 

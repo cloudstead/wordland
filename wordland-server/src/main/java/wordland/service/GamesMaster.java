@@ -1,12 +1,16 @@
 package wordland.service;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import wordland.model.GameRoom;
-import wordland.model.game.GameDaemon;
 import wordland.model.game.GamePlayer;
 import wordland.model.game.GameState;
+import wordland.model.game.GameStateChange;
+import wordland.model.support.PlayedTile;
 import wordland.server.WordlandConfiguration;
 
 import java.util.Map;
@@ -15,23 +19,25 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 
-@Service @Slf4j
+@Service @Slf4j @Accessors(chain=true)
 public class GamesMaster {
 
     @Autowired private WordlandConfiguration configuration;
+
+    @Getter @Setter private AtmosphereEventsService eventService;
 
     public Map<String, GameDaemon> rooms = new ConcurrentHashMap<>();
 
     public void newRoom(GameRoom room) {
         if (rooms.containsKey(room.getName())) throw invalidEx("err.room.alreadyExists");
-        final GameDaemon gameDaemon = configuration.autowire(new GameDaemon(room.getName()));
+        final GameDaemon gameDaemon = newGameDaemon(room);
         rooms.put(room.getName(), gameDaemon);
         gameDaemon.startGame(room.randomizeTiles());
     }
 
     public void initRoom(GameRoom room) {
         if (!rooms.containsKey(room.getName())) {
-            final GameDaemon gameDaemon = configuration.autowire(new GameDaemon(room.getName()));
+            final GameDaemon gameDaemon = newGameDaemon(room);
             rooms.put(room.getName(), gameDaemon);
             boolean restored = false;
             try {
@@ -41,6 +47,10 @@ public class GamesMaster {
             }
             if (!restored) gameDaemon.startGame(room.randomizeTiles());
         }
+    }
+
+    protected GameDaemon newGameDaemon(GameRoom room) {
+        return configuration.autowire(new GameDaemon(room.getName(), eventService));
     }
 
     private GameDaemon getGameDaemon(String roomName) { return getGameDaemon(roomName, true); }
@@ -73,4 +83,8 @@ public class GamesMaster {
         return getGameDaemon(roomName).getGameState();
     }
 
+    public GameStateChange playWord(String roomName, GamePlayer player, String word, PlayedTile[] tiles) {
+        final GameDaemon daemon = getGameDaemon(roomName, false);
+        return daemon != null ? daemon.playWord(player, word, tiles) : null;
+    }
 }

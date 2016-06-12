@@ -6,6 +6,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 public class ApiConstants {
 
     public static final String API_TOKEN = "x-wordland-api-key";
+    public static final String EVENTS_API_TOKEN = "x-wordland-events-api-key";
 
     public static final String ACCOUNTS_ENDPOINT = "/accounts";
     public static final String EP_REGISTER = "/register";

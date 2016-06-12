@@ -2,15 +2,19 @@ package wordland.model.game;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import wordland.model.support.PlayedTile;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 
 @NoArgsConstructor
 public class GameState {
 
-    @Getter private int version = 0;
+    @Getter private AtomicInteger version = new AtomicInteger(0);
     @Getter private int length;
     @Getter private int width;
     @Getter private int maxPlayers;
@@ -46,11 +50,36 @@ public class GameState {
 
     public GamePlayer getPlayer(String account) { return players.get(account); }
 
-    public void addPlayer(GamePlayer player) {
+    public GameStateChange addPlayer(GamePlayer player) {
         // todo check maxPlayers. if maxPlayers reached, see if any can be evicted? maybe not, let GameDaemon handle that...
         players.put(player.getId(), player);
+        return GameStateChange.playerJoined(version.incrementAndGet(), player);
     }
 
-    public void removePlayer(String uuid) { players.remove(uuid); }
+    public GameStateChange removePlayer(String id) {
+        players.remove(id);
+        return GameStateChange.playerLeft(version.incrementAndGet(), id);
+    }
 
+    public GameStateChange playWord(GamePlayer player, String word, PlayedTile[] tiles) {
+        final GameTileState[] boardTiles = new GameTileState[tiles.length];
+        final StringBuilder b = new StringBuilder();
+        for (int i=0; i<tiles.length; i++) {
+            final PlayedTile tile = tiles[i];
+            final GameTileState boardTile = this.tiles[tile.getX()][tile.getY()];
+            if (!boardTile.getSymbol().equals(tile.getSymbol())) {
+                die("playWord: invalid play");
+            }
+            boardTiles[i] = boardTile;
+            b.append(tile.getSymbol());
+        }
+
+        if (!b.toString().equalsIgnoreCase(word)) die("playWord: word does not match tiles");
+
+        for (int i=0; i<boardTiles.length; i++) {
+            boardTiles[i].setOwner(player.getId());
+        }
+
+        return GameStateChange.wordPlayed(version.incrementAndGet(), player, tiles);
+    }
 }
