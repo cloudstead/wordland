@@ -37,9 +37,14 @@ Wordland = {
         err.css({visibility: 'visible'});
     },
 
-    showScreen: function (name) {
-        $('.dialogContainer').css({visibility: 'hidden'});
-        $('#'+name).css({visibility: 'visible'});
+    showLobby: function () {
+        $('#gameRoomContainer').css({visibility: 'hidden'});
+        $('#lobbyContainer').css({visibility: 'visible'});
+    },
+
+    showGameRoom: function () {
+        $('#lobbyContainer').css({visibility: 'hidden'});
+        $('#gameRoomContainer').css({visibility: 'visible'});
     },
 
     join: function (room, player_info) {
@@ -62,10 +67,10 @@ Wordland = {
             Wordland.globalError('no game in progress');
 
         } else {
-            Api.quit_game(Wordland.room, Wordland.player.id, Wordland.player.apiKey, function (data) {
+            Api.quit_game(Wordland.room, Wordland.player.id, Wordland.player.apiKey, Wordland.clientId, function (data) {
                 Wordland.room = null;
                 Wordland.player = null;
-                Wordland.showScreen('lobbyContainer');
+                Wordland.showLobby();
 
             }, Wordland.apiError("error quitting game"));
         }
@@ -91,7 +96,7 @@ $(function() {
     "use strict";
 
     $('.lobbyControl').attr('disabled', 'disabled');
-    $('#joinButton').on('click', function (e) {
+    $('#join_button').on('click', function (e) {
         Wordland.join( $('#room_to_join').find(':selected').text(), {name: $('#player_name').val()} );
     });
     $('#player_name').on('keyup', function (e) {
@@ -105,11 +110,12 @@ $(function() {
                 break;
         }
     });
+    $('#lobbyControlsContainer').centerTop();
 
     Api.list_rooms(function (data) {
         if (is_array(data)) {
             WordlandLobby.refreshRooms(data);
-            Wordland.showScreen('lobbyContainer')
+            Wordland.showLobby();
         }
     }, Wordland.apiError("error listing rooms"));
 

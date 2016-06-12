@@ -33,7 +33,7 @@ WLGame = {
                     row.append(cell);
                 }
             }
-            Wordland.showScreen('gameRoomContainer');
+            Wordland.showGameRoom();
 
         }, Wordland.apiError("error getting game state"));
     },

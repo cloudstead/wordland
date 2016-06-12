@@ -64,7 +64,12 @@ Api = {
             },
             error: function (jqXHR, status, error) {
                 console.log('_update error: status='+status+' (jqXHR.status='+jqXHR.status+'), error='+error);
-                if (typeof fail != "undefined" && fail != null) fail(jqXHR, status, error);
+                if (jqXHR.status == 200) {
+                    console.log('API error handler received 200 response, calling success with no args');
+                    if (typeof success != "undefined" && success != null) success();
+                } else {
+                    if (typeof fail != "undefined" && fail != null) fail(jqXHR, status, error);
+                }
             }
         });
         return result;
@@ -132,8 +137,8 @@ Api = {
         Api._post('rooms/' + room_name + '/join', player_info, success, fail);
     },
 
-    quit_game: function (room_name, id, secret, success, fail) {
-        Api._post('rooms/' + room_name + '/quit', {id: id, secret: secret, type: 'player_left'}, success, fail);
+    quit_game: function (room_name, id, apiKey, clientId, success, fail) {
+        Api._post('rooms/' + room_name + '/quit', {id: id, apiKey: apiKey, stateChange: 'player_left', room: room_name, clientId: clientId}, success, fail);
     },
 
     get_game_state: function (room_name, success, fail) {

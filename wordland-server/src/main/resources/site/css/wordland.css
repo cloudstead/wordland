@@ -11,15 +11,14 @@ html, body {
     font-family: Tahoma,sans-serif;
     font-size: small;
     font-weight: bold;
-    text-align: center;
-    position: relative;
-    top: -20px;
+    position: absolute;
+    top: -10px;
+    left: 20px;
 }
 .h5title a {
     color: #222222;
     text-decoration: none;
 }
-
 
 #wordland_global_error {
     position: absolute;
@@ -43,16 +42,33 @@ html, body {
     top: 10px;
 }
 
-.dialogContainer {
+#lobbyContainer {
+    text-align: center;
+    visibility: hidden;
+    font-family: Tahoma,sans-serif;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: visible;
+}
+
+#lobbyControlsContainer {
+    text-align: center;
+    background-color: whitesmoke;
+    border: 2px solid black;
+    padding: 5px;
+    position: relative;
+}
+
+#gameRoomContainer {
     text-align: center;
     visibility: hidden;
     font-family: Tahoma,sans-serif;
     z-index: -1;
     background-color: whitesmoke;
-    overflow: hidden;
     pointer-events: visible;
     border: 2px solid black;
     padding: 5px;
+    margin: 30px;
 }
 
 .quitButton {
