@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.atmosphere.config.service.Get;
 import org.atmosphere.config.service.ManagedService;
 import org.atmosphere.config.service.Message;
+import org.atmosphere.config.service.Post;
 import org.atmosphere.cpr.*;
 import org.atmosphere.interceptor.CorsInterceptor;
 import org.atmosphere.interceptor.IdleResourceInterceptor;
@@ -57,8 +58,7 @@ public class AtmosphereEventsService {
         final String clientId = uri.substring(prefix+URI_PREFIX.length());
         log.info("onOpen: "+ clientId);
         if (clients.containsKey(clientId)) {
-            log.error("Connection already open from "+ clientId);
-            return;
+            log.warn("Connection already open from "+ clientId+", replacing");
         }
         clients.put(clientId, new AtmosphereResourceEntry(r));
         r.addEventListener(new AtmosphereResourceEventListenerAdapter() {
@@ -77,8 +77,16 @@ public class AtmosphereEventsService {
                 } else if (event.isClosedByClient()) {
                     log.info("User {} closed the connection", clientId);
                 }
+                clients.remove(clientId);
             }
         });
+    }
+
+    @Post
+    public void onMessage(final AtmosphereResource r) throws IOException {
+        final String message = r.getRequest().body().asString();
+        log.info("onMessage(POST): "+message);
+        onMessage(message);
     }
 
     @Message
@@ -127,8 +135,9 @@ public class AtmosphereEventsService {
                     return null;
                 }
                 if (!isValidWord(request.getWord())) {
-                    send(entry, GameNotification.invalidWord(request.getWord()));
-                    return null;
+                    final GameNotification notification = GameNotification.invalidWord(request.getWord());
+                    send(entry, notification);
+                    return null; //json(notification);
                 }
                 final GameStateChange stateChange = getGamesMaster().playWord(request.getRoom(), player, request.getWord(), request.getTiles());
                 return stateChange != null ? json(stateChange) : null;
@@ -141,6 +150,7 @@ public class AtmosphereEventsService {
     }
 
     private void send(AtmosphereResourceEntry entry, Object thing) throws IOException {
+//        getBroadcaster().broadcast(thing, entry.getResource());
         entry.getResource().getResponse().write(json(thing)).flushBuffer();
     }
 

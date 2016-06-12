@@ -1,0 +1,117 @@
+.playerOwnedCell {
+    border: 2px solid darkblue;
+    background-color: cornflowerblue;
+    width: 18px;
+    height: 14px;
+}
+.playerLog {
+    border: 2px solid darkblue;
+    background-color: cornflowerblue;
+    margin: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+.playerOwnedCell_0 {
+    border: 2px solid red;
+    background-color: lightcoral;
+    width: 18px;
+    height: 14px;
+}
+.playerLog_0 {
+    border: 2px solid red;
+    background-color: lightcoral;
+    margin: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+.playerOwnedCell_1 {
+    border: 2px solid orangered;
+    background-color: lightsalmon;
+    width: 18px;
+    height: 14px;
+}
+.playerLog_1 {
+    border: 2px solid orangered;
+    background-color: lightsalmon;
+    margin: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+.playerOwnedCell_2 {
+    border: 2px solid green;
+    background-color: lightgreen;
+    width: 18px;
+    height: 14px;
+}
+.playerLog_2 {
+    border: 2px solid green;
+    background-color: lightgreen;
+    margin: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+.playerOwnedCell_3 {
+    border: 2px solid purple;
+    background-color: lavender;
+    width: 18px;
+    height: 14px;
+}
+.playerLog_3 {
+    border: 2px solid purple;
+    background-color: lavender;
+    margin: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+.playerOwnedCell_4 {
+    border: 2px solid chocolate;
+    background-color: khaki;
+    width: 18px;
+    height: 14px;
+}
+.playerLog_4 {
+    border: 2px solid chocolate;
+    background-color: khaki;
+    margin: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+.playerOwnedCell_5 {
+    border: 2px solid yellow;
+    background-color: lightyellow;
+    width: 18px;
+    height: 14px;
+}
+.playerLog_5 {
+    border: 2px solid yellow;
+    background-color: lightyellow;
+    margin: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+.playerOwnedCell_6 {
+    border: 2px solid deeppink;
+    background-color: lightpink;
+    width: 18px;
+    height: 14px;
+}
+.playerLog_6 {
+    border: 2px solid deeppink;
+    background-color: lightpink;
+    margin: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+.playerOwnedCell_7 {
+    border: 2px solid darkgreen;
+    background-color: forestgreen;
+    width: 18px;
+    height: 14px;
+}
+.playerLog_7 {
+    border: 2px solid darkgreen;
+    background-color: forestgreen;
+    margin: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+}

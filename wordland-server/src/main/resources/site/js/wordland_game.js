@@ -73,7 +73,20 @@ WLGame = {
     },
 
     playerStyleIndex: function (id) { return parseInt(id.substring(id.length-4), 16) % 8; },
-    playerCss: function (id) { return 'playerOwnedCell_' + WLGame.playerStyleIndex(id); },
+    playerCss: function (id) {
+        if (id == Wordland.player.id) {
+            return 'playerOwnedCell';
+        } else {
+            return 'playerOwnedCell_' + WLGame.playerStyleIndex(id);
+        }
+    },
+    playerLogCss: function (id) {
+        if (id == Wordland.player.id) {
+            return 'playerLog';
+        } else {
+            return 'playerLog_' + WLGame.playerStyleIndex(id);
+        }
+    },
 
     notifyInTray: function (id) {
         const boardCell = WLGame.cells[id];
@@ -91,8 +104,10 @@ WLGame = {
 
     updateTiles: function (player, tiles) {
         var isLocalPlayer = player == Wordland.player.id;
+        var word = '';
         for (var i=0; i<tiles.length; i++) {
             const tile = tiles[i];
+            word += tile.symbol;
             if (WLGame.cellIsClaimable(player, tile.x, tile.y)) {
                 const boardCell = WLGame.cellAt(tile.x, tile.y);
                 var boardCellElement = $('#td_' + boardCell.id);
@@ -102,20 +117,19 @@ WLGame = {
                     }
                 }
                 boardCell.owner = player;
-                if (isLocalPlayer) {
-                    boardCellElement.addClass('playerOwnedCell');
-                } else {
-                    boardCellElement.addClass(WLGame.playerCss(player));
-                }
+                boardCellElement.addClass(WLGame.playerCss(player));
             }
         }
         if (isLocalPlayer) WLTray.clear();
+        return word;
     },
 
     applyStateChange: function (stateUpdate) {
         switch (stateUpdate.stateChange) {
             case 'word_played':
-                WLGame.updateTiles(stateUpdate.object.id, stateUpdate.object.tiles);
+                const player = stateUpdate.object.id;
+                const word = WLGame.updateTiles(player, stateUpdate.object.tiles);
+                WLLog.logWordPlayed(player, word);
                 break;
             default:
                 console.log('applyStateChange: unsupported update type: '+stateUpdate.stateChange);

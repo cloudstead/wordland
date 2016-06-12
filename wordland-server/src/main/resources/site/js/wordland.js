@@ -1,4 +1,5 @@
 const WORDLAND_CLIENT_ID = 'wordland_client_id';
+const EVENTS_PORT = 9099;
 
 Wordland = {
 
@@ -7,7 +8,7 @@ Wordland = {
 
     clientId: function () {
         var id = localStorage.getItem(WORDLAND_CLIENT_ID);
-        if (!id) {
+        if (typeof id == 'undefined' || id == null) {
             id = guid();
             localStorage.setItem(WORDLAND_CLIENT_ID, id);
         }
@@ -19,7 +20,7 @@ Wordland = {
         if (host.indexOf(':') != -1) {
             host = host.substring(0, host.indexOf(':'));
         }
-        return document.location.protocol + "//" + host;
+        return document.location.protocol + "//" + host + ':' + EVENTS_PORT;
     },
 
     apiError: function (message) {
@@ -58,7 +59,7 @@ Wordland = {
 
     join: function (room, player_info) {
         if (Wordland.player != null) {
-            Wordland.globalError('game already in progress');
+            console.log('game already in progress');
 
         } else {
             Api.join_game(room, player_info, function (data) {
@@ -108,8 +109,14 @@ $(function() {
     $('#join_button').on('click', function (e) {
         Wordland.join( $('#room_to_join').find(':selected').text(), {name: $('#player_name').val()} );
     });
-    $('#player_name').on('keyup', function (e) {
+
+    const name = $('#player_name');
+    name.on('keyup', function (e) {
         const playerName = $('#player_name');
+        if (playerName.is(":focus") && $('#lobbyContainer').css('visibility') != 'visible') {
+            playerName.val('');
+            return;
+        }
         switch (e.keyCode) {
             case 13:
                 Wordland.join($('#room_to_join').find(':selected').text(), {name: playerName.val()});
@@ -119,6 +126,9 @@ $(function() {
                 break;
         }
     });
+    name.focus();
+    if (Wordland.player && Wordland.player.name) name.val(Wordland.player.name);
+
     $('#lobbyControlsContainer').centerTop();
 
     Api.list_rooms(function (data) {
@@ -140,7 +150,6 @@ $(function() {
         trackMessageLength: true,
         enableProtocol: true,
         fallbackTransport: 'long-polling'};
-
 
     request.onOpen = function (response) {
         console.log('Atmosphere connected using ' + response.transport);
