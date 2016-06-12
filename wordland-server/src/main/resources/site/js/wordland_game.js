@@ -123,22 +123,34 @@ WLGame = {
         if (x > 0) {
             cell = WLGame.cellAt(x-1, y);
             owner = cell.owner;
-            if (owner && owner != targetCell.owner) cell.element.removeClass(WLGame.playerCellProtectedCss(owner));
+            if (owner && owner != targetCell.owner) {
+                cell.element.removeClass(WLGame.playerCellProtectedCss(owner));
+                cell.element.addClass(WLGame.playerCellCss(owner));
+            }
         }
         if (x < WLGame.width-1) {
             cell = WLGame.cellAt(x+1, y);
             owner = cell.owner;
-            if (owner && owner != targetCell.owner) cell.element.removeClass(WLGame.playerCellProtectedCss(owner));
+            if (owner && owner != targetCell.owner) {
+                cell.element.removeClass(WLGame.playerCellProtectedCss(owner));
+                cell.element.addClass(WLGame.playerCellCss(owner));
+            }
         }
         if (y > 0) {
             cell = WLGame.cellAt(x, y-1);
             owner = cell.owner;
-            if (owner && owner != targetCell.owner) cell.element.removeClass(WLGame.playerCellProtectedCss(owner));
+            if (owner && owner != targetCell.owner) {
+                cell.element.removeClass(WLGame.playerCellProtectedCss(owner));
+                cell.element.addClass(WLGame.playerCellCss(owner));
+            }
         }
         if (y < WLGame.length-1) {
             cell = WLGame.cellAt(x, y+1);
             owner = cell.owner;
-            if (owner && owner != targetCell.owner) cell.element.removeClass(WLGame.playerCellProtectedCss(owner));
+            if (owner && owner != targetCell.owner) {
+                cell.element.removeClass(WLGame.playerCellProtectedCss(owner));
+                cell.element.addClass(WLGame.playerCellCss(owner));
+            }
         }
         return false;
     },
@@ -153,34 +165,46 @@ WLGame = {
 
     updateTiles: function (player, tiles) {
         var isLocalPlayer = player == Wordland.player.id;
+        if (isLocalPlayer) WLTray.clear();
+
         var word = '';
         var i, tile, protector, boardCell;
+
+        // check for tiles that are protected by other players, we cannot claim them
+        // also accumulate the word
         for (i=0; i<tiles.length; i++) {
             tile = tiles[i];
             word += tile.symbol;
             protector = WLGame.cellProtector(tile.x, tile.y);
-            if (protector == null) {
-                boardCell = WLGame.cellAt(tile.x, tile.y);
-                if (boardCell.owner) {
-                    if (boardCell.owner != player) {
-                        boardCell.element.removeClass(WLGame.playerCellCss(boardCell.owner));
-                    }
-                }
-                boardCell.owner = player;
-                boardCell.element.addClass(WLGame.playerCellCss(player));
-                WLGame.unprotectCellsAround(tile.x, tile.y)
+            if (protector != null && protector != player) {
+                tiles[i].protected = true;
             }
         }
+        // claim tiles that we can
         for (i=0; i<tiles.length; i++) {
-            // check for cells that are now protected by the current owner
             tile = tiles[i];
+            if (tile.protected) continue; // protected by another player
+            boardCell = WLGame.cellAt(tile.x, tile.y);
+            if (boardCell.owner) {
+                if (boardCell.owner != player) {
+                    boardCell.element.removeClass(WLGame.playerCellCss(boardCell.owner));
+                }
+            }
+            boardCell.owner = player;
+            boardCell.element.addClass(WLGame.playerCellCss(player));
+            WLGame.unprotectCellsAround(tile.x, tile.y)
+        }
+
+        // check for cells that are now protected by the current owner
+        for (i=0; i<tiles.length; i++) {
+            tile = tiles[i];
+            if (tile.protected) continue; // protected by another player
             WLGame.checkCellProtection(player, tile.x, tile.y);
             if (tile.x > 0) WLGame.checkCellProtection(player, tile.x-1, tile.y);
             if (tile.x < WLGame.width-1) WLGame.checkCellProtection(player, tile.x+1, tile.y);
             if (tile.y > 0) WLGame.checkCellProtection(player, tile.x, tile.y-1);
             if (tile.y < WLGame.length-1) WLGame.checkCellProtection(player, tile.x, tile.y+1);
         }
-        if (isLocalPlayer) WLTray.clear();
         return word;
     },
 
