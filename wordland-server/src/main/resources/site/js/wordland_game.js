@@ -13,24 +13,34 @@ WLGame = {
             WLGame.cells = {};
             WLGame.width = data.width;
             WLGame.length = data.length;
+            var x, y, tile;
 
             var tbody = $('#game_tbody');
-            for (var x=0; x<data.width; x++) {
+            for (x=0; x<data.width; x++) {
                 var row = $('<tr id="g_row_'+x+'"></tr>');
                 tbody.append(row);
-                for (var y=0; y<data.length; y++) {
-                    var tile = data.tiles[x][y];
+                for (y=0; y<data.length; y++) {
+                    tile = data.tiles[x][y];
                     tile.x = x;
                     tile.y = y;
                     tile.id = 'cell_'+guid();
 
                     var cell = $('<td class="gameCell" id="td_'+tile.id+'">'+tile.symbol+'</td>');
                     cell.on('click', WLGame.addToTrayFunc(tile.id));
+                    tile.element = cell;
                     WLGame.cells[tile.id] = tile;
                     WLGame.cellsByCoordinates[WLGame.coords(x, y)] = tile;
-                    if (tile.owner) cell.addClass(WLGame.playerCss(tile.owner));
+                    if (tile.owner) cell.addClass(WLGame.playerCellCss(tile.owner));
 
                     row.append(cell);
+                }
+            }
+            for (x=0; x<data.width; x++) {
+                for (y=0; y<data.length; y++) {
+                    tile = data.tiles[x][y];
+                    if (tile.owner && WLGame.cellProtector(x, y) == tile.owner) {
+                        tile.element.addClass(WLGame.playerCellProtectedCss(tile.owner));
+                    }
                 }
             }
             Wordland.showGameRoom();
@@ -46,38 +56,43 @@ WLGame = {
         return function () { WLTray.add(id); }
     },
 
-    cellIsClaimable: function (player, x, y) {
+    cellProtector: function (x, y) {
         const targetCell = WLGame.cellAt(x, y);
-        if (!targetCell.owner) return true;
-        if (targetCell.owner == player) return true;
+        if (!targetCell.owner) return null;
 
-        // check cell above
         var owner;
         if (x > 0) {
             owner = WLGame.cellAt(x-1, y).owner;
-            if (!owner || owner != targetCell.owner) return true;
+            if (!owner || owner != targetCell.owner) return null;
         }
         if (x < WLGame.width-1) {
             owner = WLGame.cellAt(x+1, y).owner;
-            if (!owner || owner != targetCell.owner) return true;
+            if (!owner || owner != targetCell.owner) return null;
         }
         if (y > 0) {
             owner = WLGame.cellAt(x, y-1).owner;
-            if (!owner || owner != targetCell.owner) return true;
+            if (!owner || owner != targetCell.owner) return null;
         }
         if (y < WLGame.length-1) {
             owner = WLGame.cellAt(x, y+1).owner;
-            if (!owner || owner != targetCell.owner) return true;
+            if (!owner || owner != targetCell.owner) return null;
         }
-        return false;
+        return targetCell.owner;
     },
 
     playerStyleIndex: function (id) { return parseInt(id.substring(id.length-4), 16) % 8; },
-    playerCss: function (id) {
+    playerCellCss: function (id) {
         if (id == Wordland.player.id) {
-            return 'playerOwnedCell';
+            return 'playerCell';
         } else {
-            return 'playerOwnedCell_' + WLGame.playerStyleIndex(id);
+            return 'playerCell_' + WLGame.playerStyleIndex(id);
+        }
+    },
+    playerCellProtectedCss: function (id) {
+        if (id == Wordland.player.id) {
+            return 'playerProtectedCell';
+        } else {
+            return 'playerProtectedCell_' + WLGame.playerStyleIndex(id);
         }
     },
     playerLogCss: function (id) {
@@ -91,34 +106,79 @@ WLGame = {
     notifyInTray: function (id) {
         const boardCell = WLGame.cells[id];
         if (boardCell.owner && boardCell.owner != Wordland.player.id) {
-            $('#td_' + boardCell.id).removeClass(WLGame.playerCss(boardCell.owner));
+            boardCell.element.removeClass(WLGame.playerCellCss(boardCell.owner));
         }
     },
 
     notifyOutOfTray: function (id) {
         const boardCell = WLGame.cells[id];
         if (boardCell.owner && boardCell.owner != Wordland.player.id) {
-            $('#td_' + boardCell.id).addClass(WLGame.playerCss(boardCell.owner));
+            boardCell.element.addClass(WLGame.playerCellCss(boardCell.owner));
+        }
+    },
+
+    unprotectCellsAround: function (x, y) {
+        const targetCell = WLGame.cellAt(x, y);
+        var owner, cell;
+        if (x > 0) {
+            cell = WLGame.cellAt(x-1, y);
+            owner = cell.owner;
+            if (owner && owner != targetCell.owner) cell.element.removeClass(WLGame.playerCellProtectedCss(owner));
+        }
+        if (x < WLGame.width-1) {
+            cell = WLGame.cellAt(x+1, y);
+            owner = cell.owner;
+            if (owner && owner != targetCell.owner) cell.element.removeClass(WLGame.playerCellProtectedCss(owner));
+        }
+        if (y > 0) {
+            cell = WLGame.cellAt(x, y-1);
+            owner = cell.owner;
+            if (owner && owner != targetCell.owner) cell.element.removeClass(WLGame.playerCellProtectedCss(owner));
+        }
+        if (y < WLGame.length-1) {
+            cell = WLGame.cellAt(x, y+1);
+            owner = cell.owner;
+            if (owner && owner != targetCell.owner) cell.element.removeClass(WLGame.playerCellProtectedCss(owner));
+        }
+        return false;
+    },
+
+    checkCellProtection: function (player, x, y) {
+        var protector = WLGame.cellProtector(x, y);
+        var boardCell = WLGame.cellAt(x, y);
+        if (protector == player) {
+            boardCell.element.addClass(WLGame.playerCellProtectedCss(player));
         }
     },
 
     updateTiles: function (player, tiles) {
         var isLocalPlayer = player == Wordland.player.id;
         var word = '';
-        for (var i=0; i<tiles.length; i++) {
-            const tile = tiles[i];
+        var i, tile, protector, boardCell;
+        for (i=0; i<tiles.length; i++) {
+            tile = tiles[i];
             word += tile.symbol;
-            if (WLGame.cellIsClaimable(player, tile.x, tile.y)) {
-                const boardCell = WLGame.cellAt(tile.x, tile.y);
-                var boardCellElement = $('#td_' + boardCell.id);
+            protector = WLGame.cellProtector(tile.x, tile.y);
+            if (protector == null) {
+                boardCell = WLGame.cellAt(tile.x, tile.y);
                 if (boardCell.owner) {
                     if (boardCell.owner != player) {
-                        boardCellElement.removeClass(WLGame.playerCss(boardCell.owner));
+                        boardCell.element.removeClass(WLGame.playerCellCss(boardCell.owner));
                     }
                 }
                 boardCell.owner = player;
-                boardCellElement.addClass(WLGame.playerCss(player));
+                boardCell.element.addClass(WLGame.playerCellCss(player));
+                WLGame.unprotectCellsAround(tile.x, tile.y)
             }
+        }
+        for (i=0; i<tiles.length; i++) {
+            // check for cells that are now protected by the current owner
+            tile = tiles[i];
+            WLGame.checkCellProtection(player, tile.x, tile.y);
+            if (tile.x > 0) WLGame.checkCellProtection(player, tile.x-1, tile.y);
+            if (tile.x < WLGame.width-1) WLGame.checkCellProtection(player, tile.x+1, tile.y);
+            if (tile.y > 0) WLGame.checkCellProtection(player, tile.x, tile.y-1);
+            if (tile.y < WLGame.length-1) WLGame.checkCellProtection(player, tile.x, tile.y+1);
         }
         if (isLocalPlayer) WLTray.clear();
         return word;

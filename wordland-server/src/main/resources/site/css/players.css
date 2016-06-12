@@ -1,8 +1,10 @@
-.playerOwnedCell {
-    border: 2px solid darkblue;
+.playerCell {
     background-color: cornflowerblue;
     width: 18px;
     height: 14px;
+}
+.playerProtectedCell {
+    border: 2px solid darkblue;
 }
 .playerLog {
     border: 2px solid darkblue;
@@ -11,11 +13,13 @@
     padding-left: 5px;
     padding-right: 5px;
 }
-.playerOwnedCell_0 {
-    border: 2px solid red;
+.playerCell_0 {
     background-color: lightcoral;
     width: 18px;
     height: 14px;
+}
+.playerProtectedCell_0 {
+    border: 2px solid red;
 }
 .playerLog_0 {
     border: 2px solid red;
@@ -24,11 +28,13 @@
     padding-left: 5px;
     padding-right: 5px;
 }
-.playerOwnedCell_1 {
-    border: 2px solid orangered;
+.playerCell_1 {
     background-color: lightsalmon;
     width: 18px;
     height: 14px;
+}
+.playerProtectedCell_1 {
+    border: 2px solid orangered;
 }
 .playerLog_1 {
     border: 2px solid orangered;
@@ -37,11 +43,13 @@
     padding-left: 5px;
     padding-right: 5px;
 }
-.playerOwnedCell_2 {
-    border: 2px solid green;
+.playerCell_2 {
     background-color: lightgreen;
     width: 18px;
     height: 14px;
+}
+.playerProtectedCell_2 {
+    border: 2px solid green;
 }
 .playerLog_2 {
     border: 2px solid green;
@@ -50,11 +58,13 @@
     padding-left: 5px;
     padding-right: 5px;
 }
-.playerOwnedCell_3 {
-    border: 2px solid purple;
+.playerCell_3 {
     background-color: lavender;
     width: 18px;
     height: 14px;
+}
+.playerProtectedCell_3 {
+    border: 2px solid purple;
 }
 .playerLog_3 {
     border: 2px solid purple;
@@ -63,11 +73,13 @@
     padding-left: 5px;
     padding-right: 5px;
 }
-.playerOwnedCell_4 {
-    border: 2px solid chocolate;
+.playerCell_4 {
     background-color: khaki;
     width: 18px;
     height: 14px;
+}
+.playerProtectedCell_4 {
+    border: 2px solid chocolate;
 }
 .playerLog_4 {
     border: 2px solid chocolate;
@@ -76,24 +88,28 @@
     padding-left: 5px;
     padding-right: 5px;
 }
-.playerOwnedCell_5 {
-    border: 2px solid yellow;
-    background-color: lightyellow;
+.playerCell_5 {
+    background-color: gold;
     width: 18px;
     height: 14px;
 }
+.playerProtectedCell_5 {
+    border: 2px solid darkgoldenrod;
+}
 .playerLog_5 {
     border: 2px solid yellow;
-    background-color: lightyellow;
+    background-color: gold;
     margin: 3px;
     padding-left: 5px;
     padding-right: 5px;
 }
-.playerOwnedCell_6 {
-    border: 2px solid deeppink;
+.playerCell_6 {
     background-color: lightpink;
     width: 18px;
     height: 14px;
+}
+.playerProtectedCell_6 {
+    border: 2px solid deeppink;
 }
 .playerLog_6 {
     border: 2px solid deeppink;
@@ -102,16 +118,18 @@
     padding-left: 5px;
     padding-right: 5px;
 }
-.playerOwnedCell_7 {
-    border: 2px solid darkgreen;
+.playerCell_7 {
     background-color: forestgreen;
     width: 18px;
     height: 14px;
+}
+.playerProtectedCell_7 {
+    border: 2px solid darkgreen;
 }
 .playerLog_7 {
     border: 2px solid darkgreen;
     background-color: forestgreen;
     margin: 3px;
     padding-left: 5px;
-    padding-right: 5px;
+    padding-right: 3px;
 }

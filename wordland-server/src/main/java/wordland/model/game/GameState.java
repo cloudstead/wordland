@@ -48,7 +48,7 @@ public class GameState {
 
     public void setTileSymbol(int x, int y, String symbol) { tiles[x][y].setSymbol(symbol); }
 
-    public GamePlayer getPlayer(String account) { return players.get(account); }
+    public GamePlayer getPlayer(String id) { return players.get(id); }
 
     public GameStateChange addPlayer(GamePlayer player) {
         // todo check maxPlayers. if maxPlayers reached, see if any can be evicted? maybe not, let GameDaemon handle that...

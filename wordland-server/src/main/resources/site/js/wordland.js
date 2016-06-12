@@ -62,6 +62,7 @@ Wordland = {
             console.log('game already in progress');
 
         } else {
+            player_info.clientId = Wordland.clientId();
             Api.join_game(room, player_info, function (data) {
                 Wordland.room = room;
                 Wordland.player = data;
@@ -171,7 +172,7 @@ $(function() {
     request.onMessage = function (response) {
         console.log('onMessage: '+response.responseBody);
         var obj = JSON.parse(response.responseBody);
-        try {
+        //try {
             if (obj.stateChange) {
                 WLGame.applyStateChange(obj);
             } else if (obj.notification) {
@@ -185,9 +186,9 @@ $(function() {
             } else {
                 console.log('unsupported message object: '+obj);
             }
-        } catch (e) {
-            console.log('This doesn\'t look like valid JSON: ', message.data);
-        }
+        //} catch (e) {
+        //    console.log('This doesn\'t look like valid JSON: ', response.responseBody);
+        //}
     };
 
     request.onClose = function (response) {
