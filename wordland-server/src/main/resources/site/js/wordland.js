@@ -10,7 +10,7 @@ Wordland = {
         if (host.indexOf(':') != -1) {
             host = host.substring(0, host.indexOf(':'));
         }
-        return document.location.protocol + "//" + host + ":9099";
+        return document.location.protocol + "//" + host;
     },
 
     apiError: function (message) {

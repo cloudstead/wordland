@@ -44,6 +44,8 @@ http:
   port: {{WORDLAND_SERVER_PORT}}
   baseUri: /api
 
+atmospherePort: {{WORDLAND_EVENTS_PORT}}
+
 jersey:
   resourcePackages:
    - wordland.resources
