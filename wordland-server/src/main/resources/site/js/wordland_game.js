@@ -90,6 +90,7 @@ WLGame = {
     },
 
     updateTiles: function (player, tiles) {
+        var isLocalPlayer = player == Wordland.player.id;
         for (var i=0; i<tiles.length; i++) {
             const tile = tiles[i];
             if (WLGame.cellIsClaimable(player, tile.x, tile.y)) {
@@ -101,20 +102,20 @@ WLGame = {
                     }
                 }
                 boardCell.owner = player;
-                if (player == Wordland.player.id) {
+                if (isLocalPlayer) {
                     boardCellElement.addClass('playerOwnedCell');
                 } else {
                     boardCellElement.addClass(WLGame.playerCss(player));
                 }
             }
         }
+        if (isLocalPlayer) WLTray.clear();
     },
 
     applyStateChange: function (stateUpdate) {
         switch (stateUpdate.stateChange) {
             case 'word_played':
                 WLGame.updateTiles(stateUpdate.object.id, stateUpdate.object.tiles);
-                WLTray.clear();
                 break;
             default:
                 console.log('applyStateChange: unsupported update type: '+stateUpdate.stateChange);

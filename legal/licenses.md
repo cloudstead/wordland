@@ -235,3 +235,11 @@ The following third-party software is used by histori.city, in accordance with t
 # interact.js
   * Site: [http://interactjs.io/](http://interactjs.io/)
   * License: [https://raw.githubusercontent.com/taye/interact.js/master/LICENSE](https://raw.githubusercontent.com/taye/interact.js/master/LICENSE)
+
+# atmosphere
+  * Site: [https://github.com/Atmosphere/atmosphere](https://github.com/Atmosphere/atmosphere)
+  * License: [https://raw.githubusercontent.com/Atmosphere/atmosphere/master/license/README](https://raw.githubusercontent.com/Atmosphere/atmosphere/master/license/README)
+
+# atmosphere-javascript
+  * Site: [https://github.com/Atmosphere/atmosphere-javascript](https://github.com/Atmosphere/atmosphere-javascript)
+  * License: [https://raw.githubusercontent.com/Atmosphere/atmosphere-javascript/master/LICENSE](https://raw.githubusercontent.com/Atmosphere/atmosphere-javascript/master/LICENSE)

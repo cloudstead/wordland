@@ -1,11 +1,17 @@
-const EVENTS_API = 'http://127.0.0.1:9099';
-const API_KEY_HEADER = 'x-wordland-events-api-key';
 
 Wordland = {
 
     room: null,
     player: null,
     clientId: guid(),
+
+    eventsApi: function () {
+        var host = document.location.host;
+        if (host.indexOf(':') != -1) {
+            host = host.substring(0, host.indexOf(':'));
+        }
+        return document.location.protocol + "//" + host + ":9099";
+    },
 
     apiError: function (message) {
         return function (jqXHR, status, error) {
@@ -98,7 +104,7 @@ $(function() {
     var transport = 'websocket';
 
     // We are now ready to cut the request
-    var request = { url: EVENTS_API+'/events/'+Wordland.clientId,
+    var request = { url: Wordland.eventsApi()+'/events/'+Wordland.clientId,
         contentType: "application/json",
         logLevel: 'debug',
         transport: transport,

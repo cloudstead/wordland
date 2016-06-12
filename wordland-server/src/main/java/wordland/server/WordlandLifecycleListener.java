@@ -47,7 +47,7 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
         // start nettosphere event server
         final Nettosphere nettosphere = new Nettosphere.Builder().config(
                 new Config.Builder()
-                        .host("127.0.0.1")
+                        .host("0.0.0.0")
                         .port(configuration.getAtmospherePort())
                         .resource(AtmosphereEventsService.class)
                         .build())

@@ -4,6 +4,7 @@ html, body {
     margin: 0;
     padding: 0;
     overflow: hidden;
+    color: #222222;
 }
 
 .h5title {
@@ -11,8 +12,14 @@ html, body {
     font-size: small;
     font-weight: bold;
     text-align: center;
-    margin-top: 5px;
+    position: relative;
+    top: -20px;
 }
+.h5title a {
+    color: #222222;
+    text-decoration: none;
+}
+
 
 #wordland_global_error {
     position: absolute;
@@ -33,6 +40,11 @@ html, body {
     pointer-events: visible;
     border: 2px solid black;
     padding: 5px;
+}
+
+#gameRoomContainer {
+    position: relative;
+    top: -80px;
 }
 
 .quitButton {
