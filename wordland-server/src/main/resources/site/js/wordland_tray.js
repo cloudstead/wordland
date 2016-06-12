@@ -264,17 +264,24 @@ $(function () {
     $(document).unbind('keydown').bind('keydown', function (event) {
         switch (event.keyCode) {
             case 27:         // escape
-                WLTray.clear();
-                event.preventDefault();
+                if (WLTray.items.length > 0) {
+                    WLTray.clear();
+                    event.preventDefault();
+                }
                 break;
+
             case 13:         // enter
-                WLTray.submit();
-                event.preventDefault();
+                if (WLTray.items.length > 0) {
+                    WLTray.submit();
+                    event.preventDefault();
+                }
                 break;
 
             case 8: case 46: // backspace or delete
-                if (WLTray.items.length > 0) WLTray.remove(WLTray.items[WLTray.items.length-1].id);
-                event.preventDefault();
+                if (WLTray.items.length > 0) {
+                    WLTray.remove(WLTray.items[WLTray.items.length-1].id);
+                    event.preventDefault();
+                }
                 break;
 
             default:

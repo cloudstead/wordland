@@ -44,6 +44,7 @@ html, body {
 }
 
 .dialogContainer {
+    text-align: center;
     visibility: hidden;
     font-family: Tahoma,sans-serif;
     z-index: -1;
@@ -52,11 +53,6 @@ html, body {
     pointer-events: visible;
     border: 2px solid black;
     padding: 5px;
-}
-
-#gameRoomContainer {
-    position: relative;
-    top: -80px;
 }
 
 .quitButton {

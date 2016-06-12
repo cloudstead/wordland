@@ -91,6 +91,20 @@ $(function() {
     "use strict";
 
     $('.lobbyControl').attr('disabled', 'disabled');
+    $('#joinButton').on('click', function (e) {
+        Wordland.join( $('#room_to_join').find(':selected').text(), {name: $('#player_name').val()} );
+    });
+    $('#player_name').on('keyup', function (e) {
+        const playerName = $('#player_name');
+        switch (e.keyCode) {
+            case 13:
+                Wordland.join($('#room_to_join').find(':selected').text(), {name: playerName.val()});
+                break;
+            case 27:
+                playerName.val('');
+                break;
+        }
+    });
 
     Api.list_rooms(function (data) {
         if (is_array(data)) {

@@ -15,7 +15,7 @@
 <div id="lobbyContainer" class="dialogContainer">
   name: <input type="text" id="player_name" name="player_name" class="lobbyControl"/>
   <select id="room_to_join" name="room_to_join" class="lobbyControl"></select>
-  <button class="lobbyControl" onclick="Wordland.join( $('#room_to_join').find(':selected').text(), {name: $('#player_name').val()} );">join</button>
+  <button id="join_button" class="lobbyControl">join</button>
 </div>
 
 <div id="gameRoomContainer" class="dialogContainer">
@@ -28,7 +28,7 @@
     <button onclick="Wordland.quit();">quit</button>
   </div>
   <div id="game_board">
-      <table align="center" border="1">
+      <table align="center" border="0">
           <tbody>
           <tr><td height="50">
 
