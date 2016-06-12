@@ -262,6 +262,7 @@ $(function () {
         });
 
     $(document).unbind('keydown').bind('keydown', function (event) {
+        if ($('#gameRoomContainer').css('visibility') != 'visible') return;
         switch (event.keyCode) {
             case 27:         // escape
                 if (WLTray.items.length > 0) {
@@ -280,8 +281,8 @@ $(function () {
             case 8: case 46: // backspace or delete
                 if (WLTray.items.length > 0) {
                     WLTray.remove(WLTray.items[WLTray.items.length-1].id);
-                    event.preventDefault();
                 }
+                event.preventDefault();
                 break;
 
             default:

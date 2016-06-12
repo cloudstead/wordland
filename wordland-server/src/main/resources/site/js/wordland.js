@@ -1,9 +1,18 @@
+const WORDLAND_CLIENT_ID = 'wordland_client_id';
 
 Wordland = {
 
     room: null,
     player: null,
-    clientId: guid(),
+
+    clientId: function () {
+        var id = localStorage.getItem(WORDLAND_CLIENT_ID);
+        if (!id) {
+            id = guid();
+            localStorage.setItem(WORDLAND_CLIENT_ID, id);
+        }
+        return id;
+    },
 
     eventsApi: function () {
         var host = document.location.host;
@@ -67,7 +76,7 @@ Wordland = {
             Wordland.globalError('no game in progress');
 
         } else {
-            Api.quit_game(Wordland.room, Wordland.player.id, Wordland.player.apiKey, Wordland.clientId, function (data) {
+            Api.quit_game(Wordland.room, Wordland.player.id, Wordland.player.apiKey, Wordland.clientId(), function (data) {
                 Wordland.room = null;
                 Wordland.player = null;
                 Wordland.showLobby();
@@ -81,7 +90,7 @@ Wordland = {
     toMessage: function (message) {
         message.id = Wordland.player.id;
         message.apiKey = Wordland.player.apiKey;
-        message.clientId = Wordland.clientId;
+        message.clientId = Wordland.clientId();
         message.room = Wordland.room;
         return JSON.stringify(message);
     },
@@ -124,7 +133,7 @@ $(function() {
     var transport = 'websocket';
 
     // We are now ready to cut the request
-    var request = { url: Wordland.eventsApi()+'/events/'+Wordland.clientId,
+    var request = { url: Wordland.eventsApi()+'/events/'+Wordland.clientId(),
         contentType: "application/json",
         logLevel: 'debug',
         transport: transport,
@@ -144,7 +153,7 @@ $(function() {
     request.onTransportFailure = function (errorMsg, request) {
         atmosphere.util.info(errorMsg);
         if (window.EventSource) {
-            request.fallbackTransport = "sse";
+            request.fallbackTransport = 'long-polling';
         }
         $('.lobbyControl').attr('disabled', 'disabled');
         console.log('Default transport is WebSocket, fallback is ' + request.fallbackTransport);
