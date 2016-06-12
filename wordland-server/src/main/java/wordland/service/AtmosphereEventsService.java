@@ -5,7 +5,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.atmosphere.config.service.Get;
 import org.atmosphere.config.service.ManagedService;
-import org.atmosphere.config.service.Message;
 import org.atmosphere.config.service.Post;
 import org.atmosphere.cpr.*;
 import org.atmosphere.interceptor.CorsInterceptor;
@@ -85,43 +84,37 @@ public class AtmosphereEventsService {
     @Post
     public void onMessage(final AtmosphereResource r) throws IOException {
         final String message = r.getRequest().body().asString();
-        log.info("onMessage(POST): "+message);
-        onMessage(message);
-    }
-
-    @Message
-    public String onMessage(String message) throws IOException {
         log.info("onMessage: "+message);
         final GameRuntimeEvent request;
         try {
             request = json(message, GameRuntimeEvent.class);
         } catch (Exception e) {
             log.warn("unparseable message: "+message+": "+e);
-            return null;
+            return;
         }
         if (!request.hasClientId()) {
             log.warn("onMessage: no clientId, ignoring");
-            return null;
+            return;
         }
         final AtmosphereResourceEntry entry = clients.get(request.getClientId());
         if (entry == null) {
             log.warn("onMessage: client not found, ignoring");
-            return null;
+            return;
         }
 
         final GamePlayer player = getGamesMaster().findPlayer(request.getRoom(), request.getId());
         if (player == null) {
             log.warn("onMessage: no player");
-            return null;
+            return;
         }
         if (!player.getApiKey().equals(request.getApiKey())) {
             log.warn("onMessage: invalid apiKey");
-            return null;
+            return;
         }
 
         if (!request.hasStateChange()) {
             log.warn("onMessage: no state change requested, ignoring");
-            return null;
+            return;
         }
 
         switch (request.getStateChange()) {
@@ -132,21 +125,20 @@ public class AtmosphereEventsService {
             case word_played:
                 if (!request.hasTiles() || !request.hasWord()) {
                     log.warn("onMessage: no tiles sent for play");
-                    return null;
+                    return;
                 }
                 if (!isValidWord(request.getWord())) {
                     final GameNotification notification = GameNotification.invalidWord(request.getWord());
                     send(entry, notification);
-                    return null; //json(notification);
+                    return; //json(notification);
                 }
                 final GameStateChange stateChange = getGamesMaster().playWord(request.getRoom(), player, request.getWord(), request.getTiles());
-                return stateChange != null ? json(stateChange) : null;
+                if (stateChange != null) getBroadcaster().broadcast(stateChange);
 
             default:
                 log.warn("onMessage: invalid state change type: "+request.getStateChange());
-                return null;
+                return;
         }
-        return null;
     }
 
     private void send(AtmosphereResourceEntry entry, Object thing) throws IOException {

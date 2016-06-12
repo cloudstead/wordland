@@ -2,6 +2,7 @@ package wordland.model.game;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import wordland.model.support.PlayedTile;
 
 import java.util.HashMap;
@@ -11,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 
-@NoArgsConstructor
+@NoArgsConstructor @Slf4j
 public class GameState {
 
     @Getter private AtomicInteger version = new AtomicInteger(0);
@@ -76,10 +77,41 @@ public class GameState {
 
         if (!b.toString().equalsIgnoreCase(word)) die("playWord: word does not match tiles");
 
+        for (int i=0; i<tiles.length; i++) {
+            final PlayedTile tile = tiles[i];
+            final GameTileState boardTile = this.tiles[tile.getX()][tile.getY()];
+            if (!isClaimable(boardTile, tile.getX(), tile.getY())) {
+                log.info("not assigning protected tile: "+tile);
+                boardTiles[i] = null;
+            }
+        }
         for (int i=0; i<boardTiles.length; i++) {
-            boardTiles[i].setOwner(player.getId());
+            if (boardTiles[i] != null) boardTiles[i].setOwner(player.getId());
         }
 
         return GameStateChange.wordPlayed(version.incrementAndGet(), player, tiles);
+    }
+
+    private boolean isClaimable(GameTileState boardTile, int x, int y) {
+        if (!boardTile.hasOwner()) return true;
+        final String currentOwner = boardTile.getOwner();
+        GameTileState adjacent;
+        if (x > 0) {
+            adjacent = this.tiles[x-1][y];
+            if (!adjacent.hasOwner() || !adjacent.getOwner().equals(currentOwner)) return true;
+        }
+        if (x < length-1) {
+            adjacent = this.tiles[x+1][y];
+            if (!adjacent.hasOwner() || !adjacent.getOwner().equals(currentOwner)) return true;
+        }
+        if (y > 0) {
+            adjacent = this.tiles[x][y-1];
+            if (!adjacent.hasOwner() || !adjacent.getOwner().equals(currentOwner)) return true;
+        }
+        if (y < width-1) {
+            adjacent = this.tiles[x][y+1];
+            if (!adjacent.hasOwner() || !adjacent.getOwner().equals(currentOwner)) return true;
+        }
+        return false;
     }
 }
