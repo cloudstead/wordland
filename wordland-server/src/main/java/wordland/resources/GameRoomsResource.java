@@ -74,4 +74,12 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         return state == null ? notFound(room) : ok(state);
     }
 
+    @GET
+    @Path("/{name}"+EP_SETTINGS)
+    public Response settings (@Context HttpContext ctx,
+                              @PathParam("name") String roomName) {
+        final GameRoom room = gamesMaster.findRoom(roomName);
+        return room == null ? notFound(roomName) : ok(room.getSettings());
+    }
+
 }

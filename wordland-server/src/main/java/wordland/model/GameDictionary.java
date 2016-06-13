@@ -28,7 +28,7 @@ public class GameDictionary extends NamedIdentityBase {
     public static final String CLASSPATH_PREFIX = "classpath:";
 
     @Column(length=1024)
-    @Getter @Setter private String location;
+    @JsonIgnore @Getter @Setter private String location;
 
     // ensure that we never load the words into memory multiple times
     private static Map<String, Set<String>> wordCache = new HashMap<>();

@@ -32,5 +32,6 @@ public class ApiConstants {
     public static final String EP_JOIN = "/join";
     public static final String EP_QUIT = "/quit";
     public static final String EP_STATE = "/state";
+    public static final String EP_SETTINGS = "/settings";
 
 }

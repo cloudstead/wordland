@@ -8,44 +8,48 @@ WLGame = {
 
     start: function () {
         WLStatus.reset();
-        Api.get_game_state(Wordland.room, function (data) {
+        Api.get_room_settings(Wordland.room, function(data) {
+            WLGame.roomSettings = data;
 
-            WLGame.cells = {};
-            WLGame.width = data.width;
-            WLGame.length = data.length;
-            var x, y, tile;
+            Api.get_game_state(Wordland.room, function (data) {
 
-            var tbody = $('#game_tbody');
-            for (x=0; x<data.width; x++) {
-                var row = $('<tr id="g_row_'+x+'"></tr>');
-                tbody.append(row);
-                for (y=0; y<data.length; y++) {
-                    tile = data.tiles[x][y];
-                    tile.x = x;
-                    tile.y = y;
-                    tile.id = 'cell_'+guid();
+                WLGame.cells = {};
+                WLGame.width = data.width;
+                WLGame.length = data.length;
+                var x, y, tile;
 
-                    var cell = $('<td class="gameCell" id="td_'+tile.id+'">'+tile.symbol+'</td>');
-                    cell.on('click', WLGame.addToTrayFunc(tile.id));
-                    tile.element = cell;
-                    WLGame.cells[tile.id] = tile;
-                    WLGame.cellsByCoordinates[WLGame.coords(x, y)] = tile;
-                    if (tile.owner) cell.addClass(WLGame.playerCellCss(tile.owner));
+                var tbody = $('#game_tbody');
+                for (x = 0; x < data.width; x++) {
+                    var row = $('<tr id="g_row_' + x + '"></tr>');
+                    tbody.append(row);
+                    for (y = 0; y < data.length; y++) {
+                        tile = data.tiles[x][y];
+                        tile.x = x;
+                        tile.y = y;
+                        tile.id = 'cell_' + guid();
 
-                    row.append(cell);
-                }
-            }
-            for (x=0; x<data.width; x++) {
-                for (y=0; y<data.length; y++) {
-                    tile = data.tiles[x][y];
-                    if (tile.owner && WLGame.cellProtector(x, y) == tile.owner) {
-                        tile.element.addClass(WLGame.playerCellProtectedCss(tile.owner));
+                        var cell = $('<td class="gameCell" id="td_' + tile.id + '">' + tile.symbol + '</td>');
+                        cell.on('click', WLGame.addToTrayFunc(tile.id));
+                        tile.element = cell;
+                        WLGame.cells[tile.id] = tile;
+                        WLGame.cellsByCoordinates[WLGame.coords(x, y)] = tile;
+                        if (tile.owner) cell.addClass(WLGame.playerCellCss(tile.owner));
+
+                        row.append(cell);
                     }
                 }
-            }
-            Wordland.showGameRoom();
+                for (x = 0; x < data.width; x++) {
+                    for (y = 0; y < data.length; y++) {
+                        tile = data.tiles[x][y];
+                        if (tile.owner && WLGame.cellProtector(x, y) == tile.owner) {
+                            tile.element.addClass(WLGame.playerCellProtectedCss(tile.owner));
+                        }
+                    }
+                }
+                Wordland.showGameRoom();
 
-        }, Wordland.apiError("error getting game state"));
+            }, Wordland.apiError("error getting game state"));
+        }, Wordland.apiError("error getting room settings"));
     },
 
     coords: function (x, y) { return '' + x + ',' + y; },

@@ -66,7 +66,7 @@ Wordland = {
             Api.join_game(room, player_info, function (data) {
                 Wordland.room = room;
                 Wordland.player = data;
-                Wordland.send({type: 'player_joined', id: Wordland.player.id, apiKey: Wordland.player.apiKey, room: Wordland.room});
+                Wordland.send({stateChange: 'player_joined', id: Wordland.player.id, apiKey: Wordland.player.apiKey, room: Wordland.room});
                 WLGame.start();
 
             }, Wordland.apiError("error joining game"));

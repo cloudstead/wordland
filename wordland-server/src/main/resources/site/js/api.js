@@ -141,6 +141,10 @@ Api = {
         Api._post('rooms/' + room_name + '/quit', {id: id, apiKey: apiKey, stateChange: 'player_left', room: room_name, clientId: clientId}, success, fail);
     },
 
+    get_room_settings: function (room_name, success, fail) {
+        Api._get('rooms/' + room_name + '/settings', success, fail);
+    },
+
     get_game_state: function (room_name, success, fail) {
         Api._get('rooms/' + room_name + '/state', success, fail);
     }

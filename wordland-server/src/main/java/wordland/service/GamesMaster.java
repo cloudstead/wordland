@@ -92,4 +92,9 @@ public class GamesMaster {
         final GameDaemon daemon = getGameDaemon(roomName, false);
         return daemon != null && daemon.isValidWord(word);
     }
+
+    public GameRoom findRoom (String roomName) {
+        final GameDaemon daemon = getGameDaemon(roomName, false);
+        return daemon != null ? daemon.getRoom() : null;
+    }
 }
