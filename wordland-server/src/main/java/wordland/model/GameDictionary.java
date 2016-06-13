@@ -39,6 +39,7 @@ public class GameDictionary extends NamedIdentityBase {
     private Set<String> initWords() {
         Set<String> set = wordCache.get(getName());
         if (set == null) {
+            if (location == null) location = CLASSPATH_PREFIX + "dict/en_US.txt";
             if (location.startsWith(CLASSPATH_PREFIX)) {
                 try {
                     @Cleanup final InputStream in = StreamUtil.loadResourceAsStream(location.substring(CLASSPATH_PREFIX.length()));
