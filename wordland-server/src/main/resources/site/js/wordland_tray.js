@@ -135,10 +135,14 @@ WLTray = {
      * Clear the tray. Un-highlight all board letters.
      */
     clear: function () {
+        var items = WLTray.items;
         WLTray.items = [];
         $('.gameCell').removeClass('usedInTray');
         $('#game_tray_tr').empty();
         $('.trayButton').css({visibility: 'hidden'});
+        for (var i=0; i<items.length; i++) {
+            WLGame.notifyOutOfTray(items[i].id);
+        }
     },
 
     /**
