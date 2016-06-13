@@ -25,6 +25,7 @@ public class ApiConstants {
     public static final String SYMBOL_SETS_ENDPOINT = "/alphabets";
     public static final String EP_POINT_SYSTEMS = "/pointSystems";
     public static final String EP_DISTRIBUTIONS = "/distributions";
+    public static final String EP_DICTIONARIES = "/dictionaries";
 
     public static final String GAME_BOARDS_ENDPOINT = "/boards";
     public static final String GAME_ROOMS_ENDPOINT = "/rooms";

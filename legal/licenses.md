@@ -243,3 +243,7 @@ The following third-party software is used by histori.city, in accordance with t
 # atmosphere-javascript
   * Site: [https://github.com/Atmosphere/atmosphere-javascript](https://github.com/Atmosphere/atmosphere-javascript)
   * License: [https://raw.githubusercontent.com/Atmosphere/atmosphere-javascript/master/LICENSE](https://raw.githubusercontent.com/Atmosphere/atmosphere-javascript/master/LICENSE)
+
+# aspell word lists
+  * Site: [http://wordlist.aspell.net/](http://wordlist.aspell.net/)
+  * License: [http://wordlist.aspell.net/scowl-readme/](http://wordlist.aspell.net/scowl-readme/)

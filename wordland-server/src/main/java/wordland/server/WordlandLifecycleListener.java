@@ -19,7 +19,6 @@ import wordland.service.GamesMaster;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStringOrDie;
@@ -33,10 +32,10 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
     private static final Class<? extends Identifiable>[] SEED_CLASSES = new Class[]{
             SymbolSet.class,
             SymbolDistribution.class,
+            GameDictionary.class,
             PointSystem.class,
             GameBoard.class
     };
-    private static final long INIT_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
 
     @Getter private WordlandConfiguration configuration;
 
@@ -94,7 +93,8 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
                     .setBoard(configuration.getBean(GameBoardDAO.class).findByName(STANDARD))
                     .setSymbolSet(configuration.getBean(SymbolSetDAO.class).findByName(STANDARD))
                     .setPointSystem(configuration.getBean(PointSystemDAO.class).findByName(STANDARD))
-                    .setDefaultDistribution(configuration.getBean(SymbolDistributionDAO.class).findByName(STANDARD));
+                    .setDefaultDistribution(configuration.getBean(SymbolDistributionDAO.class).findByName(STANDARD))
+                    .setDictionary(configuration.getBean(GameDictionaryDAO.class).findByName(STANDARD));
             configuration.getBean(GameRoomDAO.class).create(new GameRoom(STANDARD).setSettings(roomSettings));
         } else {
             final GamesMaster gamesMaster = configuration.getBean(GamesMaster.class);

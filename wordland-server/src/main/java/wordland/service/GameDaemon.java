@@ -4,6 +4,9 @@ import lombok.Getter;
 import org.cobbzilla.util.daemon.SimpleDaemon;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
+import wordland.dao.GameDictionaryDAO;
+import wordland.model.GameDictionary;
+import wordland.model.GameRoom;
 import wordland.model.game.GamePlayer;
 import wordland.model.game.GamePlayerState;
 import wordland.model.game.GameState;
@@ -15,12 +18,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.json;
 
 @SuppressWarnings("SpringJavaAutowiredMembersInspection")
 public class GameDaemon extends SimpleDaemon {
 
-    private String name;
+    @Getter private GameRoom room;
     private AtmosphereEventsService eventService;
 
     private final AtomicReference<GameState> gameState = new AtomicReference<>();
@@ -33,14 +37,16 @@ public class GameDaemon extends SimpleDaemon {
         }
     }
 
-    public GameDaemon(String name, AtmosphereEventsService eventService) {
-        this.name = name;
+    public GameDaemon(GameRoom room, AtmosphereEventsService eventService) {
+        this.room = room;
         this.eventService = eventService;
     }
 
     @Autowired private RedisService redisService;
     @Getter(lazy=true) private final RedisService redis = initRedis();
-    private RedisService initRedis() { return redisService.prefixNamespace("game_"+name); }
+    private RedisService initRedis() { return redisService.prefixNamespace("game_"+room.getName()); }
+
+    @Autowired private GameDictionaryDAO dictDAO;
 
     private static final long SLEEP_TIME = TimeUnit.SECONDS.toMillis(5);
 
@@ -74,7 +80,7 @@ public class GameDaemon extends SimpleDaemon {
     public void addPlayer(GamePlayer player) {
         final GameStateChange stateChange;
         synchronized (gameState) {
-            stateChange = gameState.get().addPlayer(player).setRoom(name);
+            stateChange = gameState.get().addPlayer(player).setRoom(room.getName());
             deltas.get().add(stateChange);
             playerStates.get().put(player.getId(), new GamePlayerState());
         }
@@ -109,4 +115,15 @@ public class GameDaemon extends SimpleDaemon {
         }
         return stateChange;
     }
+
+    public boolean isValidWord(String word) {
+        GameDictionary dictionary = room.getSettings().getDictionary();
+        if (dictionary == null) {
+            dictionary = dictDAO.findDefault();
+            if (dictionary == null) die("isValidWord: no default dictionary");
+            room.getSettings().setDictionary(dictionary);
+        }
+        return dictionary.isWord(word);
+    }
+
 }

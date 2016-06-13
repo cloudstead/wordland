@@ -41,4 +41,13 @@ public class SymbolSetsResource extends NamedSystemResource<SymbolSet> {
         if (symbolSet == null) throw notFoundEx(name);
         return symbolDistributionsResource.forContext(configuration.getApplicationContext(), symbolSet);
     }
+
+    private GameDictionariesResource gameDictionariesResource = new GameDictionariesResource();
+    @Path("/{name}" + EP_DICTIONARIES)
+    public GameDictionariesResource getGameDictionariesResource(@Context HttpContext context,
+                                                                @PathParam("name") String name) {
+        final SymbolSet symbolSet = dao.findByName(name);
+        if (symbolSet == null) throw notFoundEx(name);
+        return gameDictionariesResource.forContext(configuration.getApplicationContext(), symbolSet);
+    }
 }

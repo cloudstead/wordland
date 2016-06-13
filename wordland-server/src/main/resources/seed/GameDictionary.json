@@ -1,0 +1,3 @@
+[
+  {"name": "standard", "location": "classpath:dict/en_US.txt"}
+]

@@ -133,7 +133,7 @@ public class AtmosphereEventsService {
                     log.warn("onMessage: no tiles sent for play");
                     return null;
                 }
-                if (!isValidWord(request.getWord())) {
+                if (!getGamesMaster().isValidWord(request.getRoom(), request.getWord())) {
                     final GameNotification notification = GameNotification.invalidWord(request.getWord());
                     send(entry, notification);
                     return null; //json(notification);
@@ -151,11 +151,6 @@ public class AtmosphereEventsService {
     private void send(AtmosphereResourceEntry entry, Object thing) throws IOException {
 //        getBroadcaster().broadcast(thing, entry.getResource());
         entry.getResource().getResponse().write(json(thing));
-    }
-
-    private boolean isValidWord(String word) {
-        // todo: lookup word in dictionary in use for game
-        return !word.startsWith("x");
     }
 
     private class AtmosphereResourceEntry {

@@ -50,7 +50,7 @@ public class GamesMaster {
     }
 
     protected GameDaemon newGameDaemon(GameRoom room) {
-        return configuration.autowire(new GameDaemon(room.getName(), eventService));
+        return configuration.autowire(new GameDaemon(room, eventService));
     }
 
     private GameDaemon getGameDaemon(String roomName) { return getGameDaemon(roomName, true); }
@@ -86,5 +86,10 @@ public class GamesMaster {
     public GameStateChange playWord(String roomName, GamePlayer player, String word, PlayedTile[] tiles) {
         final GameDaemon daemon = getGameDaemon(roomName, false);
         return daemon != null ? daemon.playWord(player, word, tiles) : null;
+    }
+
+    public boolean isValidWord(String roomName, String word) {
+        final GameDaemon daemon = getGameDaemon(roomName, false);
+        return daemon != null && daemon.isValidWord(word);
     }
 }
