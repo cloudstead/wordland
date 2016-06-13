@@ -7,14 +7,6 @@ The following third-party software is used by histori.city, in accordance with t
  * Site: [https://jquery.com/](https://jquery.com/)
  * License: [https://jquery.org/license/](https://jquery.org/license/)
  
-# jQuery UI
- * Site: [https://jqueryui.com/](https://jqueryui.com/)
- * License: [https://jquery.org/license/](https://jquery.org/license/)
- 
-# Globalize
-  * Site: [https://github.com/jquery/globalize](https://github.com/jquery/globalize)
-  * License: [https://raw.githubusercontent.com/jquery/globalize/master/LICENSE.txt](https://raw.githubusercontent.com/jquery/globalize/master/LICENSE.txt)
-
 # Java
   * Site: [http://www.oracle.com/technetwork/java/javase/downloads/index.html](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
   * License: [http://www.oracle.com/technetwork/java/javase/terms/license/index.html](http://www.oracle.com/technetwork/java/javase/terms/license/index.html)
