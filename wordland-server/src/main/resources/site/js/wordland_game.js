@@ -84,7 +84,7 @@ WLGame = {
         return targetCell.owner;
     },
 
-    playerStyleIndex: function (id) { return parseInt(id.substring(id.length-4), 16) % 8; },
+    playerStyleIndex: function (id) { return parseInt(id.substring(id.length-4), 16) % 16; },
     playerCellCss: function (id) {
         if (id == Wordland.player.id) {
             return 'playerCell';

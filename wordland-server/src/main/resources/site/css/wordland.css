@@ -182,3 +182,19 @@ html, body {
     overflow: scroll;
     padding: 3px;
 }
+
+.playerCell {
+    background-color: cornflowerblue;
+    width: 18px;
+    height: 14px;
+}
+.playerProtectedCell {
+    border: 2px solid black;
+}
+.playerLog {
+    border: 2px solid darkblue;
+    background-color: cornflowerblue;
+    margin: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
