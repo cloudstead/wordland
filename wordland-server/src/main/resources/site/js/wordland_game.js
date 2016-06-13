@@ -93,11 +93,11 @@ WLGame = {
         }
     },
     playerCellProtectedCss: function (id) {
-        if (id == Wordland.player.id) {
+        //if (id == Wordland.player.id) {
             return 'playerProtectedCell';
-        } else {
-            return 'playerProtectedCell_' + WLGame.playerStyleIndex(id);
-        }
+        //} else {
+        //    return 'playerProtectedCell_' + WLGame.playerStyleIndex(id);
+        //}
     },
     playerLogCss: function (id) {
         if (id == Wordland.player.id) {

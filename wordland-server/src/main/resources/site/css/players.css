@@ -4,7 +4,7 @@
     height: 14px;
 }
 .playerProtectedCell {
-    border: 2px solid darkblue;
+    border: 2px solid black;
 }
 .playerLog {
     border: 2px solid darkblue;
@@ -18,9 +18,6 @@
     width: 18px;
     height: 14px;
 }
-.playerProtectedCell_0 {
-    border: 2px solid red;
-}
 .playerLog_0 {
     border: 2px solid red;
     background-color: lightcoral;
@@ -32,9 +29,6 @@
     background-color: lightsalmon;
     width: 18px;
     height: 14px;
-}
-.playerProtectedCell_1 {
-    border: 2px solid orangered;
 }
 .playerLog_1 {
     border: 2px solid orangered;
@@ -48,9 +42,6 @@
     width: 18px;
     height: 14px;
 }
-.playerProtectedCell_2 {
-    border: 2px solid green;
-}
 .playerLog_2 {
     border: 2px solid green;
     background-color: lightgreen;
@@ -62,9 +53,6 @@
     background-color: mediumpurple;
     width: 18px;
     height: 14px;
-}
-.playerProtectedCell_3 {
-    border: 2px solid purple;
 }
 .playerLog_3 {
     border: 2px solid purple;
@@ -78,9 +66,6 @@
     width: 18px;
     height: 14px;
 }
-.playerProtectedCell_4 {
-    border: 2px solid chocolate;
-}
 .playerLog_4 {
     border: 2px solid chocolate;
     background-color: khaki;
@@ -92,9 +77,6 @@
     background-color: gold;
     width: 18px;
     height: 14px;
-}
-.playerProtectedCell_5 {
-    border: 2px solid darkgoldenrod;
 }
 .playerLog_5 {
     border: 2px solid yellow;
@@ -108,9 +90,6 @@
     width: 18px;
     height: 14px;
 }
-.playerProtectedCell_6 {
-    border: 2px solid deeppink;
-}
 .playerLog_6 {
     border: 2px solid deeppink;
     background-color: lightpink;
@@ -122,9 +101,6 @@
     background-color: forestgreen;
     width: 18px;
     height: 14px;
-}
-.playerProtectedCell_7 {
-    border: 2px solid darkgreen;
 }
 .playerLog_7 {
     border: 2px solid darkgreen;
