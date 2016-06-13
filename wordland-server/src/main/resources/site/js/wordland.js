@@ -111,9 +111,9 @@ $(function() {
         Wordland.join( $('#room_to_join').find(':selected').text(), {name: $('#player_name').val()} );
     });
 
-    const name = $('#player_name');
+    var name = $('#player_name');
     name.on('keyup', function (e) {
-        const playerName = $('#player_name');
+        var playerName = $('#player_name');
         if (playerName.is(":focus") && $('#lobbyContainer').css('visibility') != 'visible') {
             playerName.val('');
             return;
