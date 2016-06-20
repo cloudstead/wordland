@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.atmosphere.nettosphere.Config;
 import org.atmosphere.nettosphere.Nettosphere;
+import org.cobbzilla.util.collection.MapBuilder;
 import org.cobbzilla.wizard.dao.DAO;
 import org.cobbzilla.wizard.dao.NamedIdentityBaseDAO;
 import org.cobbzilla.wizard.model.HashedPassword;
@@ -14,6 +15,7 @@ import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
 import wordland.dao.*;
 import wordland.model.*;
 import wordland.model.json.GameRoomSettings;
+import wordland.model.json.GameRoomSettingsValues;
 import wordland.service.AtmosphereEventsService;
 import wordland.service.GamesMaster;
 
@@ -24,7 +26,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStringOrDie;
 import static org.cobbzilla.util.json.JsonUtil.fromJsonOrDie;
 import static org.cobbzilla.util.reflect.ReflectionUtil.arrayClass;
-import static wordland.ApiConstants.STANDARD;
+import static wordland.ApiConstants.*;
 
 @Slf4j
 public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<WordlandConfiguration> {
@@ -36,6 +38,14 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
             PointSystem.class,
             GameBoard.class
     };
+
+    private static final Map<String, GameRoomSettingsValues> DEFAULT_ROOMS = MapBuilder.build(new Object[][] {
+        new Object[] { ELECTRO, new GameRoomSettingsValues().setBoard(ELECTRO).setMaxPlayers(2) },
+        new Object[] { WORDLANDIO, new GameRoomSettingsValues().setMaxPlayers(50) },
+        new Object[] { BIG, new GameRoomSettingsValues().setBoard(BIG).setMaxPlayers(100) },
+        new Object[] { LARGE, new GameRoomSettingsValues().setBoard(LARGE).setMaxPlayers(500) },
+        new Object[] { HUGE, new GameRoomSettingsValues().setBoard(HUGE).setMaxPlayers(1000) }
+    });
 
     @Getter private WordlandConfiguration configuration;
 
@@ -88,19 +98,26 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
 
         final GameRoomDAO roomDAO = configuration.getBean(GameRoomDAO.class);
         final List<GameRoom> rooms = roomDAO.findAll();
-        if (rooms.isEmpty()) {
-            final GameRoomSettings roomSettings = new GameRoomSettings()
-                    .setBoard(configuration.getBean(GameBoardDAO.class).findByName(STANDARD))
-                    .setSymbolSet(configuration.getBean(SymbolSetDAO.class).findByName(STANDARD))
-                    .setPointSystem(configuration.getBean(PointSystemDAO.class).findByName(STANDARD))
-                    .setDefaultDistribution(configuration.getBean(SymbolDistributionDAO.class).findByName(STANDARD))
-                    .setDictionary(configuration.getBean(GameDictionaryDAO.class).findByName(STANDARD));
-            configuration.getBean(GameRoomDAO.class).create(new GameRoom(STANDARD).setSettings(roomSettings));
-        } else {
-            final GamesMaster gamesMaster = configuration.getBean(GamesMaster.class);
-            for (GameRoom room : rooms) gamesMaster.initRoom(room);
+        for (Map.Entry<String, GameRoomSettingsValues> entry : DEFAULT_ROOMS.entrySet()) {
+            GameRoom room = new GameRoom(entry.getKey());
+            if (!rooms.contains(room)) {
+                roomDAO.create(room.setSettings(initGameRoomSettings(configuration, entry.getValue())));
+            }
         }
+
+        final GamesMaster gamesMaster = configuration.getBean(GamesMaster.class);
+        for (GameRoom room : rooms) gamesMaster.initRoom(room);
         super.onStart(server);
+    }
+
+    protected GameRoomSettings initGameRoomSettings(WordlandConfiguration configuration, GameRoomSettingsValues values) {
+        return new GameRoomSettings()
+                        .setBoard(configuration.getBean(GameBoardDAO.class).findByName(values.getBoard()))
+                        .setSymbolSet(configuration.getBean(SymbolSetDAO.class).findByName(values.getSymbolSet()))
+                        .setPointSystem(configuration.getBean(PointSystemDAO.class).findByName(values.getPointSystem()))
+                        .setDefaultDistribution(configuration.getBean(SymbolDistributionDAO.class).findByName(values.getDefaultDistribution()))
+                        .setDictionary(configuration.getBean(GameDictionaryDAO.class).findByName(values.getDictionary()))
+                        .setMaxPlayers(values.getMaxPlayers());
     }
 
     public void populate(WordlandConfiguration configuration, Class<? extends Identifiable> type) {

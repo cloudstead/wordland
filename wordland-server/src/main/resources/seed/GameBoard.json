@@ -1,9 +1,37 @@
 [
   {
+    "name": "electrotype",
+    "settings": {
+      "length": 5,
+      "width": 5
+    }
+  },
+  {
     "name": "standard",
     "settings": {
       "length": 20,
       "width": 20
+    }
+  },
+  {
+    "name": "big",
+    "settings": {
+      "length": 50,
+      "width": 50
+    }
+  },
+  {
+    "name": "large",
+    "settings": {
+      "length": 200,
+      "width": 200
+    }
+  },
+  {
+    "name": "huge",
+    "settings": {
+      "length": 1000,
+      "width": 1000
     }
   }
 ]

@@ -10,7 +10,7 @@ public class GameBoardSettings {
 
     public static final String JSONB_TYPE = JSONBUserType.JSONB_TYPE+"_GameBoardSettings";
 
-    @Getter @Setter private int length;
-    @Getter @Setter private int width;
+    @Getter @Setter private Integer length;
+    @Getter @Setter private Integer width;
 
 }
