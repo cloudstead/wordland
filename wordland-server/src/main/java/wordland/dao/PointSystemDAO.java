@@ -6,4 +6,9 @@ import wordland.model.PointSystem;
 
 @Repository
 public class PointSystemDAO extends NamedIdentityBaseDAO<PointSystem> {
+
+    public PointSystem findBySymbolSetAndName(String symbolSet, String name) {
+        return findByUniqueFields("symbolSet", symbolSet, "name", name);
+    }
+
 }

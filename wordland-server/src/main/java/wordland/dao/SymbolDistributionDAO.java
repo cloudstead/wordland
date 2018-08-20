@@ -6,4 +6,9 @@ import wordland.model.SymbolDistribution;
 
 @Repository
 public class SymbolDistributionDAO extends NamedIdentityBaseDAO<SymbolDistribution> {
+
+    public SymbolDistribution findBySymbolSetAndName(String symbolSet, String name) {
+        return findByUniqueFields("symbolSet", symbolSet, "name", name);
+    }
+
 }

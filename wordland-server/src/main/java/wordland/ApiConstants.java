@@ -13,6 +13,8 @@ public class ApiConstants {
     public static final String EP_LOGIN = "/login";
     public static final String EP_REMOVE = "/remove";
 
+    public static final String ENTITY_CONFIGS_ENDPOINT = "/entityConfigs";
+
     public static final String INFO_ENDPOINT = "/info";
     public static final String ERR_ALREADY_LOGGED_IN = "err.alreadyLoggedIn";
 

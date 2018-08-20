@@ -83,7 +83,7 @@ assetStorage:
     secretKey: {{ASSETS_S3_SECRET_KEY}}
     bucket: {{ASSETS_S3_BUCKET}}
     prefix: {{ASSETS_S3_PREFIX}}
-    localCache: {{ASSETS_LOCAL_CACHE_DIR}}
+    #localCache: {{ASSETS_LOCAL_CACHE_DIR}}
 
 recaptcha:
   publicKey: {{RECAPTCHA_PUBLIC_KEY}}

@@ -17,10 +17,7 @@ import wordland.model.support.GameRuntimeEvent;
 import wordland.service.GamesMaster;
 
 import javax.validation.Valid;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
@@ -34,8 +31,22 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
     @Getter @Autowired private GameRoomDAO dao;
     @Getter @Autowired private GamesMaster gamesMaster;
 
-    @POST
-    @Path("/{name}"+EP_JOIN)
+    @PUT
+    public Response create (@Context HttpContext ctx,
+                            @Valid GameRoom gameRoom) {
+        return create(ctx, gameRoom.getName(), gameRoom);
+    }
+
+    @PUT @Path("/{name}")
+    public Response create (@Context HttpContext ctx,
+                            @PathParam("name") String room,
+                            @Valid GameRoom gameRoom) {
+        final Account account = userPrincipal(ctx);
+        gamesMaster.newRoom(gameRoom);
+        return ok(gameRoom);
+    }
+
+    @POST @Path("/{name}"+EP_JOIN)
     public Response join (@Context HttpContext ctx,
                           @PathParam("name") String room,
                           @Valid GameRoomJoinRequest request) {
@@ -50,8 +61,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         return ok(player.getCredentials());
     }
 
-    @POST
-    @Path("/{name}"+EP_QUIT)
+    @POST @Path("/{name}"+EP_QUIT)
     public Response quit (@Context HttpContext ctx,
                           @PathParam("name") String room,
                           @Valid GameRuntimeEvent request) {
@@ -66,16 +76,14 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         return ok();
     }
 
-    @GET
-    @Path("/{name}"+EP_STATE)
+    @GET @Path("/{name}"+EP_STATE)
     public Response state (@Context HttpContext ctx,
                            @PathParam("name") String room) {
         final GameState state = gamesMaster.getGameState(room);
         return state == null ? notFound(room) : ok(state);
     }
 
-    @GET
-    @Path("/{name}"+EP_SETTINGS)
+    @GET @Path("/{name}"+EP_SETTINGS)
     public Response settings (@Context HttpContext ctx,
                               @PathParam("name") String roomName) {
         final GameRoom room = gamesMaster.findRoom(roomName);

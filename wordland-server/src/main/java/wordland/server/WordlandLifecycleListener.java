@@ -1,19 +1,26 @@
 package wordland.server;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.atmosphere.nettosphere.Config;
 import org.atmosphere.nettosphere.Nettosphere;
 import org.cobbzilla.util.collection.MapBuilder;
+import org.cobbzilla.util.reflect.ReflectionUtil;
 import org.cobbzilla.wizard.dao.DAO;
-import org.cobbzilla.wizard.dao.NamedIdentityBaseDAO;
 import org.cobbzilla.wizard.model.HashedPassword;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.model.NamedIdentityBase;
+import org.cobbzilla.wizard.model.entityconfig.EntityConfig;
+import org.cobbzilla.wizard.model.entityconfig.EntityConfigSource;
+import org.cobbzilla.wizard.model.entityconfig.ParentEntity;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.RestServerLifecycleListenerBase;
 import wordland.dao.*;
-import wordland.model.*;
+import wordland.model.Account;
+import wordland.model.GameBoard;
+import wordland.model.GameRoom;
+import wordland.model.SymbolSet;
 import wordland.model.json.GameRoomSettings;
 import wordland.model.json.GameRoomSettingsValues;
 import wordland.service.AtmosphereEventsService;
@@ -25,7 +32,9 @@ import java.util.Map;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.StreamUtil.loadResourceAsStringOrDie;
 import static org.cobbzilla.util.json.JsonUtil.fromJsonOrDie;
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.arrayClass;
+import static org.cobbzilla.util.reflect.ReflectionUtil.forName;
 import static wordland.ApiConstants.*;
 
 @Slf4j
@@ -33,9 +42,6 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
 
     private static final Class<? extends Identifiable>[] SEED_CLASSES = new Class[]{
             SymbolSet.class,
-            SymbolDistribution.class,
-            GameDictionary.class,
-            PointSystem.class,
             GameBoard.class
     };
 
@@ -121,16 +127,34 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
     }
 
     public void populate(WordlandConfiguration configuration, Class<? extends Identifiable> type) {
-        final DAO dao = configuration.getDaoForEntityType(type);
+        final EntityConfigSource configSource = configuration.getBean(EntityConfigSource.class);
+        final EntityConfig entityConfig = configSource.getEntityConfig(type);
+        if (entityConfig == null) die("populate: no entity config found for: "+type.getName());
+
+        //noinspection RedundantCast -- removing it breaks compilation
         final Identifiable[] things = (Identifiable[]) fromJsonOrDie(loadResourceAsStringOrDie("seed/" + type.getSimpleName() + ".json"), arrayClass(type));
-        if (dao instanceof NamedIdentityBaseDAO) {
-            final NamedIdentityBaseDAO nameDAO = (NamedIdentityBaseDAO) dao;
-            for (Identifiable thing : things) {
-                final NamedIdentityBase named = (NamedIdentityBase) thing;
-                if (nameDAO.findByName(named.getName()) == null) nameDAO.create(named);
+        populateType(configuration, entityConfig, type, configSource, things);
+    }
+
+    protected void populateType(WordlandConfiguration configuration, EntityConfig entityConfig, Class<? extends Identifiable> type, EntityConfigSource configSource, Identifiable[] things) {
+        final DAO dao = configuration.getDaoForEntityType(type);
+        for (Identifiable thing : things) {
+            final NamedIdentityBase named = (NamedIdentityBase) thing;
+            if (dao.findByUuid(named.getName()) == null) dao.create(named);
+            if (thing instanceof ParentEntity) {
+                Map<String, JsonNode[]> children = ((ParentEntity) thing).getChildren();
+                for (String childType : children.keySet()) {
+                    final EntityConfig childConfig = entityConfig.getChildren().get(childType);
+                    if (childConfig == null) die("populateType: no child config found for "+childType);
+                    //noinspection RedundantCast -- removing it breaks compilation
+                    final Class<? extends Identifiable> childClass = forName(childConfig.getClassName());
+                    final Identifiable[] childObjects = (Identifiable[]) json(json(children.get(childType)), arrayClass(childClass));
+                    for (Identifiable child : childObjects) {
+                        ReflectionUtil.set(child, childConfig.getParentField().getName(), thing.getUuid());
+                    }
+                    populateType(configuration, entityConfig, childClass, configSource, childObjects);
+                }
             }
-        } else {
-            die("populate: DAO is not a NamedIdentityBaseDAO: "+dao.getClass().getName());
         }
     }
 

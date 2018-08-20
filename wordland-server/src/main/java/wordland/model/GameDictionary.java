@@ -8,10 +8,12 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.io.StreamUtil;
 import org.cobbzilla.wizard.model.NamedIdentityBase;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECFieldReference;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECTypeURIs;
+import org.cobbzilla.wizard.validation.HasValue;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -20,12 +22,19 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.CLASSPATH_PREFIX;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static wordland.ApiConstants.EP_DICTIONARIES;
 
+@ECType @ECTypeURIs(baseURI=EP_DICTIONARIES)
 @Entity @NoArgsConstructor @Accessors(chain=true)
+@Table(uniqueConstraints=@UniqueConstraint(columnNames={"symbolSet", "name"}, name="game_dictionary_UNIQ_symbol_set_name"))
 public class GameDictionary extends NamedIdentityBase {
 
-    public static final String CLASSPATH_PREFIX = "classpath:";
+    @HasValue(message="err.symbolSet.empty")
+    @Column(length=NAME_MAXLEN, nullable=false, updatable=false)
+    @ECFieldReference(control="select", refEntity="SymbolSet", refFinder="symbolSets/{symbolSet}", options="uri:symbolSets:name:name")
+    @Getter @Setter private String symbolSet;
 
     @Column(length=1024)
     @JsonIgnore @Getter @Setter private String location;

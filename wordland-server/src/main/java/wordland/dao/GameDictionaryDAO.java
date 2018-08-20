@@ -9,4 +9,8 @@ public class GameDictionaryDAO extends NamedIdentityBaseDAO<GameDictionary> {
 
     public GameDictionary findDefault() { return findByName("standard"); }
 
+    public GameDictionary findBySymbolSetAndName(String symbolSet, String name) {
+        return findByUniqueFields("symbolSet", symbolSet, "name", name);
+    }
+
 }

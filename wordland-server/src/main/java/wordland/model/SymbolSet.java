@@ -8,14 +8,27 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.model.NamedIdentityBase;
+import org.cobbzilla.wizard.model.entityconfig.NamedParentEntity;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECTypeChild;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECTypeChildren;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECTypeURIs;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 import java.util.List;
 
+import static wordland.ApiConstants.SYMBOL_SETS_ENDPOINT;
+
+@ECType(root=true)
+@ECTypeURIs(baseURI=SYMBOL_SETS_ENDPOINT)
+@ECTypeChildren(uriPrefix=SYMBOL_SETS_ENDPOINT + "/{SymbolSet.name}",
+        value={@ECTypeChild(type=PointSystem.class,        backref="symbolSet"),
+               @ECTypeChild(type=GameDictionary.class,     backref="symbolSet"),
+               @ECTypeChild(type=SymbolDistribution.class, backref="symbolSet")})
 @Entity @NoArgsConstructor @Accessors(chain=true)
-public class SymbolSet extends NamedIdentityBase {
+public class SymbolSet extends NamedParentEntity {
 
     public SymbolSet (SymbolSet other) { super(other.getName()); update(other); }
 

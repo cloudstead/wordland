@@ -1,5 +1,6 @@
 package wordland;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.mail.sender.mock.MockTemplatedMailSender;
 import org.cobbzilla.mail.sender.mock.MockTemplatedMailService;
@@ -52,10 +53,11 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
     }
 
     @Override protected List<ConfigurationSource> getConfigurations() {
-        return new SingletonList<ConfigurationSource>(new StreamConfigurationSource(getTestConfig()));
+        return new SingletonList<>(new StreamConfigurationSource(getTestConfig()));
     }
 
-    @Override public ApiClientBase getApi() {
+    @Getter(lazy=true) private final ApiClientBase api = initApi();
+    private ApiClientBase initApi() {
         return new ApiClientBase(super.getApi()) {
             @Override public String getTokenHeader() { return API_TOKEN; }
         };
@@ -99,7 +101,7 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
     }
 
     public static final String STANDARD_SYMBOLS_URI = SYMBOL_SETS_ENDPOINT + "/standard";
-    public static final String STANDARD_DISTRIBUTION_URI = STANDARD_SYMBOLS_URI + "/" + EP_DISTRIBUTIONS + "/standard";
+    public static final String STANDARD_DISTRIBUTION_URI = STANDARD_SYMBOLS_URI + EP_DISTRIBUTIONS + "/standard";
     public static final String STANDARD_ROOM_URI = GAME_ROOMS_ENDPOINT + "/standard";
 
     public GameRoom createRoom(String name, GameRoomSettings roomSettings) throws Exception {

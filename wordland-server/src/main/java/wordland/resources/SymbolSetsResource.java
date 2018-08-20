@@ -34,7 +34,7 @@ public class SymbolSetsResource extends NamedSystemResource<SymbolSet> {
 
     @Path("/{name}" + EP_DISTRIBUTIONS)
     public SymbolDistributionsResource getSymbolDistributionsResource(@Context HttpContext context,
-                                                               @PathParam("name") String name) {
+                                                                      @PathParam("name") String name) {
         final SymbolSet symbolSet = dao.findByName(name);
         if (symbolSet == null) throw notFoundEx(name);
         return configuration.subResource(SymbolDistributionsResource.class, symbolSet);
