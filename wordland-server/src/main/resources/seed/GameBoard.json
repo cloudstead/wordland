@@ -7,6 +7,13 @@
     }
   },
   {
+    "name": "small",
+    "settings": {
+      "length": 10,
+      "width": 10
+    }
+  },
+  {
     "name": "standard",
     "settings": {
       "length": 20,
@@ -32,6 +39,34 @@
     "settings": {
       "length": 1000,
       "width": 1000
+    }
+  },
+  {
+    "name": "football",
+    "settings": {
+      "length": 120,
+      "width": 90
+    }
+  },
+  {
+    "name": "infinite",
+    "settings": {
+      "length": -1,
+      "width": -1
+    }
+  },
+  {
+    "name": "roadie",
+    "settings": {
+      "length": -1,
+      "width": 20
+    }
+  },
+  {
+    "name": "hallway",
+    "settings": {
+      "length": -1,
+      "width": 5
     }
   }
 ]

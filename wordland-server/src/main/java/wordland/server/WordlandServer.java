@@ -9,6 +9,8 @@ import org.cobbzilla.wizard.server.config.factory.ConfigurationSource;
 import java.util.List;
 import java.util.Map;
 
+import static org.cobbzilla.util.network.NetworkUtil.IPv4_ALL_ADDRS;
+
 @NoArgsConstructor @Slf4j
 public class WordlandServer extends RestServerBase<WordlandConfiguration> {
 
@@ -16,7 +18,7 @@ public class WordlandServer extends RestServerBase<WordlandConfiguration> {
     public static final WordlandLifecycleListener WORDLAND_LIFECYCLE_LISTENER = new WordlandLifecycleListener();
 
     //    @Override protected String getListenAddress() { return LOCALHOST; }
-    @Override protected String getListenAddress() { return ALL_ADDRS; }
+    @Override protected String getListenAddress() { return IPv4_ALL_ADDRS; }
 
     // args are ignored, config is loaded from the classpath
     public static void main(String[] args) throws Exception {

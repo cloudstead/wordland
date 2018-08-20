@@ -1,8 +1,8 @@
 package wordland.auth;
 
-import cloudos.model.auth.AuthResponse;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.wizard.auth.AuthResponse;
 import wordland.model.Account;
 
 @NoArgsConstructor @Slf4j

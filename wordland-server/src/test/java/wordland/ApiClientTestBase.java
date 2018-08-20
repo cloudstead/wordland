@@ -1,12 +1,13 @@
 package wordland;
 
-import cloudos.model.auth.LoginRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.mail.sender.mock.MockTemplatedMailSender;
 import org.cobbzilla.mail.sender.mock.MockTemplatedMailService;
 import org.cobbzilla.util.collection.SingletonList;
 import org.cobbzilla.util.system.CommandShell;
 import org.cobbzilla.wizard.api.ApiException;
+import org.cobbzilla.wizard.auth.LoginRequest;
+import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.server.config.factory.ConfigurationSource;
 import org.cobbzilla.wizard.server.config.factory.StreamConfigurationSource;
@@ -17,17 +18,15 @@ import wordland.auth.AccountAuthResponse;
 import wordland.model.*;
 import wordland.model.json.GameRoomSettings;
 import wordland.model.support.RegistrationRequest;
-import wordland.server.WordlandLifecycleListener;
 import wordland.server.WordlandConfiguration;
+import wordland.server.WordlandLifecycleListener;
 import wordland.server.WordlandServer;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.json.JsonUtil.fromJson;
-import static org.cobbzilla.util.json.JsonUtil.json;
-import static org.cobbzilla.util.json.JsonUtil.toJson;
+import static org.cobbzilla.util.json.JsonUtil.*;
 import static wordland.ApiConstants.*;
 
 @Slf4j
@@ -56,7 +55,11 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
         return new SingletonList<ConfigurationSource>(new StreamConfigurationSource(getTestConfig()));
     }
 
-    @Override protected String getTokenHeader() { return API_TOKEN; }
+    @Override public ApiClientBase getApi() {
+        return new ApiClientBase(super.getApi()) {
+            @Override public String getTokenHeader() { return API_TOKEN; }
+        };
+    }
 
     public MockTemplatedMailService getTemplatedMailService() {
         return getBean(MockTemplatedMailService.class);
@@ -81,7 +84,7 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
     }
 
     protected void loginSuperuser() {
-        final Map<String, String> env = server.getConfiguration().getEnvironment();
+        final Map<String, String> env = getServer().getConfiguration().getEnvironment();
         login(env.get("WORDLAND_SUPERUSER"), env.get("WORDLAND_SUPERUSER_PASS"));
     }
 
@@ -136,7 +139,7 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
         apiDocs.addNote("create standard game room, then logout superuser");
         final GameRoom standard = createRoom(STANDARD, roomSettings);
 
-        popToken(); // logout superuser
+        getApi().popToken(); // logout superuser
         return standard;
     }
 

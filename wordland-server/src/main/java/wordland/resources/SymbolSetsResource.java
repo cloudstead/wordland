@@ -24,30 +24,27 @@ public class SymbolSetsResource extends NamedSystemResource<SymbolSet> {
     @Getter @Autowired private SymbolSetDAO dao;
     @Autowired private WordlandConfiguration configuration;
 
-    private PointSystemsResource pointSystemsResource = new PointSystemsResource();
     @Path("/{name}" + EP_POINT_SYSTEMS)
     public PointSystemsResource getPointSystemsResource(@Context HttpContext context,
                                                         @PathParam("name") String name) {
         final SymbolSet symbolSet = dao.findByName(name);
         if (symbolSet == null) throw notFoundEx(name);
-        return pointSystemsResource.forContext(configuration.getApplicationContext(), symbolSet);
+        return configuration.subResource(PointSystemsResource.class, symbolSet);
     }
 
-    private SymbolDistributionsResource symbolDistributionsResource = new SymbolDistributionsResource();
     @Path("/{name}" + EP_DISTRIBUTIONS)
     public SymbolDistributionsResource getSymbolDistributionsResource(@Context HttpContext context,
                                                                @PathParam("name") String name) {
         final SymbolSet symbolSet = dao.findByName(name);
         if (symbolSet == null) throw notFoundEx(name);
-        return symbolDistributionsResource.forContext(configuration.getApplicationContext(), symbolSet);
+        return configuration.subResource(SymbolDistributionsResource.class, symbolSet);
     }
 
-    private GameDictionariesResource gameDictionariesResource = new GameDictionariesResource();
     @Path("/{name}" + EP_DICTIONARIES)
     public GameDictionariesResource getGameDictionariesResource(@Context HttpContext context,
                                                                 @PathParam("name") String name) {
         final SymbolSet symbolSet = dao.findByName(name);
         if (symbolSet == null) throw notFoundEx(name);
-        return gameDictionariesResource.forContext(configuration.getApplicationContext(), symbolSet);
+        return configuration.subResource(GameDictionariesResource.class, symbolSet);
     }
 }

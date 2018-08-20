@@ -1,8 +1,7 @@
 package wordland.server;
 
-import cloudos.server.asset.AssetStorageConfiguration;
-import cloudos.service.asset.AssetStorageService;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.github.jknack.handlebars.Handlebars;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,7 +11,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.cobbzilla.mail.SimpleEmailMessage;
 import org.cobbzilla.mail.sender.SmtpMailConfig;
 import org.cobbzilla.mail.service.TemplatedMailSenderConfiguration;
+import org.cobbzilla.util.handlebars.HandlebarsUtil;
+import org.cobbzilla.util.javascript.StandardJsEngine;
 import org.cobbzilla.util.reflect.ReflectionUtil;
+import org.cobbzilla.wizard.asset.AssetStorageConfiguration;
+import org.cobbzilla.wizard.asset.AssetStorageService;
 import org.cobbzilla.wizard.cache.redis.HasRedisConfiguration;
 import org.cobbzilla.wizard.cache.redis.RedisConfiguration;
 import org.cobbzilla.wizard.dao.DAO;
@@ -92,5 +95,14 @@ public class WordlandConfiguration extends RestServerConfiguration
             daoCache.put(shardSet, entityDao);
         }
         return entityDao;
+    }
+
+    @Getter(lazy=true) private final Handlebars handlebars = initHandlebars();
+    private Handlebars initHandlebars() {
+        final Handlebars hbs = new Handlebars(new HandlebarsUtil(getClass().getSimpleName()));
+        HandlebarsUtil.registerUtilityHelpers(hbs);
+        HandlebarsUtil.registerDateHelpers(hbs);
+        HandlebarsUtil.registerJavaScriptHelper(hbs, StandardJsEngine::new);
+        return hbs;
     }
 }

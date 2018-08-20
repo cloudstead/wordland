@@ -1,13 +1,13 @@
 package wordland.dao;
 
 import cloudos.dao.AccountBaseDAOBase;
-import cloudos.model.auth.AuthenticationException;
-import cloudos.model.auth.LoginRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.mail.SimpleEmailMessage;
 import org.cobbzilla.mail.TemplatedMail;
 import org.cobbzilla.mail.service.TemplatedMailService;
 import org.cobbzilla.util.reflect.ReflectionUtil;
+import org.cobbzilla.wizard.auth.AuthenticationException;
+import org.cobbzilla.wizard.auth.LoginRequest;
 import org.cobbzilla.wizard.model.HashedPassword;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
