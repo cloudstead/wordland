@@ -58,7 +58,7 @@ public class GameState {
         // fetch blocks, initialize as needed
         final Map<String,  GameBoardBlock> blockMap = new HashMap<>();
         for (String blockKey : blockKeys) {
-            final GameBoardBlock block = stateStorage.newBlock(blockKey, roomSettings.getDefaultDistribution());
+            final GameBoardBlock block = stateStorage.newBlock(blockKey, roomSettings.getSymbolDistribution());
             blockMap.put(block.getBlockKey(), block);
         }
 

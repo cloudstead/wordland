@@ -14,7 +14,7 @@ public interface GameStateStorageService {
     GameStateChange removePlayer(String id);
 
     GameBoardBlock getBlock(String blockKey);
-    GameBoardBlock newBlock(String blockKey, SymbolDistribution defaultDistribution);
+    GameBoardBlock newBlock(String blockKey, SymbolDistribution distribution);
 
     GameStateChange playWord(GamePlayer player,
                              Collection<GameBoardBlock> blocks,

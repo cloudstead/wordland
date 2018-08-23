@@ -46,10 +46,10 @@ public class GamesMaster {
         if (symbolSet == null) throw notFoundEx(symbolSetName);
         roomSettings.setSymbolSet(symbolSet);
 
-        final String distributionName = roomSettings.defaultDistributionName();
+        final String distributionName = roomSettings.symbolDistributionName();
         final SymbolDistribution distribution = distributionDAO.findBySymbolSetAndName(symbolSet.getName(), distributionName);
         if (distribution == null) throw notFoundEx(distributionName);
-        roomSettings.setDefaultDistribution(distribution);
+        roomSettings.setSymbolDistribution(distribution);
 
         final String pointSystemName = roomSettings.pointSystemName();
         final PointSystem pointSystem = pointSystemDAO.findBySymbolSetAndName(symbolSet.getName(), pointSystemName);

@@ -13,7 +13,7 @@ public class GameRoomSettings {
     public static final String JSONB_TYPE = JSONBUserType.JSONB_TYPE+"_GameRoomSettings";
 
     @Getter @Setter private SymbolSet symbolSet;
-    @Getter @Setter private SymbolDistribution defaultDistribution;
+    @Getter @Setter private SymbolDistribution symbolDistribution;
     @Getter @Setter private PointSystem pointSystem;
     @Getter @Setter private GameBoard board;
     @Getter @Setter private GameDictionary dictionary;
@@ -30,8 +30,8 @@ public class GameRoomSettings {
         return symbolSet != null && symbolSet.getName() != null ? symbolSet.getName() : ApiConstants.STANDARD;
     }
 
-    public String defaultDistributionName() {
-        return defaultDistribution != null && defaultDistribution.getName() != null ? defaultDistribution.getName() : ApiConstants.STANDARD;
+    public String symbolDistributionName() {
+        return symbolDistribution != null && symbolDistribution.getName() != null ? symbolDistribution.getName() : ApiConstants.STANDARD;
     }
 
     public String pointSystemName() {

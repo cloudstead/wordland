@@ -1,0 +1,27 @@
+[
+  {
+    "comment": "declare default parameters for login_as test part",
+    "include": "_defaults",
+    "params": {
+      "login": "_required",
+      "password": "_required",
+      "sessionName": "_required"
+    }
+  },
+
+  {
+    "comment": "login as <<login>> to start session <<sessionName>>",
+    "request": {
+      "session": "new",
+      "uri": "accounts/login",
+      "entity": {
+        "name": "<<login>>",
+        "password": "<<password>>"
+      }
+    },
+    "response": {
+      "sessionName": "<<sessionName>>",
+      "session": "sessionId"
+    }
+  }
+]

@@ -65,8 +65,7 @@ public class AccountsResource extends AuthResourceBase<Account> {
      * @param ctx session info
      * @return Upon success, an AccountAuthResponse containing the session ID and account information
      */
-    @POST
-    @Path(EP_LOGIN)
+    @POST @Path(EP_LOGIN)
     public Response login (@Context HttpContext ctx, LoginRequest request) {
 
         final Account alreadyLoggedIn = optionalUserPrincipal(ctx);
@@ -142,8 +141,7 @@ public class AccountsResource extends AuthResourceBase<Account> {
      * @param ctx session info
      * @return Upon success, an AccountAuthResponse containing the session ID and account information
      */
-    @POST
-    @Path(EP_REGISTER)
+    @POST @Path(EP_REGISTER)
     public Response register (@Context HttpContext ctx, @Valid RegistrationRequest request) {
 
         request.setUserAgent(ctx.getRequest().getHeaderValue(USER_AGENT));
@@ -170,8 +168,7 @@ public class AccountsResource extends AuthResourceBase<Account> {
 
     @Override protected String getResetPasswordUrl(String token) { return configuration.getResetPasswordUrl(token); }
 
-    @POST
-    @Path(EP_REMOVE)
+    @POST @Path(EP_REMOVE)
     public Response remove (@Context HttpContext ctx, @Valid RegistrationRequest request) {
 
         request.setUserAgent(ctx.getRequest().getHeaderValue(USER_AGENT));

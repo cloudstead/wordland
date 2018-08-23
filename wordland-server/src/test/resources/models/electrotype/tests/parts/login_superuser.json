@@ -1,0 +1,19 @@
+[
+  {
+    "comment": "declare default parameters for login_superuser test part",
+    "include": "_defaults",
+    "params": {
+      "sessionName": "superuser"
+    }
+  },
+
+  {
+    "comment": "login as superuser to start session <<sessionName>>",
+    "include": "parts/login_as",
+    "params": {
+      "login": "{{WORDLAND_SUPERUSER}}",
+      "password": "{{WORDLAND_SUPERUSER_PASS}}",
+      "sessionName": "<<sessionName>>"
+    }
+  }
+]

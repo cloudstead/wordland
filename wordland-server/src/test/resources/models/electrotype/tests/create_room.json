@@ -1,0 +1,62 @@
+[
+  {
+    "comment": "lookup standard game board",
+    "request": { "uri": "boards/standard" },
+    "response": {
+      "store": "standard_board",
+      "check": [{"condition": "json.name == 'standard'"}]
+    }
+  },
+
+  {
+    "comment": "lookup standard symbol set",
+    "request": { "uri": "alphabets/standard" },
+    "response": {
+      "store": "standard_symbols",
+      "check": [{"condition": "json.name == 'standard'"}]
+    }
+  },
+
+  {
+    "comment": "lookup standard letter distribution",
+    "request": { "uri": "alphabets/standard/distributions/standard" },
+    "response": {
+      "store": "standard_distribution",
+      "check": [{"condition": "json.name == 'standard'"}]
+    }
+  },
+
+  {
+    "comment": "lookup standard point system",
+    "request": { "uri": "alphabets/standard/pointSystems/standard" },
+    "response": {
+      "store": "standard_point_system",
+      "check": [{"condition": "json.name == 'standard'"}]
+    }
+  },
+
+  {
+    "comment": "login as superuser",
+    "include": "parts/login_superuser"
+  },
+
+  {
+    "comment": "create room",
+    "request": {
+      "uri": "rooms",
+      "method": "put",
+      "entity": {
+        "name": "new_room_@@@",
+        "settings": {
+          "board": { "name": "{{standard_board.name}}" },
+          "symbolSet": { "name": "{{standard_symbols.name}}" },
+          "symbolDistribution": { "name": "{{standard_distribution.name}}" },
+          "pointSystem": { "name": "{{standard_point_system.name}}" }
+        }
+      }
+    },
+    "response": {
+      "check": [{"condition": "json.name != null"}]
+    }
+  }
+]

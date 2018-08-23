@@ -133,7 +133,7 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
                 .setBoard(getStandardGameBoard())
                 .setSymbolSet(getStandardSymbolSet())
                 .setPointSystem(getStandardPointSystem())
-                .setDefaultDistribution(getStandardDistribution());
+                .setSymbolDistribution(getStandardDistribution());
 
         apiDocs.addNote("login as superuser");
         loginSuperuser();
