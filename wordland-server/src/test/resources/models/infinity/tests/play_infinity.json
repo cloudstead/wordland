@@ -47,11 +47,11 @@
       "store": "initial_board",
       "check": [
         {"condition": "json.x1 == 0"},
-        {"condition": "json.x2 == 9"},
+        {"condition": "json.x2 == 31"},
         {"condition": "json.y1 == 0"},
-        {"condition": "json.y2 == 9"},
-        {"condition": "json.tiles.length == 10"},
-        {"condition": "json.tiles[0].length == 10"},
+        {"condition": "json.y2 == 31"},
+        {"condition": "json.tiles.length == 32"},
+        {"condition": "json.tiles[0].length == 32"},
         {"condition": "json.tiles[0][0].unclaimed()"},
         {"condition": "json.tiles[0][1].unclaimed()"},
         {"condition": "json.tiles[0][2].unclaimed()"},
@@ -87,11 +87,25 @@
         {"condition": "json.tiles[10][9].symbol == initial_board.tiles[5][4].symbol"}
       ]
     }
-  }//,
-/*
-  {
-    "comment": "player 1 requests board state for zoomed-out area"
   },
+
+  {
+    "comment": "player 1 requests board state for large random area, server limits to 50x50",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/the_expanse/board?x1=-128&x2=109&y1=-132&y2=128"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.tiles.length == 50"},
+        {"condition": "json.tiles[0].length == 50"},
+        {"condition": "json.tiles[0][0].unclaimed()"},
+        {"condition": "json.tiles[0][1].unclaimed()"},
+        {"condition": "json.tiles[0][2].unclaimed()"},
+        {"condition": "json.tiles[49][49].unclaimed()"}
+      ]
+    }
+  }/*,
 
   {
     "comment": "player 1 plays word"

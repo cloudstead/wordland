@@ -24,6 +24,9 @@ public class ApiConstants {
     // this is the name of many standard objects.
     public static final String STANDARD = "standard";
 
+    // maximum number of rows/columns in a call to get board state
+    public static final int MAX_BOARD_VIEW = 50;
+
     public static String anonymousEmail() { return ANONYMOUS_EMAIL.replace("#STAMP#", randomAlphanumeric(10)+"-"+now()); }
 
     public static final String SYMBOL_SETS_ENDPOINT = "/alphabets";

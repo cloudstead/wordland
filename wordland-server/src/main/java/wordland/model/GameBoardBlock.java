@@ -11,7 +11,7 @@ import java.util.*;
 @NoArgsConstructor
 public class GameBoardBlock {
 
-    public static final int BLOCK_SIZE = 10;
+    public static final int BLOCK_SIZE = 32;
 
     @Getter @Setter private int blockX;
     @Getter @Setter private int blockY;
@@ -48,7 +48,7 @@ public class GameBoardBlock {
     }
 
     protected static int getNegativeKey(int index) {
-        int key = index / BLOCK_SIZE;
+        int key = (index+1) / BLOCK_SIZE;
         return key == 0 ? -1 : key - 1;
     }
 
@@ -65,12 +65,25 @@ public class GameBoardBlock {
             x += BLOCK_SIZE;
         }
         keys.add(getBlockKeyForTile(x2, y2));
+        keys.add(getBlockKeyForTile(x2, y1));
         return keys;
     }
 
-    @JsonIgnore public int getX1() { return blockX * BLOCK_SIZE; }
+    @JsonIgnore public int getX1() {
+        if (blockX < 0) {
+            return ((blockX+1) * BLOCK_SIZE) - BLOCK_SIZE;
+        } else {
+            return blockX * BLOCK_SIZE;
+        }
+    }
     @JsonIgnore public int getX2() { return getX1() + BLOCK_SIZE - 1; }
-    @JsonIgnore public int getY1() { return blockY * BLOCK_SIZE; }
+    @JsonIgnore public int getY1() {
+        if (blockY < 0) {
+            return ((blockY+1) * BLOCK_SIZE) - BLOCK_SIZE;
+        } else {
+            return blockY * BLOCK_SIZE;
+        }
+    }
     @JsonIgnore public int getY2() { return getY1() + BLOCK_SIZE - 1; }
 
     private void initialize(SymbolDistribution distribution) {

@@ -1,6 +1,9 @@
 package wordland.model.game;
 
+import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.daemon.Await;
+import org.cobbzilla.util.time.TimeUtil;
 import org.cobbzilla.wizard.validation.SimpleViolationException;
 import wordland.model.GameBoard;
 import wordland.model.GameBoardBlock;
@@ -8,11 +11,18 @@ import wordland.model.json.GameBoardSettings;
 import wordland.model.json.GameRoomSettings;
 import wordland.model.support.PlayedTile;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
+import static org.cobbzilla.util.daemon.DaemonThreadFactory.fixedPool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.time.TimeUtil.formatDuration;
+import static wordland.ApiConstants.MAX_BOARD_VIEW;
 import static wordland.model.GameBoardBlock.getBlockKeyForTile;
 
 @Slf4j
@@ -47,9 +57,15 @@ public class GameState {
             if (x1 < 0) x1 = 0;
             if (settings.getLength() > x2) x2 = settings.getLength();
         }
+        if (x2-x1 >= MAX_BOARD_VIEW) {
+            x2 = x1 + MAX_BOARD_VIEW - 1;
+        }
         if (settings.hasWidth()) {
             if (y1 < 0) y1 = 0;
             if (settings.getWidth() > y2) y2 = settings.getLength();
+        }
+        if (y2-y1 >= MAX_BOARD_VIEW) {
+            y2 = y1 + MAX_BOARD_VIEW - 1;
         }
 
         // determine applicable board blocks
@@ -66,13 +82,30 @@ public class GameState {
             }
         }
 
+        final long start = now();
         final GameTileState[][] tiles = new GameTileState[Math.abs(x2-x1)+1][Math.abs(y2-y1)+1];
+        final Collection<Future<?>> futures = new ArrayList<>();
+        @Cleanup("shutdownNow") final ExecutorService pool = fixedPool(100);
+        final int X1 = x1;
+        final int Y1 = y1;
         for (int x=0; x<tiles.length; x++) {
             for (int y=0; y<tiles[x].length; y++) {
-                final String blockKeyForTile = getBlockKeyForTile(x1 + x, y1 + y);
-                tiles[x][y] = blockMap.get(blockKeyForTile).getAbsoluteTile(x1 + x, y1 + y);
+                final int thisX = x;
+                final int thisY = y;
+                futures.add(pool.submit(() -> {
+                    final String blockKeyForTile = getBlockKeyForTile(X1 + thisX, Y1 + thisY);
+                    final GameBoardBlock block = blockMap.get(blockKeyForTile);
+                    if (block == null) {
+                        log.error("getBoard: no block found for key: "+blockKeyForTile);
+                    } else {
+                        tiles[thisX][thisY] = block.getAbsoluteTile(X1 + thisX, Y1 + thisY);
+                    }
+                }));
             }
         }
+        Await.awaitAll(futures, 10*TimeUtil.SECOND);
+        final String duration = formatDuration(now() - start);
+        log.info("mapping of blocks took "+ duration);
 
         return boardState.setTiles(tiles);
     }
