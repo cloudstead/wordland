@@ -22,7 +22,7 @@ public class GamePlayer {
     }
 
     public GamePlayer(Account account, GameRoomJoinRequest request) {
-        this.id = request.getClientId();
+        this.id = request.hasClientId() ? request.getClientId() : newStrongUuid();
         this.apiKey = newStrongUuid();
         this.account = account == null ? uuid() : account.getUuid();
         this.name = request.hasName() ? request.getName() : randomName();

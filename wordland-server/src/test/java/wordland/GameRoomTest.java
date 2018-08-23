@@ -1,18 +1,14 @@
 package wordland;
 
-import org.cobbzilla.util.http.HttpStatusCodes;
+import org.cobbzilla.util.javascript.StandardJsEngine;
+import org.cobbzilla.wizard.client.script.ApiRunner;
+import org.cobbzilla.wizard.model.entityconfig.ModelSetup;
 import org.junit.Test;
 import wordland.model.*;
-import wordland.model.game.GamePlayer;
 import wordland.model.json.GameRoomSettings;
-import wordland.model.support.GameRoomJoinRequest;
 
-import static org.junit.Assert.assertEquals;
+import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static wordland.ApiConstants.EP_JOIN;
-import static wordland.ApiConstants.EP_QUIT;
-import static wordland.ApiConstants.GAME_ROOMS_ENDPOINT;
 
 public class GameRoomTest extends ApiClientTestBase {
 
@@ -48,22 +44,26 @@ public class GameRoomTest extends ApiClientTestBase {
     }
 
     @Test public void testJoinRoomAndPlay () throws Exception {
+
+        loginSuperuser();
+        ModelSetup.setupModel(getApi(), ApiConstants.ENTITY_CONFIGS_ENDPOINT, "models/electrotype/", "manifest", null, "testRun");
+        logout();
+
         apiDocs.startRecording(DOC_TARGET, "join a game room and play a few moves, then leave");
-        final GameRoom room = findOrCreateStandardRoom();
-        assertNotNull(room);
+        new ApiRunner(new StandardJsEngine(), getApi(), null, null).run(stream2string("models/electrotype/tests/join_and_play.json"));
 
-        apiDocs.addNote("list available rooms");
-        final GameRoom[] rooms = get(GAME_ROOMS_ENDPOINT, GameRoom[].class);
-        assertTrue(rooms.length > 0);
-
-        apiDocs.addNote("join game");
-        final GameRoomJoinRequest joinRequest = new GameRoomJoinRequest();
-        final GamePlayer player = post(STANDARD_ROOM_URI+EP_JOIN, joinRequest, GamePlayer.class);
-        assertNotNull(player);
-        assertNotNull(player.getName());
-
-        apiDocs.addNote("quit game");
-        assertEquals(HttpStatusCodes.OK, doPost(STANDARD_ROOM_URI+EP_QUIT, player.getId()).status);
+//        apiDocs.addNote("list available rooms");
+//        final GameRoom[] rooms = get(GAME_ROOMS_ENDPOINT, GameRoom[].class);
+//        assertTrue(rooms.length > 0);
+//
+//        apiDocs.addNote("join game");
+//        final GameRoomJoinRequest joinRequest = new GameRoomJoinRequest();
+//        final GamePlayer player = post(STANDARD_ROOM_URI+EP_JOIN, joinRequest, GamePlayer.class);
+//        assertNotNull(player);
+//        assertNotNull(player.getName());
+//
+//        apiDocs.addNote("quit game");
+//        assertEquals(HttpStatusCodes.OK, doPost(STANDARD_ROOM_URI+EP_QUIT, player.getId()).status);
     }
 
 }

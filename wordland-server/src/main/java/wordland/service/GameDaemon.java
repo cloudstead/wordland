@@ -12,6 +12,7 @@ import wordland.model.game.GameStateStorageService;
 import wordland.model.support.PlayedTile;
 import wordland.server.WordlandConfiguration;
 
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -46,6 +47,10 @@ public class GameDaemon extends SimpleDaemon {
         // todo: check for players who have timed-out, remove them from the game
     }
 
+    protected Future<Object> broadcast(GameStateChange stateChange) {
+        return eventService == null ? null : eventService.getBroadcaster().broadcast(stateChange);
+    }
+
     public GameDaemon startGame() {
         if (gameState.get() != null) {
             log.warn("startGame: game already started: "+room.getName());
@@ -61,7 +66,7 @@ public class GameDaemon extends SimpleDaemon {
         synchronized (gameState) {
             stateChange = gameState.get().addPlayer(player).setRoom(room.getName());
         }
-        eventService.getBroadcaster().broadcast(stateChange);
+        broadcast(stateChange);
     }
 
     public GamePlayer findPlayer(GamePlayer player) {
@@ -77,7 +82,7 @@ public class GameDaemon extends SimpleDaemon {
         synchronized (gameState) {
             stateChange = gameState.get().removePlayer(id);
         }
-        eventService.getBroadcaster().broadcast(stateChange);
+        broadcast(stateChange);
     }
 
     public GameStateChange playWord(GamePlayer player, String word, PlayedTile[] tiles) {
@@ -86,7 +91,7 @@ public class GameDaemon extends SimpleDaemon {
             stateChange = gameState.get().playWord(player, word, tiles);
         }
         if (stateChange != null) {
-            eventService.getBroadcaster().broadcast(stateChange);
+            broadcast(stateChange);
         }
         return stateChange;
     }

@@ -5,6 +5,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.wizard.model.NamedIdentityBase;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
+import org.cobbzilla.wizard.model.entityconfig.annotations.ECTypeURIs;
 import org.hibernate.annotations.Type;
 import wordland.model.game.GameState;
 import wordland.model.game.GameStateStorageService;
@@ -13,6 +15,10 @@ import wordland.model.json.GameRoomSettings;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 
+import static wordland.ApiConstants.GAME_ROOMS_ENDPOINT;
+
+@ECType(root=true)
+@ECTypeURIs(baseURI=GAME_ROOMS_ENDPOINT)
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class GameRoom extends NamedIdentityBase {
 

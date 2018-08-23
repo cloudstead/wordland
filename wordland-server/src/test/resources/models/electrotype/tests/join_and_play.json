@@ -1,0 +1,36 @@
+[
+  {
+    "comment": "list available rooms",
+    "request": { "uri": "rooms" },
+    "response": {
+      "store": "rooms",
+      "check": [
+        {"condition": "json.length > 0"}
+      ]
+    }
+  },
+
+  {
+    "comment": "join room",
+    "request": {
+      "uri": "rooms/{{rooms.0.name}}/join",
+      "entity": {
+        "name": "Joe Smith"
+      }
+    },
+    "response": {
+      "store": "player",
+      "sessionName": "player1",
+      "session": "apiKey",
+      "check": [
+        {"condition": "json.name == 'Joe Smith'"},
+        {"condition": "json.id != null"}
+      ]
+    }
+  },
+
+  {
+    "comment": "quit game",
+    "request": { "uri": "rooms/standard/quit" }
+  }
+]
