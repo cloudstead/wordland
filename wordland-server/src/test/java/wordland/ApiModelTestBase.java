@@ -1,14 +1,10 @@
 package wordland;
 
 import org.cobbzilla.util.javascript.StandardJsEngine;
-import org.cobbzilla.wizard.client.script.ApiRunner;
-import org.cobbzilla.wizard.client.script.ApiScriptIncludeClasspathHandler;
-import org.cobbzilla.wizard.client.script.ApiScriptIncludeHandler;
+import org.cobbzilla.wizard.client.script.*;
 import org.cobbzilla.wizard.model.entityconfig.ModelSetup;
 import org.cobbzilla.wizard.server.RestServer;
 import wordland.server.WordlandConfiguration;
-
-import java.util.Map;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
@@ -35,13 +31,8 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
     private final ApiScriptIncludeHandler includeHandler = new ApiScriptIncludeClasspathHandler().setIncludePrefix(getModelPrefix()+"/tests");
 
     protected void runScript (String scriptName) throws Exception {
-        new ApiRunner(new StandardJsEngine(), getApi(), null, includeHandler) {
-            @Override public Map<String, Object> getContext() {
-                final Map<String, Object> ctx = super.getContext();
-                try { ctx.putAll(getServerEnvironment()); } catch (Exception e) { return die("getContext: "+e, e); }
-                return ctx;
-            }
-        }.run(stream2string(getModelPrefix()+"/tests/"+scriptName+".json"));
+        new ApiRunnerWithEnv(getApi(), new StandardJsEngine(), null, includeHandler, getServerEnvironment())
+                .run(stream2string(getModelPrefix()+"/tests/"+scriptName+".json"));
     }
 
 }
