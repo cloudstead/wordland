@@ -18,10 +18,13 @@ import org.cobbzilla.wizard.asset.AssetStorageConfiguration;
 import org.cobbzilla.wizard.asset.AssetStorageService;
 import org.cobbzilla.wizard.cache.redis.HasRedisConfiguration;
 import org.cobbzilla.wizard.cache.redis.RedisConfiguration;
+import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.dao.DAO;
 import org.cobbzilla.wizard.server.config.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import wordland.model.game.GameStateStorageService;
+import wordland.service.state.RedisGameStateStorageService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,6 +50,15 @@ public class WordlandConfiguration extends RestServerConfiguration
         if (redis == null) redis = new RedisConfiguration();
         if (empty(redis.getPrefix())) redis.setPrefix("wordland");
         return redis;
+    }
+
+    private final Map<String, GameStateStorageService> cachedStorageServices = new HashMap<>();
+    public GameStateStorageService getGameStateStorage(String roomName) {
+        final RedisService redis = getBean(RedisService.class);
+        synchronized (cachedStorageServices) {
+            return cachedStorageServices.computeIfAbsent(roomName,
+                    (name) -> new RedisGameStateStorageService(redis, getServerName() + "/rooms/" + name));
+        }
     }
 
     @Getter @Setter private int atmospherePort = 9099;

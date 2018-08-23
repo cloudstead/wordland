@@ -4,9 +4,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.collection.ArrayUtil;
+import org.cobbzilla.util.collection.NameAndValue;
 
-import java.util.ArrayList;
-import java.util.List;
+import static org.cobbzilla.util.json.JsonUtil.json;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class GameNotification {
@@ -14,7 +15,7 @@ public class GameNotification {
     @Getter @Setter private GameNotificationType notification;
     @Getter @Setter private String messageKey;
     @Getter @Setter private String message;
-    @Getter @Setter private List<String> params;
+    @Getter @Setter private NameAndValue[] params;
 
     public GameNotification(GameNotificationType notificationType, String messageKey, String message) {
         this.notification = notificationType;
@@ -22,14 +23,25 @@ public class GameNotification {
         this.message = message;
     }
 
-    public GameNotification addParam (String param) {
-        if (params == null) params = new ArrayList<>();
-        params.add(param);
+    public GameNotification addParam (String name, String value) {
+        if (params == null) {
+            params = new NameAndValue[1];
+            params[0] = new NameAndValue(name, value);
+        } else {
+            params = ArrayUtil.append(params, new NameAndValue(name, value));
+        }
         return this;
     }
 
     public static GameNotification invalidWord(String word) {
-        return new GameNotification(GameNotificationType.invalid_word, "err.word.invalid", "sorry, that's not a valid word").addParam(word);
+        return new GameNotification(GameNotificationType.invalid_word, "err.word.invalid", "sorry, that's not a valid word")
+                .addParam("word", word);
+    }
+
+    public static GameNotification sparseWord(String word, int max, PlayedTile farTile) {
+        return new GameNotification(GameNotificationType.sparse_word, "err.word.sparse", "letters must be no farther than "+max+"letters apart in all directions")
+                .addParam("word", word)
+                .addParam("tile", json(farTile));
     }
 
 }

@@ -32,21 +32,7 @@ public class GamesMaster {
         if (rooms.containsKey(room.getName())) throw invalidEx("err.room.alreadyExists");
         final GameDaemon gameDaemon = newGameDaemon(room);
         rooms.put(room.getName(), gameDaemon);
-        gameDaemon.startGame(room.randomizeTiles());
-    }
-
-    public void initRoom(GameRoom room) {
-        if (!rooms.containsKey(room.getName())) {
-            final GameDaemon gameDaemon = newGameDaemon(room);
-            rooms.put(room.getName(), gameDaemon);
-            boolean restored = false;
-            try {
-                restored = gameDaemon.restore();
-            } catch (Exception e) {
-                log.warn("initRoom: error restoring (starting fresh instead): "+e, e);
-            }
-            if (!restored) gameDaemon.startGame(room.randomizeTiles());
-        }
+        gameDaemon.startGame();
     }
 
     protected GameDaemon newGameDaemon(GameRoom room) {
@@ -86,11 +72,6 @@ public class GamesMaster {
     public GameStateChange playWord(String roomName, GamePlayer player, String word, PlayedTile[] tiles) {
         final GameDaemon daemon = getGameDaemon(roomName, false);
         return daemon != null ? daemon.playWord(player, word, tiles) : null;
-    }
-
-    public boolean isValidWord(String roomName, String word) {
-        final GameDaemon daemon = getGameDaemon(roomName, false);
-        return daemon != null && daemon.isValidWord(word);
     }
 
     public GameRoom findRoom (String roomName) {

@@ -17,7 +17,12 @@ public class GameRoomSettings {
     @Getter @Setter private GameBoard board;
     @Getter @Setter private GameDictionary dictionary;
 
-    @Getter @Setter private boolean teamPlay = false;
+    @Getter @Setter private TeamPlayMode teamPlayMode;
     @Getter @Setter private int maxPlayers = 100;
+    @Getter @Setter private Integer maxLetterDistance = 4;
+    public boolean hasMaxLetterDistance () { return maxLetterDistance != null; }
+
+    @Getter @Setter private MissedTurnPolicy missedTurnPolicy;
+    @Getter @Setter private String[] allowedBonuses;
 
 }

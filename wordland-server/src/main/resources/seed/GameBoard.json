@@ -49,23 +49,17 @@
     }
   },
   {
-    "name": "infinite",
-    "settings": {
-      "length": -1,
-      "width": -1
-    }
+    "name": "infinity"
   },
   {
     "name": "roadie",
     "settings": {
-      "length": -1,
       "width": 20
     }
   },
   {
     "name": "hallway",
     "settings": {
-      "length": -1,
       "width": 5
     }
   }

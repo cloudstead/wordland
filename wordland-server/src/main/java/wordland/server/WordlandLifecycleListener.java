@@ -112,7 +112,7 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
         }
 
         final GamesMaster gamesMaster = configuration.getBean(GamesMaster.class);
-        for (GameRoom room : rooms) gamesMaster.initRoom(room);
+        for (GameRoom room : rooms) gamesMaster.newRoom(room);
         super.onStart(server);
     }
 
