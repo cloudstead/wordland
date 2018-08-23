@@ -42,8 +42,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                             @PathParam("name") String room,
                             @Valid GameRoom gameRoom) {
         final Account account = userPrincipal(ctx);
-        gamesMaster.newRoom(gameRoom);
-        return ok(gameRoom);
+        return super.create(ctx, gameRoom);
     }
 
     @POST @Path("/{name}"+EP_JOIN)

@@ -24,13 +24,6 @@ public class ApiConstants {
     // this is the name of many standard objects.
     public static final String STANDARD = "standard";
 
-    // board names
-    public static final String ELECTRO = "electrotype"; // 5x5 max 2 players
-    public static final String WORDLANDIO = "wordlandio"; // 20x20 max 8 players
-    public static final String BIG = "big";
-    public static final String LARGE = "large";
-    public static final String HUGE = "huge";
-
     public static String anonymousEmail() { return ANONYMOUS_EMAIL.replace("#STAMP#", randomAlphanumeric(10)+"-"+now()); }
 
     public static final String SYMBOL_SETS_ENDPOINT = "/alphabets";

@@ -1,18 +1,16 @@
 package wordland;
 
-import org.cobbzilla.util.javascript.StandardJsEngine;
-import org.cobbzilla.wizard.client.script.ApiRunner;
-import org.cobbzilla.wizard.model.entityconfig.ModelSetup;
 import org.junit.Test;
 import wordland.model.*;
 import wordland.model.json.GameRoomSettings;
 
-import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.junit.Assert.assertNotNull;
 
-public class GameRoomTest extends ApiClientTestBase {
+public class GameRoomTest extends ApiModelTestBase {
 
     public static final String DOC_TARGET = "Games";
+
+    @Override public String getModelPrefix() { return "models/electrotype"; }
 
     @Test public void testCreateGameRoom () throws Exception {
         apiDocs.startRecording(DOC_TARGET, "create a game room with standard rules");
@@ -44,26 +42,8 @@ public class GameRoomTest extends ApiClientTestBase {
     }
 
     @Test public void testJoinRoomAndPlay () throws Exception {
-
-        loginSuperuser();
-        ModelSetup.setupModel(getApi(), ApiConstants.ENTITY_CONFIGS_ENDPOINT, "models/electrotype/", "manifest", null, "testRun");
-        logout();
-
         apiDocs.startRecording(DOC_TARGET, "join a game room and play a few moves, then leave");
-        new ApiRunner(new StandardJsEngine(), getApi(), null, null).run(stream2string("models/electrotype/tests/join_and_play.json"));
-
-//        apiDocs.addNote("list available rooms");
-//        final GameRoom[] rooms = get(GAME_ROOMS_ENDPOINT, GameRoom[].class);
-//        assertTrue(rooms.length > 0);
-//
-//        apiDocs.addNote("join game");
-//        final GameRoomJoinRequest joinRequest = new GameRoomJoinRequest();
-//        final GamePlayer player = post(STANDARD_ROOM_URI+EP_JOIN, joinRequest, GamePlayer.class);
-//        assertNotNull(player);
-//        assertNotNull(player.getName());
-//
-//        apiDocs.addNote("quit game");
-//        assertEquals(HttpStatusCodes.OK, doPost(STANDARD_ROOM_URI+EP_QUIT, player.getId()).status);
+        runScript("join_and_play");
     }
 
 }
