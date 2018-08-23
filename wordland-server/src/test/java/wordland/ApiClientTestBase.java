@@ -44,6 +44,11 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
 
     public boolean seedTestData() { return true; }
 
+    @Override public void beforeStart(RestServer<WordlandConfiguration> server) {
+        super.beforeStart(server);
+        server.getConfiguration().getRedis().setKey(null); // disable redis encryption in tests
+    }
+
     @Override public void onStart(RestServer<WordlandConfiguration> server) {
         // disable captcha for tests
         final WordlandConfiguration config = server.getConfiguration();

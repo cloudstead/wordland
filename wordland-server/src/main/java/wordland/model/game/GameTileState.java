@@ -13,5 +13,21 @@ public class GameTileState {
     @Getter @Setter private String symbol;
     @Getter @Setter private String owner;
     public boolean hasOwner () { return owner != null; }
+    public boolean unclaimed () { return !hasOwner(); }
 
+    public static String grid (GameTileState[][] tiles) {
+        final StringBuilder b = new StringBuilder();
+        for (GameTileState[] row : tiles) {
+            final StringBuilder rowVal = new StringBuilder();
+            for (GameTileState tile : row) {
+                if (rowVal.length() > 0) {
+                    rowVal.append(" | ");
+                }
+                rowVal.append(tile.getSymbol());
+            }
+            if (b.length() > 0) b.append("\n");
+            b.append(rowVal);
+        }
+        return b.toString();
+    }
 }

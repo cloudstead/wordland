@@ -53,7 +53,9 @@ jersey:
    - org.cobbzilla.wizard.filters
    - org.cobbzilla.wizard.exceptionmappers
   requestFilters: [ wordland.auth.WordlandAuthFilter ]
-  responseFilters: [ org.cobbzilla.wizard.filters.ScrubbableScrubber ]
+  responseFilters:
+   - org.cobbzilla.wizard.filters.ScrubbableScrubber
+   - org.cobbzilla.wizard.filters.EntityTypeHeaderFilter
 
 emailTemplateRoot: {{EMAIL_TEMPLATE_ROOT}}
 

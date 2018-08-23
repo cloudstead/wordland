@@ -8,15 +8,18 @@ import java.util.Collection;
 
 public interface GameStateStorageService {
 
+    long getVersion();
+
     GamePlayer getPlayer(String id);
     int getPlayerCount();
     GameStateChange addPlayer(GamePlayer player);
     GameStateChange removePlayer(String id);
 
     GameBoardBlock getBlock(String blockKey);
-    GameBoardBlock newBlock(String blockKey, SymbolDistribution distribution);
+    GameBoardBlock getBlockOrCreate(String blockKey, SymbolDistribution distribution);
 
     GameStateChange playWord(GamePlayer player,
                              Collection<GameBoardBlock> blocks,
                              PlayedTile[] tiles);
+
 }

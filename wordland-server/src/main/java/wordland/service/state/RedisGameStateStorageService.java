@@ -50,7 +50,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         return nextState(playerLeft(nextVersion(), id));
     }
 
-    @Override public synchronized GameBoardBlock newBlock(String blockKey, SymbolDistribution distribution) {
+    @Override public synchronized GameBoardBlock getBlockOrCreate(String blockKey, SymbolDistribution distribution) {
         GameBoardBlock block = getBlock(blockKey);
         if (block == null) {
             block = new GameBoardBlock(blockKey, distribution);
@@ -69,6 +69,11 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     @Override public synchronized GameBoardBlock getBlock(String blockKey) {
         final String json = redis.get(K_BLOCKS + "/" + blockKey);
         return json == null ? null : json(json, GameBoardBlock.class);
+    }
+
+    @Override public long getVersion() {
+        final Long value = redis.counterValue(K_VERSION);
+        return value == null ? 0L : value;
     }
 
     protected Long nextVersion() { return redis.incr(K_VERSION); }

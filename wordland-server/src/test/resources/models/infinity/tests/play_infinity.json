@@ -1,0 +1,111 @@
+[
+  {
+    "comment": "join infinity board as player1",
+    "request": {
+      "uri": "rooms/the_expanse/join",
+      "entity": {
+        "name": "player1"
+      }
+    },
+    "response": {
+      "store": "player",
+      "sessionName": "player1",
+      "session": "apiKey",
+      "check": [
+        {"condition": "json.name == 'player1'"},
+        {"condition": "json.id != null"}
+      ]
+    }
+  },
+
+  {
+    "comment": "join infinity board as player2",
+    "request": {
+      "uri": "rooms/the_expanse/join",
+      "entity": {
+        "name": "player2"
+      }
+    },
+    "response": {
+      "store": "player",
+      "sessionName": "player2",
+      "session": "apiKey",
+      "check": [
+        {"condition": "json.name == 'player2'"},
+        {"condition": "json.id != null"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player 1 requests initial board state",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/the_expanse/board"
+    },
+    "response": {
+      "store": "initial_board",
+      "check": [
+        {"condition": "json.x1 == 0"},
+        {"condition": "json.x2 == 9"},
+        {"condition": "json.y1 == 0"},
+        {"condition": "json.y2 == 9"},
+        {"condition": "json.tiles.length == 10"},
+        {"condition": "json.tiles[0].length == 10"},
+        {"condition": "json.tiles[0][0].unclaimed()"},
+        {"condition": "json.tiles[0][1].unclaimed()"},
+        {"condition": "json.tiles[0][2].unclaimed()"},
+        {"condition": "json.tiles[2][0].unclaimed()"},
+        {"condition": "json.tiles[3][0].unclaimed()"},
+        {"condition": "json.tiles[4][5].unclaimed()"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player 1 requests board state, requires 4 game state blocks",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/the_expanse/board?x1=-5&x2=5&y1=-5&y2=5"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.x1 == -5"},
+        {"condition": "json.x2 == 5"},
+        {"condition": "json.y1 == -5"},
+        {"condition": "json.y2 == 5"},
+        {"condition": "json.tiles.length == 11"},
+        {"condition": "json.tiles[0].length == 11"},
+        {"condition": "json.tiles[0][0].unclaimed()"},
+        {"condition": "json.tiles[0][1].unclaimed()"},
+        {"condition": "json.tiles[0][2].unclaimed()"},
+        {"condition": "json.tiles[2][0].unclaimed()"},
+        {"condition": "json.tiles[3][0].unclaimed()"},
+        // ensure alignment with view of initial board state
+        {"condition": "json.tiles[5][5].symbol == initial_board.tiles[0][0].symbol"},
+        {"condition": "json.tiles[10][10].symbol == initial_board.tiles[5][5].symbol"},
+        {"condition": "json.tiles[10][9].symbol == initial_board.tiles[5][4].symbol"}
+      ]
+    }
+  }//,
+/*
+  {
+    "comment": "player 1 requests board state for zoomed-out area"
+  },
+
+  {
+    "comment": "player 1 plays word"
+  },
+
+  {
+    "comment": "player 2 plays word"
+  },
+
+  {
+    "comment": "player 1 requests more board state, verify updates"
+  },
+
+  {
+    "comment": "restart server, player 1 requests board state, verify API call succeeds and all plays are there"
+  }*/
+]

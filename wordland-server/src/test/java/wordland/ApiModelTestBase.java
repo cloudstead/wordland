@@ -18,7 +18,7 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
         try {
             setupModel();
         } catch (Exception e) {
-            die("onStart: error calling setup: "+e, e);
+            die("onStart: setupModel: "+e, e);
         }
     }
 
@@ -28,7 +28,9 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
         logout();
     }
 
-    private final ApiScriptIncludeHandler includeHandler = new ApiScriptIncludeClasspathHandler().setIncludePrefix(getModelPrefix()+"/tests");
+    private final ApiScriptIncludeHandler includeHandler = new ApiScriptIncludeClasspathHandler()
+            .setIncludePrefix(getModelPrefix()+"/tests")
+            .setCommonPath("models/");
 
     protected void runScript (String scriptName) throws Exception {
         new ApiRunnerWithEnv(getApi(), new StandardJsEngine(), null, includeHandler, getServerEnvironment())

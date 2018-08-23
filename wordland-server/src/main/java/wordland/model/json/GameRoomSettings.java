@@ -4,8 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.wizard.model.json.JSONBUserType;
-import wordland.ApiConstants;
 import wordland.model.*;
+
+import static wordland.ApiConstants.STANDARD;
 
 @Accessors(chain=true)
 public class GameRoomSettings {
@@ -27,22 +28,22 @@ public class GameRoomSettings {
     @Getter @Setter private BonusPolicy[] bonusPolicies;
 
     public String symbolSetName() {
-        return symbolSet != null && symbolSet.getName() != null ? symbolSet.getName() : ApiConstants.STANDARD;
+        return symbolSet != null && symbolSet.getName() != null ? symbolSet.getName() : STANDARD;
     }
 
     public String symbolDistributionName() {
-        return symbolDistribution != null && symbolDistribution.getName() != null ? symbolDistribution.getName() : ApiConstants.STANDARD;
+        return symbolDistribution != null && symbolDistribution.getName() != null ? symbolDistribution.getName() : STANDARD;
     }
 
     public String pointSystemName() {
-        return pointSystem != null && pointSystem.getName() != null ? pointSystem.getName() : ApiConstants.STANDARD;
+        return pointSystem != null && pointSystem.getName() != null ? pointSystem.getName() : STANDARD;
     }
 
     public String dictionaryName() {
-        return dictionary != null && dictionary.getName() != null ? dictionary.getName() : ApiConstants.STANDARD;
+        return dictionary != null && dictionary.getName() != null ? dictionary.getName() : STANDARD;
     }
 
     public String boardName() {
-        return board != null && board.getName() != null ? board.getName() : ApiConstants.STANDARD;
+        return board != null && board.getName() != null ? board.getName() : STANDARD;
     }
 }

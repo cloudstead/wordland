@@ -73,7 +73,7 @@ public class AccountsResource extends AuthResourceBase<Account> {
 
         try {
             request.setUserAgent(ctx.getRequest().getHeaderValue(USER_AGENT));
-            Account account = accountDAO.authenticate(request);
+            final Account account = accountDAO.authenticate(request);
             return account != null ? ok(startSession(account)) : notFound(request.getName());
 
         } catch (AuthenticationException e) {

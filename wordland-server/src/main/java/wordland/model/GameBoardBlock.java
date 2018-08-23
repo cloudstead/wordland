@@ -2,11 +2,13 @@ package wordland.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import wordland.model.game.GameTileState;
 
 import java.util.*;
 
+@NoArgsConstructor
 public class GameBoardBlock {
 
     public static final int BLOCK_SIZE = 10;
@@ -36,33 +38,40 @@ public class GameBoardBlock {
 
     public static String getBlockKey (int blockX, int blockY) {
         return (blockX / 1000) + "/" + (blockX % 1000) + "/" +
-               (blockY / 1000) + "/" + (blockY % 1000);
+                (blockY / 1000) + "/" + (blockY % 1000);
     }
 
     public static String getBlockKeyForTile (int x, int y) {
-        return getBlockKey(x/BLOCK_SIZE, y/BLOCK_SIZE);
+        int blockX = x<0 ? getNegativeKey(x) : x/BLOCK_SIZE;
+        int blockY = y<0 ? getNegativeKey(y) : y/BLOCK_SIZE;
+        return getBlockKey(blockX, blockY);
+    }
+
+    protected static int getNegativeKey(int index) {
+        int key = index / BLOCK_SIZE;
+        return key == 0 ? -1 : key - 1;
     }
 
     public static Collection<String> getBlockKeys(int x1, int x2, int y1, int y2) {
         final Set<String> keys = new HashSet<>();
         int x = x1;
-        int y = y1;
         while (x <= x2) {
+            int y = y1;
             while (y <= y2) {
-                keys.add(getBlockKey(x, y));
+                keys.add(getBlockKeyForTile(x, y));
                 y += BLOCK_SIZE;
             }
-            keys.add(getBlockKey(x, y2));
+            keys.add(getBlockKeyForTile(x, y2));
             x += BLOCK_SIZE;
         }
-        keys.add(getBlockKey(x2, y2));
+        keys.add(getBlockKeyForTile(x2, y2));
         return keys;
     }
 
     @JsonIgnore public int getX1() { return blockX * BLOCK_SIZE; }
-    @JsonIgnore public int getX2() { return getX1() + BLOCK_SIZE; }
+    @JsonIgnore public int getX2() { return getX1() + BLOCK_SIZE - 1; }
     @JsonIgnore public int getY1() { return blockY * BLOCK_SIZE; }
-    @JsonIgnore public int getY2() { return getY1() + BLOCK_SIZE; }
+    @JsonIgnore public int getY2() { return getY1() + BLOCK_SIZE - 1; }
 
     private void initialize(SymbolDistribution distribution) {
         final Iterator<String> picker =  distribution.getSettings().getPicker();
@@ -70,13 +79,16 @@ public class GameBoardBlock {
         final int x2 = getX2();
         final int y1 = getY1();
         final int y2 = getY2();
-        for (int x=0; x<(x2-x1); x++) {
-            for (int y=0; y<(y2-y1); y++) {
-                tiles[x1+x][y1+y] = new GameTileState().setSymbol(picker.next());
+        tiles = new GameTileState[Math.abs(x2-x1)+1][Math.abs(y2-y1)+1];
+        for (int x=0; x<tiles.length; x++) {
+            for (int y=0; y<tiles[x].length; y++) {
+                tiles[x][y] = new GameTileState().setSymbol(picker.next());
             }
         }
     }
 
-    public GameTileState getAbsoluteTile(int x, int y) { return tiles[x - getX1()][y - getY1()]; }
+    public GameTileState getAbsoluteTile(int x, int y) {
+        return tiles[x - getX1()][y - getY1()];
+    }
 
 }

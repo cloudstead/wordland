@@ -38,7 +38,7 @@ public class GameState {
         return stateStorage.removePlayer(id);
     }
 
-    public GameTileState[][] getBoard(int x1, int x2, int y1, int y2) {
+    public GameBoardState getBoard(int x1, int x2, int y1, int y2) {
 
         final GameBoard board = roomSettings.getBoard();
         final GameBoardSettings settings = board.getSettings();
@@ -57,20 +57,24 @@ public class GameState {
 
         // fetch blocks, initialize as needed
         final Map<String,  GameBoardBlock> blockMap = new HashMap<>();
-        for (String blockKey : blockKeys) {
-            final GameBoardBlock block = stateStorage.newBlock(blockKey, roomSettings.getSymbolDistribution());
-            blockMap.put(block.getBlockKey(), block);
-        }
-
-        final GameTileState[][] tiles = new GameTileState[x2-x1][y2-y1];
-        for (int x=x1; x<x2; x++) {
-            for (int y=y1; y<y2; y++) {
-                final GameBoardBlock block = blockMap.get(getBlockKeyForTile(x, y));
-                tiles[x-x1][y-y1] = block.getTiles()[x][y];
+        final GameBoardState boardState;
+        synchronized (stateStorage) {
+            boardState = new GameBoardState(stateStorage.getVersion(), x1, x2, y1, y2);
+            for (String blockKey : blockKeys) {
+                final GameBoardBlock block = stateStorage.getBlockOrCreate(blockKey, roomSettings.getSymbolDistribution());
+                blockMap.put(block.getBlockKey(), block);
             }
         }
 
-        return tiles;
+        final GameTileState[][] tiles = new GameTileState[Math.abs(x2-x1)+1][Math.abs(y2-y1)+1];
+        for (int x=0; x<tiles.length; x++) {
+            for (int y=0; y<tiles[x].length; y++) {
+                final String blockKeyForTile = getBlockKeyForTile(x1 + x, y1 + y);
+                tiles[x][y] = blockMap.get(blockKeyForTile).getAbsoluteTile(x1 + x, y1 + y);
+            }
+        }
+
+        return boardState.setTiles(tiles);
     }
 
     public GameStateChange playWord(GamePlayer player, String word, PlayedTile[] tiles) {
