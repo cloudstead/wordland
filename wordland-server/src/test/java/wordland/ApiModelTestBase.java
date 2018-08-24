@@ -1,31 +1,39 @@
 package wordland;
 
+import org.apache.commons.io.IOUtils;
+import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.javascript.StandardJsEngine;
 import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.client.script.*;
 import org.cobbzilla.wizard.model.entityconfig.ModelSetup;
 import org.cobbzilla.wizard.server.RestServer;
+import org.cobbzilla.wizard.util.RestResponse;
 import org.junit.Before;
 import wordland.dao.GameDictionaryDAO;
 import wordland.model.GameDictionary;
 import wordland.model.game.GameBoardState;
+import wordland.model.game.GameBoardView;
 import wordland.model.game.GameTileState;
 import wordland.model.game.GameTileStateExtended;
 import wordland.model.support.GameRuntimeEvent;
 import wordland.server.WordlandConfiguration;
 
+import java.io.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.io.FileUtil.mkdirOrDie;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
+import static org.cobbzilla.util.json.JsonUtil.json;
 
 public abstract class ApiModelTestBase extends ApiClientTestBase {
 
     public static final String FIND_WORD_AND_TILES = "find-word-and-tiles";
+    public static final String SAVE_BOARD_VIEW = "save-board-view";
 
     public abstract String getModelPrefix();
 
@@ -62,7 +70,7 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                 if (script.hasBefore()) {
                     final String before = script.getBefore();
                     if (before.startsWith(FIND_WORD_AND_TILES)) {
-                        List<String> parts = StringUtil.splitAndTrim(before, " ");
+                        final List<String> parts = StringUtil.splitAndTrim(before, " ");
                         final String tilesVar = parts.get(1);
                         final String playVar = parts.size() > 2 ? parts.get(2) : "play";
 
@@ -84,7 +92,7 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                             }
                             if (vowelTile != null) break;
                         }
-                        if (vowelTile == null) die("before: "+FIND_WORD_AND_TILES+": no vowels found!");
+                        if (vowelTile == null) die("beforeCall: "+FIND_WORD_AND_TILES+": no vowels found!");
 
                         // searching around the vowel, get all letters within 3 spaces
                         for (int[][] search : ApiConstants.CIRCULAR_SEARCHES) {
@@ -99,6 +107,26 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                         }
                     }
 
+                }
+            }
+
+            @Override public void afterCall(ApiScript script, Map<String, Object> ctx, RestResponse response) {
+                super.afterCall(script, ctx, response);
+                if (script.hasAfter()) {
+                    final String after = script.getAfter();
+                    if (after.startsWith(SAVE_BOARD_VIEW)) {
+                        final String outFilePath = HandlebarsUtil.apply(getConfiguration().getHandlebars(), after.substring(SAVE_BOARD_VIEW.length()+1), ctx);
+                        final File outFile = new File(outFilePath.trim());
+                        final GameBoardView boardView = json(response.json, GameBoardView.class);
+                        mkdirOrDie(outFile.getParentFile());
+                        try (OutputStream out = new FileOutputStream(outFile)) {
+                            try (InputStream in = new ByteArrayInputStream(boardView.getImage())) {
+                                IOUtils.copy(in, out);
+                            }
+                        } catch (IOException e) {
+                            die("afterCall: error writing file: " + e, e);
+                        }
+                    }
                 }
             }
         };
