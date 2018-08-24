@@ -15,7 +15,7 @@ public class GameStateChange {
     public GameStateChange (long version, GameStateChangeType stateChange, Object object) {
         this.version = version;
         this.stateChange = stateChange;
-        this.object = JsonUtil.FULL_MAPPER.valueToTree(object);
+        this.object = stateChange.adjustJson(JsonUtil.FULL_MAPPER.valueToTree(object));
     }
 
     @Getter @Setter private long version;

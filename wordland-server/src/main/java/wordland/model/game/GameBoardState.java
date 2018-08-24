@@ -22,4 +22,15 @@ public class GameBoardState {
 
     public String grid () { return GameTileState.grid(tiles); }
 
+    @SuppressWarnings("unused") // used in JSON tests. see models/infinity/tests/play_infinity.json
+    public boolean claimedWord(String word) {
+        for (GameTileState[] row : tiles) {
+            for (GameTileState tile : row) {
+                if (!tile.hasOwner()) continue;
+                word = word.replaceFirst(tile.getSymbol(), "");
+                if (word.length() == 0) return true;
+            }
+        }
+        return false;
+    }
 }

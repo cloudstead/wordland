@@ -176,7 +176,7 @@ public class GameState {
     }
 
     private GameTileState getTileState (int x, int y) {
-        final GameBoardBlock block = stateStorage.getBlock(getBlockKeyForTile(x, y));
+        final GameBoardBlock block = stateStorage.getBlockOrCreate(getBlockKeyForTile(x, y), roomSettings.getSymbolDistribution());
         return block.getAbsoluteTile(x, y);
     }
 }

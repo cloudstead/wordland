@@ -142,11 +142,23 @@
         "tilesJson": "{{escaped_json player2_word1.tiles}}"
       }
     }
-  }/*,
+  },
 
   {
-    "comment": "player 1 requests more board state, verify updates"
-  },
+    "comment": "player 1 requests more board state, verify updates",
+    "request": {
+      "uri": "rooms/the_expanse/board?x1=-128&x2=109&y1=-132&y2=128"
+    },
+    "response": {
+      "store": "big_board",
+      "check": [
+        {"condition": "json.tiles.length == 50"},
+        {"condition": "json.claimedWord('{{player1_word1.word}}')"},
+        {"condition": "json.claimedWord('{{player1_word2.word}}')"}
+      ]
+
+    }
+  }/*,
 
   {
     "comment": "restart server, player 1 requests board state, verify API call succeeds and all plays are there"
