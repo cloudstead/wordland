@@ -1,6 +1,7 @@
 package wordland;
 
 import org.cobbzilla.util.javascript.StandardJsEngine;
+import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.client.script.*;
 import org.cobbzilla.wizard.model.entityconfig.ModelSetup;
@@ -14,8 +15,10 @@ import wordland.model.game.GameTileStateExtended;
 import wordland.model.support.GameRuntimeEvent;
 import wordland.server.WordlandConfiguration;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
@@ -49,6 +52,9 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
             .setIncludePrefix(getModelPrefix()+"/tests")
             .setCommonPath("models/");
 
+    private Set<String> playedWords = new HashSet<>();
+    @Before public void clearPlayedWords () { playedWords.clear(); }
+
     protected void runScript (String scriptName) throws Exception {
         final ApiRunnerListener listener = new ApiRunnerListenerBase("wordland-test-scripts") {
             @Override public void beforeCall(ApiScript script, Map<String, Object> ctx) {
@@ -56,7 +62,10 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                 if (script.hasBefore()) {
                     final String before = script.getBefore();
                     if (before.startsWith(FIND_WORD_AND_TILES)) {
-                        final String tilesVar = before.substring(FIND_WORD_AND_TILES.length()).trim();
+                        List<String> parts = StringUtil.splitAndTrim(before, " ");
+                        final String tilesVar = parts.get(1);
+                        final String playVar = parts.size() > 2 ? parts.get(2) : "play";
+
                         final GameBoardState boardState = (GameBoardState) ctx.get(tilesVar);
                         final GameTileState[][] tiles = boardState.getTiles();
 
@@ -81,10 +90,10 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                         for (int[][] search : ApiConstants.CIRCULAR_SEARCHES) {
                             final List<GameTileStateExtended> letters = vowelTile.collect(search, boardState, tiles);
                             final GameDictionary dictionary = getServer().getConfiguration().getBean(GameDictionaryDAO.class).findDefault();
-                            final GameRuntimeEvent event = dictionary.findWord(letters);
+                            final GameRuntimeEvent event = dictionary.findWord(letters, playedWords);
                             if (event != null) {
-                                ctx.put("word", event.getWord());
-                                ctx.put("tiles", event.getTiles());
+                                playedWords.add(event.getWord());
+                                ctx.put(playVar, event);
                                 break;
                             }
                         }

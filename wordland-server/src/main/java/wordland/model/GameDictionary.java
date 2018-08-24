@@ -94,9 +94,11 @@ public class GameDictionary extends NamedIdentityBase {
     }
 
 
-    public GameRuntimeEvent findWord(List<GameTileStateExtended> tiles) {
+    public GameRuntimeEvent findWord(List<GameTileStateExtended> tiles, Set<String> playedWords) {
         final List<Character> letters = tiles.stream().map((t) -> t.getSymbol().charAt(0)).collect(Collectors.toList());
         for (String word : getShortestFirst()) {
+            if (playedWords != null && playedWords.contains(word)) continue;
+
             char[] charsInWord = word.toCharArray();
             final List<Character> test = new ArrayList<>(letters);
             boolean ok = true;

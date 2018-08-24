@@ -8,7 +8,7 @@
       }
     },
     "response": {
-      "store": "player",
+      "store": "player1",
       "sessionName": "player1",
       "session": "apiKey",
       "check": [
@@ -27,7 +27,7 @@
       }
     },
     "response": {
-      "store": "player",
+      "store": "player2",
       "sessionName": "player2",
       "session": "apiKey",
       "check": [
@@ -110,25 +110,39 @@
 
   {
     "comment": "player 1 plays word",
-    "before": "find-word-and-tiles big_board",
+    "before": "find-word-and-tiles big_board player1_word1",
     "request": {
       "session": "player1",
       "uri": "rooms/the_expanse/play",
       "entity": {
         "room": "the_expanse",
         "stateChange": "word_played",
-        "id": "{{player.id}}",
-        "clientId": "{{player.id}}",
-        "apiKey": "{{player.apiKey}}",
-        "word": "{{word}}",
-        "tilesJson": "{{escaped_json tiles}}"
+        "id": "{{player1.id}}",
+        "clientId": "{{player1.id}}",
+        "apiKey": "{{player1.apiKey}}",
+        "word": "{{player1_word1.word}}",
+        "tilesJson": "{{escaped_json player1_word1.tiles}}"
+      }
+    }
+  },
+
+  {
+    "comment": "player 2 plays word",
+    "before": "find-word-and-tiles big_board player2_word1",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/the_expanse/play",
+      "entity": {
+        "room": "the_expanse",
+        "stateChange": "word_played",
+        "id": "{{player2.id}}",
+        "clientId": "{{player2.id}}",
+        "apiKey": "{{player2.apiKey}}",
+        "word": "{{player2_word1.word}}",
+        "tilesJson": "{{escaped_json player2_word1.tiles}}"
       }
     }
   }/*,
-
-  {
-    "comment": "player 2 plays word"
-  },
 
   {
     "comment": "player 1 requests more board state, verify updates"
