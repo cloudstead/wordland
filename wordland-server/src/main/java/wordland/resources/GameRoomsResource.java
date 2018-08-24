@@ -9,7 +9,10 @@ import org.springframework.stereotype.Service;
 import wordland.dao.GameRoomDAO;
 import wordland.model.Account;
 import wordland.model.GameRoom;
-import wordland.model.game.*;
+import wordland.model.game.GameBoardState;
+import wordland.model.game.GamePlayer;
+import wordland.model.game.GameState;
+import wordland.model.game.GameStateChangeType;
 import wordland.model.support.GameRoomJoinRequest;
 import wordland.model.support.GameRuntimeEvent;
 import wordland.service.GamesMaster;
@@ -29,7 +32,6 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
 
     @Getter @Autowired private GameRoomDAO dao;
     @Getter @Autowired private GamesMaster gamesMaster;
-
     @PUT
     public Response create (@Context HttpContext ctx,
                             @Valid GameRoom gameRoom) {
@@ -59,18 +61,27 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         return ok(player.getCredentials());
     }
 
+    @POST @Path("/{name}"+EP_PLAY)
+    public Response play (@Context HttpContext ctx,
+                          @PathParam("name") String room,
+                          @Valid GameRuntimeEvent request) {
+
+        final Account account = optionalUserPrincipal(ctx);
+        final GamePlayer player = gamesMaster.findPlayer(room, request.getId());
+        if (player == null) return notFound(request.getId());
+
+        return ok(gamesMaster.playWord(room, request.getApiKey(), player, request.getWord(), request.getTiles()));
+    }
+
     @POST @Path("/{name}"+EP_QUIT)
     public Response quit (@Context HttpContext ctx,
                           @PathParam("name") String room,
                           @Valid GameRuntimeEvent request) {
 
         if (request.getStateChange() != GameStateChangeType.player_left) return invalid("err.type.invalid", request.getStateChange().name());
-
         final GamePlayer found = gamesMaster.findPlayer(room, request.getId());
         if (found == null) return notFound(request.getId());
-        if (!found.getApiKey().equals(request.getApiKey())) return forbidden();
-
-        gamesMaster.removePlayer(room, found.getId());
+        gamesMaster.removePlayer(room, request.getApiKey(), found.getId());
         return ok();
     }
 

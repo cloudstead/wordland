@@ -37,6 +37,4 @@ public class GameRoom extends NamedIdentityBase {
         return new GameState(getSettings(), stateStorage);
     }
 
-    public boolean isValidWord(String word) { return getSettings().getDictionary().isWord(word); }
-
 }

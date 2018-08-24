@@ -21,7 +21,7 @@
     "response": {
       "store": "player",
       "sessionName": "player1",
-      "session": "apiKey",
+      "session": "sessionId",
       "check": [
         {"condition": "json.name == 'Joe Smith'"},
         {"condition": "json.id != null"}
@@ -31,6 +31,18 @@
 
   {
     "comment": "quit game",
-    "request": { "uri": "rooms/standard/quit" }
+    "request": {
+      "uri": "rooms/{{rooms.0.name}}/quit",
+      "entity": {
+        "room": "{{rooms.0.name}}",
+        "stateChange": "player_left",
+        "id": "{{player.id}}",
+        "clientId": "{{player.id}}",
+        "apiKey": "{{player.apiKey}}"
+      }
+    },
+    "response": {
+      "status": 200
+    }
   }
 ]

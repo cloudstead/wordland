@@ -24,6 +24,9 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 import static wordland.ApiConstants.MAX_BOARD_VIEW;
 import static wordland.model.GameBoardBlock.getBlockKeyForTile;
+import static wordland.model.support.GameNotification.invalidWord;
+import static wordland.model.support.GameNotification.sparseWord;
+import static wordland.model.support.PlayedTile.letterFarFromOthers;
 
 @Slf4j
 public class GameState {
@@ -111,12 +114,27 @@ public class GameState {
     }
 
     public GameStateChange playWord(GamePlayer player, String word, PlayedTile[] tiles) {
+
+        if (word.length() < 2) {
+            throw new GameNotificationException(invalidWord(word));
+        }
+        if (!roomSettings.getDictionary().isWord(word)) {
+            throw new GameNotificationException(invalidWord(word));
+        }
+        if (roomSettings.hasMaxLetterDistance()) {
+            final PlayedTile farTile = letterFarFromOthers(tiles, roomSettings.getMaxLetterDistance());
+            if (farTile != null) {
+                throw new GameNotificationException(sparseWord(word, roomSettings.getMaxLetterDistance(), farTile));
+            }
+        }
+
+        final Map<String, GameBoardBlock> alteredBlocks = new HashMap<>();
         synchronized (stateStorage) {
             // determine applicable board blocks, create change set
-            final Map<String, GameBoardBlock> alteredBlocks = new HashMap<>();
-            for (int i = 0; i < tiles.length; i++) {
+            for (int i=0; i<tiles.length; i++) {
                 final PlayedTile tile = tiles[i];
-                final GameBoardBlock block = stateStorage.getBlock(GameBoardBlock.getBlockKeyForTile(tile.getX(), tile.getY()));
+                final String blockKey = getBlockKeyForTile(tile.getX(), tile.getY());
+                final GameBoardBlock block = alteredBlocks.computeIfAbsent(blockKey, (k) -> stateStorage.getBlock(blockKey));
                 if (block == null) return die("playWord: uninitialized block");
 
                 final GameTileState boardTile = block.getTiles()[tile.getX() - block.getX1()][tile.getY() - block.getY1()];
@@ -158,7 +176,7 @@ public class GameState {
     }
 
     private GameTileState getTileState (int x, int y) {
-        final GameBoardBlock block = stateStorage.getBlock(GameBoardBlock.getBlockKeyForTile(x, y));
+        final GameBoardBlock block = stateStorage.getBlock(getBlockKeyForTile(x, y));
         return block.getAbsoluteTile(x, y);
     }
 }

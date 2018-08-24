@@ -96,6 +96,7 @@
       "uri": "rooms/the_expanse/board?x1=-128&x2=109&y1=-132&y2=128"
     },
     "response": {
+      "store": "big_board",
       "check": [
         {"condition": "json.tiles.length == 50"},
         {"condition": "json.tiles[0].length == 50"},
@@ -105,11 +106,25 @@
         {"condition": "json.tiles[49][49].unclaimed()"}
       ]
     }
-  }/*,
+  },
 
   {
-    "comment": "player 1 plays word"
-  },
+    "comment": "player 1 plays word",
+    "before": "find-word-and-tiles big_board",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/the_expanse/play",
+      "entity": {
+        "room": "the_expanse",
+        "stateChange": "word_played",
+        "id": "{{player.id}}",
+        "clientId": "{{player.id}}",
+        "apiKey": "{{player.apiKey}}",
+        "word": "{{word}}",
+        "tilesJson": "{{escaped_json tiles}}"
+      }
+    }
+  }/*,
 
   {
     "comment": "player 2 plays word"

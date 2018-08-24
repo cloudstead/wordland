@@ -23,14 +23,13 @@ public class GamePlayer {
 
     public GamePlayer(Account account, GameRoomJoinRequest request) {
         this.id = request.hasClientId() ? request.getClientId() : newStrongUuid();
-        this.apiKey = newStrongUuid();
         this.account = account == null ? uuid() : account.getUuid();
         this.name = request.hasName() ? request.getName() : randomName();
         this.team = request.getTeam();
     }
 
     @Getter @Setter private String id;
-    @JsonIgnore @Getter @Setter private String apiKey;
+    @Getter @Setter private String apiKey;
     @Getter @Setter private String account;
     @Getter @Setter private String name;
     @Getter @Setter private String team;

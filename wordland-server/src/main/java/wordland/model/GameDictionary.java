@@ -6,22 +6,26 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.cache.AutoRefreshingReference;
 import org.cobbzilla.util.io.StreamUtil;
 import org.cobbzilla.wizard.model.NamedIdentityBase;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECFieldReference;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECTypeURIs;
 import org.cobbzilla.wizard.validation.HasValue;
+import wordland.model.game.GameTileStateExtended;
+import wordland.model.support.GameRuntimeEvent;
+import wordland.model.support.PlayedTile;
 
 import javax.persistence.*;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import static java.util.Comparator.comparingInt;
+import static java.util.concurrent.TimeUnit.DAYS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.CLASSPATH_PREFIX;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static wordland.ApiConstants.EP_DICTIONARIES;
@@ -42,8 +46,13 @@ public class GameDictionary extends NamedIdentityBase {
     // ensure that we never load the words into memory multiple times
     private static Map<String, Set<String>> wordCache = new HashMap<>();
 
-    @JsonIgnore @Transient private volatile Set<String> words = null;
+    @JsonIgnore @Transient private AutoRefreshingReference<Set<String>> words = new AutoRefreshingReference<Set<String>>() {
+        @Override public Set<String> refresh() { wordCache.clear(); return initWords(); }
+        @Override public long getTimeout() { return DAYS.toMillis(1); }
+    };
     public GameDictionary setWords (Set<String> words) { return this; } // noop
+
+    private Set<String> words() { return words.get(); }
 
     private Set<String> initWords() {
         Set<String> set = wordCache.get(getName());
@@ -70,15 +79,59 @@ public class GameDictionary extends NamedIdentityBase {
         return set;
     }
 
-    @JsonIgnore public boolean isWord(String word) {
-        if (words == null) {
-            synchronized (this) {
-                if (words == null) {
-                    words = initWords();
-                }
-            }
-        }
-        return words.contains(word);
+    @JsonIgnore @Transient public boolean isWord(String word) {
+        return words().contains(word);
     }
 
+    @JsonIgnore @Transient @Getter(lazy=true) private final List<String> shortestFirst = initShortestFirst();
+    private List<String> initShortestFirst() {
+        final SortedSet<String> shorties = new TreeSet<>(comparingInt(String::length).thenComparing(s -> s));
+        final Set<String> allWords = words();
+        for (String word : allWords) {
+            if (word.length() > 1 && word.length() < 6) shorties.add(word);
+        }
+        return new ArrayList<>(shorties);
+    }
+
+
+    public GameRuntimeEvent findWord(List<GameTileStateExtended> tiles) {
+        final List<Character> letters = tiles.stream().map((t) -> t.getSymbol().charAt(0)).collect(Collectors.toList());
+        for (String word : getShortestFirst()) {
+            char[] charsInWord = word.toCharArray();
+            final List<Character> test = new ArrayList<>(letters);
+            boolean ok = true;
+            for (char c : charsInWord) {
+                if (!test.remove((Character) c)) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) {
+                return new GameRuntimeEvent().setWord(word).setTiles(pickTiles(tiles, word));
+            }
+        }
+        return null;
+    }
+
+    private PlayedTile[] pickTiles(List<GameTileStateExtended> tiles, String word) {
+        final List<PlayedTile> playedTiles = new ArrayList<>();
+        final Set<GameTileStateExtended> picked = new HashSet<>();
+        for (int i=0; i<word.length(); i++) {
+            GameTileStateExtended matchingTile = null;
+            for (GameTileStateExtended tile : tiles) {
+                if (picked.contains(tile)) continue;
+                if (tile.getSymbol().charAt(0) == word.charAt(i)) {
+                    matchingTile = tile;
+                    break;
+                }
+            }
+            if (matchingTile != null) {
+                playedTiles.add(new PlayedTile(matchingTile.getX(), matchingTile.getY(), matchingTile.getSymbol()));
+                picked.add(matchingTile);
+            } else {
+                return die("pickTiles: cannot find tile with symbol "+word.charAt(i));
+            }
+        }
+        return playedTiles.toArray(new PlayedTile[playedTiles.size()]);
+    }
 }

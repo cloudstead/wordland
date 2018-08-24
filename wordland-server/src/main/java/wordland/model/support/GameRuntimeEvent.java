@@ -10,6 +10,8 @@ import wordland.model.game.GameStateChangeType;
 
 import javax.validation.constraints.Size;
 
+import static org.cobbzilla.util.json.JsonUtil.json;
+
 @NoArgsConstructor @Accessors(chain=true)
 public class GameRuntimeEvent {
 
@@ -38,5 +40,8 @@ public class GameRuntimeEvent {
 
     @Getter @Setter private PlayedTile[] tiles;
     public boolean hasTiles () { return tiles != null && tiles.length > 0; }
+
+    public String getTilesJson () { return json(tiles); }
+    public GameRuntimeEvent setTilesJson(String json) { return setTiles(json(json, PlayedTile[].class)); }
 
 }

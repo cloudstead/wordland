@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import wordland.dao.*;
@@ -18,6 +19,9 @@ import wordland.server.WordlandConfiguration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
+import static org.cobbzilla.wizard.model.StrongIdentifiableBase.newStrongUuid;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 
@@ -30,6 +34,11 @@ public class GamesMaster {
     @Autowired private PointSystemDAO pointSystemDAO;
     @Autowired private GameDictionaryDAO dictionaryDAO;
     @Autowired private GameBoardDAO gameBoardDAO;
+
+    @Autowired private RedisService redisService;
+
+    @Getter(lazy=true) private final RedisService sessions = initSessions();
+    private RedisService initSessions() { return redisService.prefixNamespace("gamesMaster/sessions/"); }
 
     @Getter @Setter private AtmosphereEventsService eventService;
 
@@ -85,6 +94,14 @@ public class GamesMaster {
 
     public void addPlayer(String roomName, GamePlayer player) {
         getGameDaemon(roomName).addPlayer(player);
+
+        final String apiKey = newStrongUuid();
+        getSessions().set(apiKey, json(player.setApiKey(apiKey)));
+        getSessions().sadd(getRoomSessionKey(roomName, player.getId()), apiKey);
+    }
+
+    protected String getRoomSessionKey(String roomName, String uuid) {
+        return uuid+"_"+sha256_hex(roomName);
     }
 
     public GamePlayer findPlayer(String roomName, GamePlayer player) {
@@ -96,18 +113,46 @@ public class GamesMaster {
         return daemon == null ? null : daemon.findPlayer(uuid);
     }
 
-    public void removePlayer(String roomName, String uuid) {
+    public void removePlayer(String roomName, String apiKey, String uuid) {
+        getSessionPlayer(apiKey, uuid);
+
         final GameDaemon daemon = getGameDaemon(roomName, false);
         if (daemon != null) daemon.removePlayer(uuid);
+
+        final String roomSessionKey = getRoomSessionKey(roomName, uuid);
+        String key = getSessions().spop(roomSessionKey);
+        while (key != null) {
+            getSessions().del(key);
+            key = getSessions().spop(roomSessionKey);
+        }
+        getSessions().del(apiKey); // just in case
     }
 
     public GameState getGameState(String roomName) {
         return getGameDaemon(roomName).getGameState();
     }
 
-    public GameStateChange playWord(String roomName, GamePlayer player, String word, PlayedTile[] tiles) {
+    public GameStateChange playWord(String roomName, String apiKey, GamePlayer player, String word, PlayedTile[] tiles) {
+
+        getSessionPlayer(apiKey, player.getId());
+
         final GameDaemon daemon = getGameDaemon(roomName, false);
         return daemon != null ? daemon.playWord(player, word, tiles) : null;
+    }
+
+    public GamePlayer getSessionPlayer(GamePlayer player) {
+        final String apiKey = player.getApiKey();
+        final String id = player.getId();
+        return getSessionPlayer(apiKey, id);
+    }
+
+    public GamePlayer getSessionPlayer(String apiKey, String uuid) {
+        final String sessionJson = getSessions().get(apiKey);
+        if (sessionJson == null) throw notFoundEx(uuid);
+
+        final GamePlayer session = json(sessionJson, GamePlayer.class);
+        if (!session.getId().equals(uuid)) throw notFoundEx(uuid);
+        return session;
     }
 
     public GameRoom findRoom (String roomName) {

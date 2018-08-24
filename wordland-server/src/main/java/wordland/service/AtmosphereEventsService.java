@@ -10,10 +10,9 @@ import org.atmosphere.config.service.Post;
 import org.atmosphere.cpr.*;
 import org.atmosphere.interceptor.CorsInterceptor;
 import org.atmosphere.interceptor.IdleResourceInterceptor;
-import wordland.model.GameRoom;
+import wordland.model.game.GameNotificationException;
 import wordland.model.game.GamePlayer;
 import wordland.model.game.GameStateChange;
-import wordland.model.support.GameNotification;
 import wordland.model.support.GameRuntimeEvent;
 import wordland.model.support.PlayedTile;
 import wordland.server.WordlandServer;
@@ -26,7 +25,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.json.JsonUtil.json;
-import static wordland.model.support.PlayedTile.letterFarFromOthers;
 
 @SuppressWarnings("SpringJavaAutowiredMembersInspection")
 @Slf4j
@@ -136,22 +134,15 @@ public class AtmosphereEventsService {
                     log.warn("onMessage: no tiles sent for play");
                     return null;
                 }
-                final GameRoom room = getGamesMaster().findRoom(request.getRoom());
-                if (!room.isValidWord(request.getWord())) {
-                    final GameNotification notification = GameNotification.invalidWord(request.getWord());
-                    send(entry, notification);
+                final String word = request.getWord();
+                final PlayedTile[] tiles = request.getTiles();
+                try {
+                    final GameStateChange stateChange = getGamesMaster().playWord(request.getRoom(), request.getApiKey(), player, word, tiles);
+                    return stateChange != null ? json(stateChange) : null;
+                } catch (GameNotificationException e) {
+                    send(entry, e.getGameNotification());
                     return null; //json(notification);
                 }
-                if (room.getSettings().hasMaxLetterDistance()) {
-                    final PlayedTile farTile = letterFarFromOthers(request.getTiles(), room.getSettings().getMaxLetterDistance());
-                    if (farTile != null) {
-                        final GameNotification notification = GameNotification.sparseWord(request.getWord(), room.getSettings().getMaxLetterDistance(), farTile);
-                        send(entry, notification);
-                        return null; //json(notification);
-                    }
-                }
-                final GameStateChange stateChange = getGamesMaster().playWord(request.getRoom(), player, request.getWord(), request.getTiles());
-                return stateChange != null ? json(stateChange) : null;
 
             default:
                 log.warn("onMessage: invalid state change type: "+request.getStateChange());
