@@ -20,11 +20,52 @@
     },
     "response": {
       "store": "player",
-      "sessionName": "player1",
-      "session": "sessionId",
+      "sessionName": "player",
+      "session": "apiKey",
       "check": [
         {"condition": "json.name == 'Joe Smith'"},
         {"condition": "json.id != null"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player requests more board state, verify updates",
+    "request": {
+      "uri": "rooms/{{rooms.0.name}}/board"
+    },
+    "response": {
+      "store": "board"
+    }
+  },
+
+  {
+    "comment": "player plays word",
+    "before": "find-word-and-tiles board word1",
+    "request": {
+      "session": "player",
+      "uri": "rooms/{{rooms.0.name}}/play",
+      "entity": {
+        "room": "{{rooms.0.name}}",
+        "stateChange": "word_played",
+        "id": "{{player.id}}",
+        "clientId": "{{player.id}}",
+        "apiKey": "{{player.apiKey}}",
+        "word": "{{word1.word}}",
+        "tilesJson": "{{escaped_json word1.tiles}}"
+      }
+    }
+  },
+
+  {
+    "comment": "player requests more board state, verify updates",
+    "request": {
+      "uri": "rooms/{{rooms.0.name}}/board"
+    },
+    "response": {
+      "store": "board",
+      "check": [
+        {"condition": "json.claimedWord('{{word1.word}}')"}
       ]
     }
   },
