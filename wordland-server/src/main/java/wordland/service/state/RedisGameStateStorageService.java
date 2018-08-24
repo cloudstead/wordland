@@ -84,6 +84,6 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     }
 
     protected void setBlock(GameBoardBlock block) {
-        redis.set(K_BLOCKS + "/" + block.getBlockKey(), json(block));
+        redis.set(K_BLOCKS + "/" + block.getBlockKey(), json(block.incrementVersion()));
     }
 }

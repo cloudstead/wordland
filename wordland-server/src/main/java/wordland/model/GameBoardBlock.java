@@ -13,6 +13,9 @@ public class GameBoardBlock {
 
     public static final int BLOCK_SIZE = 32;
 
+    @Getter @Setter private int blockVersion = 0;
+    public GameBoardBlock incrementVersion () { blockVersion++; return this; }
+
     @Getter @Setter private int blockX;
     @Getter @Setter private int blockY;
 
@@ -85,6 +88,9 @@ public class GameBoardBlock {
         }
     }
     @JsonIgnore public int getY2() { return getY1() + BLOCK_SIZE - 1; }
+
+    @JsonIgnore public int getWidth() { return getX2() - getX1() + 1; }
+    @JsonIgnore public int getHeight() { return getY2() - getY1() + 1; }
 
     private void initialize(SymbolDistribution distribution) {
         final Iterator<String> picker =  distribution.getSettings().getPicker();

@@ -158,6 +158,17 @@
       ]
 
     }
+  },
+
+  {
+    "comment": "player 1 requests board overview for large area",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/the_expanse/board/view.png?x1=-1000&x2=1000&y1=-1000&y2=1000&height=600&width=800"
+    },
+    "response": {
+
+    }
   }/*,
 
   {

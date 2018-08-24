@@ -34,7 +34,7 @@ public class GameRoom extends NamedIdentityBase {
     @Getter @Setter private GameRoomSettings settings;
 
     public GameState initializeBoard(GameStateStorageService stateStorage) {
-        return new GameState(getSettings(), stateStorage);
+        return new GameState(this, stateStorage);
     }
 
 }

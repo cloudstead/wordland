@@ -1,0 +1,22 @@
+{
+  "blankColor": "0xffffff",
+  "playerColors": [
+    {"name": "*", "value": "#DC3D24"},
+    {"name": "*", "value": "#232B2B"},
+    {"name": "*", "value": "#E3AE57"},
+    {"name": "*", "value": "#221E1D"},
+    {"name": "*", "value": "#ECEAE0"},
+    {"name": "*", "value": "#63AA9C"},
+    {"name": "*", "value": "#E9633B"},
+    {"name": "*", "value": "#4EB1BA"},
+    {"name": "*", "value": "#E9E9E9"},
+    {"name": "*", "value": "#763A7A"},
+    {"name": "*", "value": "#AC2832"},
+    {"name": "*", "value": "#DFD297"},
+    {"name": "*", "value": "#CB8C1D"},
+    {"name": "*", "value": "#BD3632"},
+    {"name": "*", "value": "#4C3327"},
+    {"name": "*", "value": "#831618"},
+    {"name": "*", "value": "#ED1C24"}
+  ]
+}

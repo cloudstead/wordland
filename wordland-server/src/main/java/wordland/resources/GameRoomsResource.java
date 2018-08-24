@@ -9,10 +9,7 @@ import org.springframework.stereotype.Service;
 import wordland.dao.GameRoomDAO;
 import wordland.model.Account;
 import wordland.model.GameRoom;
-import wordland.model.game.GameBoardState;
-import wordland.model.game.GamePlayer;
-import wordland.model.game.GameState;
-import wordland.model.game.GameStateChangeType;
+import wordland.model.game.*;
 import wordland.model.support.GameRoomJoinRequest;
 import wordland.model.support.GameRuntimeEvent;
 import wordland.service.GamesMaster;
@@ -21,7 +18,9 @@ import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 
+import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static wordland.ApiConstants.*;
 import static wordland.model.GameBoardBlock.BLOCK_SIZE;
@@ -83,6 +82,49 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (found == null) return notFound(request.getId());
         gamesMaster.removePlayer(room, request.getApiKey(), found.getId());
         return ok();
+    }
+
+    @GET @Path("/{name}"+EP_BOARD+EP_VIEW_PNG)
+    public Response boardView (@Context HttpContext ctx,
+                               @PathParam("name") String room,
+                               @QueryParam("x1") Integer x1,
+                               @QueryParam("x2") Integer x2,
+                               @QueryParam("y1") Integer y1,
+                               @QueryParam("y2") Integer y2,
+                               @QueryParam("width") Integer width,
+                               @QueryParam("height") Integer height,
+                               @QueryParam("palette") String paletteJson) {
+        final GameBoardPalette palette = paletteJson != null
+                ? json(paletteJson, GameBoardPalette.class)
+                : null;
+        return boardView(ctx, room, x1, x2, y1, y2, width, height, palette);
+    }
+
+    @POST @Path("/{name}"+EP_BOARD+EP_VIEW_PNG)
+    public Response boardView (@Context HttpContext ctx,
+                               @PathParam("name") String room,
+                               @QueryParam("x1") Integer x1,
+                               @QueryParam("x2") Integer x2,
+                               @QueryParam("y1") Integer y1,
+                               @QueryParam("y2") Integer y2,
+                               @QueryParam("width") Integer width,
+                               @QueryParam("height") Integer height,
+                               GameBoardPalette palette) {
+        final GameState state = gamesMaster.getGameState(room);
+        if (state == null) return notFound(room);
+
+        if (x1 == null) x1 = 0;
+        if (x2 == null) x2 = (BLOCK_SIZE*10)-1;
+        if (y1 == null) y1 = 0;
+        if (y2 == null) y2 = (BLOCK_SIZE*10)-1;
+        if (height == null) height = 300;
+        if (width == null) width = 400;
+
+        try {
+            return ok(state.getBoardView(x1, x2, y1, y2, width, height, palette));
+        } catch (IOException e) {
+            return invalid("err.boardView.rendering");
+        }
     }
 
     @GET @Path("/{name}"+EP_BOARD)

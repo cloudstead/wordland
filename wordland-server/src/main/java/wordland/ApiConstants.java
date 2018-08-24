@@ -27,7 +27,10 @@ public class ApiConstants {
     public static final String STANDARD = "standard";
 
     // maximum number of rows/columns in a call to get board state
-    public static final int MAX_BOARD_VIEW = 50;
+    public static final int MAX_BOARD_DETAIL_VIEW = 50;
+
+    // max number of rows/cols to show in a PNG overview
+    public static final int MAX_BOARD_VIEW = 10_000;
 
     public static final String[] VOWELS = {"e", "a", "o", "i", "u"};
     public static final int[][] CIRCULAR_SEARCH_1 = {
@@ -70,6 +73,7 @@ public class ApiConstants {
     public static final String EP_PLAY = "/play";
     public static final String EP_QUIT = "/quit";
     public static final String EP_BOARD = "/board";
+    public static final String EP_VIEW_PNG = "/view.png";
     public static final String EP_SETTINGS = "/settings";
 
 }
