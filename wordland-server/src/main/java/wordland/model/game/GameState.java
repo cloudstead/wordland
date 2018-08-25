@@ -2,8 +2,8 @@ package wordland.model.game;
 
 import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.daemon.Await;
+import org.cobbzilla.util.daemon.AwaitResult;
 import org.cobbzilla.util.time.TimeUtil;
 import org.cobbzilla.wizard.validation.SimpleViolationException;
 import wordland.model.GameBoard;
@@ -18,7 +18,9 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -244,8 +246,6 @@ public class GameState {
         }
 
         final long start = now();
-        final Collection<Future<?>> futures = new ArrayList<>();
-        @Cleanup("shutdownNow") final ExecutorService pool = fixedPool(100);
 
         final int rawWidth = largestBlock.getX2() - smallestBlock.getX1() + 1;
         final int rawHeight = largestBlock.getY2() - smallestBlock.getY1() + 1;
@@ -270,35 +270,48 @@ public class GameState {
         final double scaleY = ((double) imageHeight) / ((double) rawHeight);
         final AffineTransform xform = new AffineTransform();
         xform.setToScale(scaleX/TILE_PIXEL_SIZE_DOUBLE, scaleY/TILE_PIXEL_SIZE_DOUBLE);
+
+        final int imHeight = imageHeight;
+        final int imWidth = imageWidth;
+
+        final Collection<Future<?>> futures = new ArrayList<>();
+        @Cleanup("shutdownNow") final ExecutorService pool = fixedPool(100);
         for (GameBoardBlock block : blocks) {
-            //futures.add(pool.submit(() -> {
+            futures.add(pool.submit(() -> {
+                // X/Y position for this block image on the final image
+                final double blockX = ((block.getBlockX() - smallestBlock.getBlockX()) / ((double)largestBlock.getBlockX()+1.0d)) * imWidth;
+                final double blockY = ((block.getBlockY() - smallestBlock.getBlockY()) / ((double)largestBlock.getBlockX()+1.0d)) * imHeight;
 
-            // X/Y position for this block image on the final image
-            final double blockX = ((block.getBlockX() - smallestBlock.getBlockX()) / ((double)largestBlock.getBlockX()+1.0d)) * imageWidth;
-            final double blockY = ((block.getBlockY() - smallestBlock.getBlockY()) / ((double)largestBlock.getBlockX()+1.0d)) * imageHeight;
+                final ByteArrayInputStream blockImage = getBlockImage(block, palette);
+                final BufferedImage bim;
+                try {
+                    bim = ImageIO.read(blockImage);
+                } catch (IOException e) {
+                    die("getBoardView: error reading block ("+block+"): "+e, e);
+                    return;
+                }
+                synchronized (g2) {
+                    g2.drawImage(bim, new AffineTransformOp(xform, AffineTransformOp.TYPE_BICUBIC), (int) blockX, (int) blockY);
+                }
+//              final FileOutputStream fileOut = new FileOutputStream("/tmp/views/partial_"+block.getBlockX()+"_"+block.getBlockY()+".png");
+//              ImageIO.write(bufferedImage, "png", fileOut);
+//              log.info("done drawing: "+fileOut);
+            }));
 
-//            final ByteArrayInputStream blockImage = getBlockImage(block, palette);
-            final ByteArrayInputStream blockImage = getFullBlockImage(block, palette);
-            final BufferedImage bim = ImageIO.read(blockImage);
-            g2.drawImage(bim, new AffineTransformOp(xform, AffineTransformOp.TYPE_BICUBIC), (int) blockX, (int) blockY);
-
-            final FileOutputStream fileOut = new FileOutputStream("/tmp/views/partial_"+block.getBlockX()+"_"+block.getBlockY()+".png");
-            ImageIO.write(bufferedImage, "png", fileOut);
-
-            //}));
-
-            log.info("done drawing: "+fileOut);
         }
-        //Await.awaitAll(futures, 10*TimeUtil.SECOND);
+        final AwaitResult<Object> result = Await.awaitAll(futures, 10 * TimeUtil.SECOND);
         final String duration = formatDuration(now() - start);
         log.info("mapping of view took "+ duration);
+        if (!result.allSucceeded()) {
+            return die("getBoardView: timeout creating view");
+        }
 
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         ImageIO.write(bufferedImage, "png", out);
         boardView.setImage(out.toByteArray());
 
-        final FileOutputStream fileOut = new FileOutputStream("/tmp/views/complete_"+timestamp()+".png");
-        ImageIO.write(bufferedImage, "png", fileOut);
+        //final FileOutputStream fileOut = new FileOutputStream("/tmp/views/complete_"+timestamp()+".png");
+        //ImageIO.write(bufferedImage, "png", fileOut);
 
         // cache image
         cachedViews.put(""+boardView.hashCode(), boardView);
@@ -306,7 +319,7 @@ public class GameState {
         return boardView;
     }
 
-    private ByteArrayInputStream getFullBlockImage(GameBoardBlock block, GameBoardPalette palette) {
+    private ByteArrayInputStream getBlockImage(GameBoardBlock block, GameBoardPalette palette) {
 
         final BufferedImage bufferedImage = new BufferedImage(TILE_PIXEL_SIZE*block.getWidth(), TILE_PIXEL_SIZE*block.getHeight(), BufferedImage.TYPE_INT_ARGB);
         final Graphics2D g2 = bufferedImage.createGraphics();
@@ -331,12 +344,12 @@ public class GameState {
         }
 
         // save image for now
-        final String filename = "/tmp/views/block_" + block.getBlockKey().replace("/", "_") + "-" + timestamp() + ".png";
-        try (OutputStream fileOut = new FileOutputStream(filename)) {
-            IOUtils.write(out.toByteArray(), fileOut);
-        } catch (Exception e) {
-            return die("error saving to disk: "+e, e);
-        }
+//        final String filename = "/tmp/views/block_" + block.getBlockKey().replace("/", "_") + "-" + timestamp() + ".png";
+//        try (OutputStream fileOut = new FileOutputStream(filename)) {
+//            IOUtils.write(out.toByteArray(), fileOut);
+//        } catch (Exception e) {
+//            return die("error saving to disk: "+e, e);
+//        }
         return new ByteArrayInputStream(out.toByteArray());
     }
 
