@@ -14,14 +14,16 @@ public class GameBoardView {
     @Getter @Setter private long ctime = now();
     public boolean youngerThan (long age) { return now() - ctime < age; }
 
-    @Getter @Setter private byte[] image;
     @Getter @Setter private String room;
+    @Getter @Setter private byte[] image;
+    @Getter @Setter private int imageWidth;
+    @Getter @Setter private int imageHeight;
+    @Getter @Setter private int tilesWidth;
+    @Getter @Setter private int tilesHeight;
     @Getter @Setter private int x1;
     @Getter @Setter private int x2;
     @Getter @Setter private int y1;
     @Getter @Setter private int y2;
-    @Getter @Setter private int width;
-    @Getter @Setter private int height;
     @Getter @Setter private GameBoardPalette palette;
 
 }

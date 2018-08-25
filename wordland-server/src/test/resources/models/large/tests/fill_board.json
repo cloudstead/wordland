@@ -1,0 +1,88 @@
+[
+
+  {
+    "nested": {
+      "iterate": {
+        "player": "[1,2,3,4,5,6,7,8,9,10]"
+      },
+      "scripts": [
+        {
+          "comment": "join fun_land board as player [[player]]",
+          "request": {
+            "uri": "rooms/fun_land/join",
+            "entity": {
+              "name": "player[[player]]"
+            }
+          },
+          "response": {
+            "store": "player[[player]]",
+            "sessionName": "player[[player]]",
+            "session": "apiKey",
+            "check": [
+              {"condition": "json.name == 'player[[player]]'"},
+              {"condition": "json.id != null"}
+            ]
+          }
+        }
+      ]
+    }
+  },
+
+  {
+    "comment": "player 1 requests initial board state",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/fun_land/board?x2=50&y2=50"
+    },
+    "response": {
+      "store": "board"
+    }
+  },
+
+  {
+    "nested": {
+      "iterate": {
+        "turn": "[1,2,3,4,5,6,7,8,9,10]"
+      },
+      "scripts": [
+        {
+          "nested": {
+            "iterate": {
+              "player": "[1,2,3,4,5,6,7,8,9,10]"
+            },
+            "paramStartDelim": "(",
+            "paramEndDelim": ")",
+            "scripts": [
+              {
+                "comment": "play word #[[turn]] for player ((player))",
+                "before": "find-word-and-tiles board player((player))_word[[turn]] (2*[[turn]]) (3*[[turn]])",
+                "request": {
+                  "session": "player1",
+                  "uri": "rooms/fun_land/play",
+                  "entity": {
+                    "room": "fun_land",
+                    "stateChange": "word_played",
+                    "id": "{{player((player)).id}}",
+                    "clientId": "{{player((player)).id}}",
+                    "apiKey": "{{player((player)).apiKey}}",
+                    "word": "{{player((player))_word[[turn]].word}}",
+                    "tilesJson": "{{escaped_json player((player))_word[[turn]].tiles}}"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+
+  {
+    "comment": "player 1 requests board overview for entire board",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/fun_land/board/view.png?x1=-1000&x2=1000&y1=-1000&y2=1000&height=1000&width=1000"
+    },
+    "after": "save-board-view /tmp/views/big_board_{{date_format 'now' 'yyyy-MM-dd_HH-mm'}}.png"
+  }
+]

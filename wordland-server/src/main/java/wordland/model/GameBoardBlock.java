@@ -4,14 +4,20 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import wordland.model.game.GameTileState;
 
 import java.util.*;
 
-@NoArgsConstructor
+@NoArgsConstructor @ToString(of={"blockX", "blockY"})
 public class GameBoardBlock {
 
     public static final int BLOCK_SIZE = 32;
+
+    public static final Comparator<GameBoardBlock> SORT_POSITION = (b1, b2) -> {
+        int diff = b1.getBlockX() - b2.getBlockX();
+        return diff != 0 ? diff : b1.getBlockY() - b2.getBlockY();
+    };
 
     @Getter @Setter private int blockVersion = 0;
     public GameBoardBlock incrementVersion () { blockVersion++; return this; }

@@ -2,7 +2,7 @@
   {
     "name": "fun_land",
     "settings": {
-      "board": { "name": "huge" }
+      "board": { "name": "big" }
     }
   }
 ]

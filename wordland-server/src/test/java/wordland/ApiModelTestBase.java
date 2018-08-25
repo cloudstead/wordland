@@ -1,5 +1,6 @@
 package wordland;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.javascript.StandardJsEngine;
@@ -30,10 +31,12 @@ import static org.cobbzilla.util.io.FileUtil.mkdirOrDie;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 
+@Slf4j
 public abstract class ApiModelTestBase extends ApiClientTestBase {
 
     public static final String FIND_WORD_AND_TILES = "find-word-and-tiles";
     public static final String SAVE_BOARD_VIEW = "save-board-view";
+    public static final StandardJsEngine JS = new StandardJsEngine();
 
     public abstract String getModelPrefix();
 
@@ -73,15 +76,18 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                         final List<String> parts = StringUtil.splitAndTrim(before, " ");
                         final String tilesVar = parts.get(1);
                         final String playVar = parts.size() > 2 ? parts.get(2) : "play";
+                        final int xPos = parts.size() > 3 ? JS.evaluateInt(parts.get(3), ctx) : 0;
+                        final int yPos = parts.size() > 4 ? JS.evaluateInt(parts.get(4), ctx) : 0;
 
                         final GameBoardState boardState = (GameBoardState) ctx.get(tilesVar);
+                        if (boardState == null) die("beforeCall: tilesVar '"+tilesVar+"' is undefined");
                         final GameTileState[][] tiles = boardState.getTiles();
 
-                        // find a vowel..
+                        // find a vowel near xPos/xPos
                         GameTileStateExtended vowelTile = null;
                         for (String vowel : ApiConstants.VOWELS) {
-                            for (int x=0; x<tiles.length; x++) {
-                                for (int y=0; y<tiles.length; y++) {
+                            for (int x=xPos; x<tiles.length; x++) {
+                                for (int y=yPos; y<tiles.length; y++) {
                                     final GameTileState tile = tiles[x][y];
                                     if (tile.getSymbol().equalsIgnoreCase(vowel)) {
                                         vowelTile = new GameTileStateExtended(tile, x, y);
@@ -94,7 +100,7 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                         }
                         if (vowelTile == null) die("beforeCall: "+FIND_WORD_AND_TILES+": no vowels found!");
 
-                        // searching around the vowel, get all letters within 3 spaces
+                        // searching around the vowel, get all letters within near spaces
                         for (int[][] search : ApiConstants.CIRCULAR_SEARCHES) {
                             final List<GameTileStateExtended> letters = vowelTile.collect(search, boardState, tiles);
                             final GameDictionary dictionary = getServer().getConfiguration().getBean(GameDictionaryDAO.class).findDefault();
@@ -102,6 +108,7 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                             if (event != null) {
                                 playedWords.add(event.getWord());
                                 ctx.put(playVar, event);
+                                log.info("selected word '"+event.getWord()+"' with tiles: "+event.tileCoordinates());
                                 break;
                             }
                         }

@@ -44,4 +44,14 @@ public class GameRuntimeEvent {
     public String getTilesJson () { return json(tiles); }
     public GameRuntimeEvent setTilesJson(String json) { return setTiles(json(json, PlayedTile[].class)); }
 
+    public String tileCoordinates() {
+        final StringBuilder b = new StringBuilder();
+        if (hasTiles()) {
+            for (PlayedTile tile : tiles) {
+                if (b.length() > 0) b.append(", ");
+                b.append("{").append(tile.getSymbol()).append(": ").append(tile.getX()).append(", ").append(tile.getY()).append("}");
+            }
+        }
+        return b.toString();
+    }
 }
