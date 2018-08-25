@@ -1,0 +1,66 @@
+[
+  {
+    "comment": "join infinity board as player1",
+    "request": {
+      "uri": "rooms/the_expanse/join",
+      "entity": {
+        "name": "player1"
+      }
+    },
+    "response": {
+      "store": "player1",
+      "sessionName": "player1",
+      "session": "apiKey",
+      "check": [
+        {"condition": "json.name == 'player1'"},
+        {"condition": "json.id != null"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player 1 requests initial board state",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/the_expanse/board"
+    },
+    "response": {
+      "store": "initial_board",
+      "check": [
+        {"condition": "json.x1 == 0"},
+        {"condition": "json.x2 == 31"},
+        {"condition": "json.y1 == 0"},
+        {"condition": "json.y2 == 31"},
+        {"condition": "json.tiles.length == 32"},
+        {"condition": "json.tiles[0].length == 32"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player 1 plays word on initial board view",
+    "before": "find-word-and-tiles initial_board word1",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/the_expanse/play",
+      "entity": {
+        "room": "the_expanse",
+        "stateChange": "word_played",
+        "id": "{{player1.id}}",
+        "clientId": "{{player1.id}}",
+        "apiKey": "{{player1.apiKey}}",
+        "word": "{{word1.word}}",
+        "tilesJson": "{{escaped_json word1.tiles}}"
+      }
+    }
+  },
+
+  {
+    "comment": "player 1 requests board overview for initial view",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/the_expanse/board/view.png?x1={{initial_board.x1}}&x2={{initial_board.x2}}&y1={{initial_board.y1}}&y2={{initial_board.y2}}&height=32&width=32"
+    },
+    "after": "save-board-view /tmp/views/initial_{{date_format 'now' 'yyyy-MM-dd_HH-mm'}}.png"
+  }
+]

@@ -110,4 +110,6 @@ public class GameBoardBlock {
         return tiles[x - getX1()][y - getY1()];
     }
 
+    public String grid () { return GameTileState.grid(getTiles()); }
+
 }

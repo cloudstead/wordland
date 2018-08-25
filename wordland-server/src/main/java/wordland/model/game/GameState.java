@@ -3,6 +3,7 @@ package wordland.model.game;
 import lombok.Cleanup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.cobbzilla.util.daemon.Await;
 import org.cobbzilla.util.time.TimeUtil;
 import org.cobbzilla.wizard.validation.SimpleViolationException;
@@ -18,9 +19,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -239,8 +238,8 @@ public class GameState {
         final Collection<Future<?>> futures = new ArrayList<>();
         @Cleanup("shutdownNow") final ExecutorService pool = fixedPool(100);
 
-        final int rawWidth = largestBlock.getX2() - smallestBlock.getX1();
-        final int rawHeight = largestBlock.getY2() - smallestBlock.getY1();
+        final int rawWidth = largestBlock.getX2() - smallestBlock.getX1() + 1;
+        final int rawHeight = largestBlock.getY2() - smallestBlock.getY1() + 1;
         final GameBoardView boardView = new GameBoardView()
                 .setRoom(room.getName())
                 .setX1(smallestBlock.getX1())
@@ -256,8 +255,8 @@ public class GameState {
 
         final BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         final Graphics2D g2 = bufferedImage.createGraphics();
-        final double scaleX = ((double) width) / ((double) rawWidth);
-        final double scaleY = ((double) height) / ((double) rawHeight);
+        final double scaleX = ((double) width) / ((double) rawWidth) / 10.0d;
+        final double scaleY = ((double) height) / ((double) rawHeight) / 10.0d;
         for (GameBoardBlock block : blockMap.values()) {
             //futures.add(pool.submit(() -> {
             // todo: try to load png for block from redis
@@ -268,9 +267,10 @@ public class GameState {
             final double blockX = (block.getBlockX() - smallestBlock.getBlockX()) * scaleX;
             final double blockY = (block.getBlockY() - smallestBlock.getBlockY()) * scaleY;
 
-            final ByteArrayInputStream blockImage = getBlockImage(block, palette);
-            BufferedImage bim = ImageIO.read(blockImage);
-            AffineTransform xform = new AffineTransform();
+//            final ByteArrayInputStream blockImage = getBlockImage(block, palette);
+            final ByteArrayInputStream blockImage = getFullBlockImage(block, palette);
+            final BufferedImage bim = ImageIO.read(blockImage);
+            final AffineTransform xform = new AffineTransform();
             xform.setToTranslation(blockX, blockY);
             xform.setToScale(scaleX, scaleY);
             final ImageObserver imageObserver = new ImageObserver() {
@@ -293,6 +293,9 @@ public class GameState {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         ImageIO.write(bufferedImage, "png", out);
         boardView.setImage(out.toByteArray());
+
+        final FileOutputStream fileOut = new FileOutputStream("/tmp/views/complete_"+timestamp()+".png");
+        ImageIO.write(bufferedImage, "png", fileOut);
 
         // cache image
         cachedViews.put(""+boardView.hashCode(), boardView);
@@ -321,6 +324,51 @@ public class GameState {
             return die("error writing png of board view: "+e, e);
         }
 
+        // save image for now
+        final String filename = "/tmp/views/block_" + block.getBlockKey().replace("/", "_") + "-" + timestamp() + ".png";
+        try (OutputStream fileOut = new FileOutputStream(filename)) {
+            IOUtils.write(out.toByteArray(), fileOut);
+        } catch (Exception e) {
+            return die("error saving to disk: "+e, e);
+        }
+        return new ByteArrayInputStream(out.toByteArray());
+    }
+
+    private String timestamp() {
+        return TimeUtil.format(now(), TimeUtil.DATE_FORMAT_YYYYMMDDHHMMSS);
+    }
+
+    private ByteArrayInputStream getFullBlockImage(GameBoardBlock block, GameBoardPalette palette) {
+
+        final BufferedImage bufferedImage = new BufferedImage(10*block.getWidth(), 10*block.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        final Graphics2D g2 = bufferedImage.createGraphics();
+        final GameTileState[][] tiles = block.getTiles();
+        for (int x=0; x<tiles.length; x++) {
+            for (int y=0; y<tiles[x].length; y++) {
+                g2.setColor(new Color(palette.rgbFor(tiles[x][y])));
+                try {
+                    g2.fillRect(x*10, y*10, 10,10);
+                    // bufferedImage.setRGB(x, y, palette.rgbFor(tiles[x][y]));
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    log.warn("wtf: "+e);
+                }
+            }
+        }
+
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            ImageIO.write(bufferedImage, "png", out);
+        } catch (IOException e) {
+            return die("error writing png of board view: "+e, e);
+        }
+
+        // save image for now
+        final String filename = "/tmp/views/block_" + block.getBlockKey().replace("/", "_") + "-" + timestamp() + ".png";
+        try (OutputStream fileOut = new FileOutputStream(filename)) {
+            IOUtils.write(out.toByteArray(), fileOut);
+        } catch (Exception e) {
+            return die("error saving to disk: "+e, e);
+        }
         return new ByteArrayInputStream(out.toByteArray());
     }
 

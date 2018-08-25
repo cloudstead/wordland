@@ -9,4 +9,8 @@ public class InfinityRoomTest extends ApiModelTestBase {
     @Test public void testPlayGameOnInfinityBoard () throws Exception {
         runScript("play_infinity");
     }
+
+    @Test public void testBoardView () throws Exception {
+        runScript("board_view");
+    }
 }
