@@ -76,14 +76,14 @@ public class GameState {
             if (x1 < 0) x1 = 0;
             if (settings.getLength() > x2) x2 = settings.getLength();
         }
-        if (x2-x1 >= MAX_BOARD_DETAIL_VIEW) {
+        if (x2 - x1 >= MAX_BOARD_DETAIL_VIEW) {
             x2 = x1 + MAX_BOARD_DETAIL_VIEW - 1;
         }
         if (settings.hasWidth()) {
             if (y1 < 0) y1 = 0;
             if (settings.getWidth() > y2) y2 = settings.getLength();
         }
-        if (y2-y1 >= MAX_BOARD_DETAIL_VIEW) {
+        if (y2 - y1 >= MAX_BOARD_DETAIL_VIEW) {
             y2 = y1 + MAX_BOARD_DETAIL_VIEW - 1;
         }
 
@@ -212,15 +212,15 @@ public class GameState {
             if (x1 < 0) x1 = 0;
             if (x2 > settings.getLength()) x2 = settings.getLength();
         }
-        if (x2-x1 >= MAX_BOARD_VIEW) {
+        if (x2 - x1 >= MAX_BOARD_VIEW) {
             x2 = x1 + MAX_BOARD_VIEW - 1;
         }
         if (settings.hasWidth()) {
             if (y1 < 0) y1 = 0;
             if (y2 > settings.getWidth()) y2 = settings.getWidth();
         }
-        if (y2-y1 >= MAX_BOARD_VIEW) {
-            y2 = y1 + MAX_BOARD_VIEW- 1;
+        if (y2 - y1 >= MAX_BOARD_VIEW) {
+            y2 = y1 + MAX_BOARD_VIEW - 1;
         }
         if (imageWidth > MAX_BOARD_IMAGE_WIDTH) imageWidth = MAX_BOARD_IMAGE_WIDTH;
         if (imageHeight > MAX_BOARD_IMAGE_HEIGHT) imageHeight = MAX_BOARD_IMAGE_HEIGHT;
