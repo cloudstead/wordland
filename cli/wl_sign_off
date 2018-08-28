@@ -1,0 +1,14 @@
+#!/bin/bash
+
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/_wl_common
+
+name="$(get_session_email)"
+if [[ -z "${name}" ]] ; then
+  name="$(get_session_name) (anonymous user)"
+fi
+
+wl_get ${WL_API}/auth/logout
+rm -f ${SESSION_JSON}
+echo "signed out as ${name}"

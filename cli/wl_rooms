@@ -2,7 +2,6 @@
 
 SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
-. ${SCRIPT_DIR}/common
+. ${SCRIPT_DIR}/_wl_common
 
-curl ${WL_API}/rooms
-echo
+wl_get ${WL_API}/rooms "error getting rooms"

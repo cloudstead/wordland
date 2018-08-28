@@ -9,12 +9,12 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.userPrincipal;
 public class ApiConstants {
 
     public static final String API_TOKEN = "x-wordland-api-key";
-    public static final String ROOM_TOKEN = "x-wordland-room-api-key";
     public static final String EVENTS_API_TOKEN = "x-wordland-events-api-key";
 
     public static final String AUTH_ENDPOINT = "/auth";
     public static final String EP_LOGIN = "/login";
     public static final String EP_REGISTER = "/register";
+    public static final String EP_LOGOUT = "/logout";
     public static final String REGISTER_URL = AUTH_ENDPOINT + EP_REGISTER;
     public static final String LOGIN_URL = AUTH_ENDPOINT + EP_LOGIN;
 

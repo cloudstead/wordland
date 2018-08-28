@@ -108,8 +108,28 @@ public class AuthResource {
         final ValidationResult validation = validateRegistration(request, false);
         if (validation.isInvalid()) return login(ctx, new LoginRequest(request.getUsername(), null));
 
+        // is there a user with this username?
+        Account userAccount = accountDAO.findByName(request.getUsername());
+        if (userAccount == null) {
+            userAccount = accountDAO.findByEmail(request.getEmail());
+        }
+        if (userAccount != null) {
+            if (userAccount.getHashedPassword().isCorrectPassword(request.getPassword())) {
+                // they already have an account and are trying to login. just login
+                return ok(startSession(new AccountSession(userAccount)));
+            }
+        }
+
         account = accountDAO.register(request);
         return ok(startSession(new AccountSession(account)));
+    }
+
+    @GET @Path(EP_LOGOUT)
+    public Response register (@Context HttpContext ctx) {
+        final AccountSession session = optionalUserPrincipal(ctx);
+        if (session == null) return ok();
+        sessionDAO.invalidate(session.getApiToken());
+        return ok();
     }
 
     protected ValidationResult validateRegistration(RegistrationRequest request, boolean checkUuid) {
