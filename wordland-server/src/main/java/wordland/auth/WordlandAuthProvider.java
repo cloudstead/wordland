@@ -12,6 +12,10 @@ public class WordlandAuthProvider implements AuthProvider<AccountSession> {
 
     @Autowired private SessionDAO sessionDAO;
 
-    @Override public AccountSession find(String uuid) { return sessionDAO.find(uuid); }
+    @Override public AccountSession find(String uuid) {
+        final AccountSession session = sessionDAO.find(uuid);
+        if (session != null) sessionDAO.touch(uuid, session);
+        return session;
+    }
 
 }
