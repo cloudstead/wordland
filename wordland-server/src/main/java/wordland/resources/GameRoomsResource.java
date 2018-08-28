@@ -41,6 +41,8 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
 
     @Override protected boolean canCreate(HttpContext ctx) { return true; }
 
+    @Override public Response findAll(HttpContext ctx) { return ok(dao.findTemplates()); }
+
     @PUT
     public Response create (@Context HttpContext ctx,
                             @Valid GameRoom gameRoom) {

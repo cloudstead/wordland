@@ -7,6 +7,7 @@ import wordland.model.GameRoom;
 import wordland.service.GamesMaster;
 
 import javax.validation.Valid;
+import java.util.List;
 
 @Repository
 public class GameRoomDAO extends NamedIdentityBaseDAO<GameRoom> {
@@ -16,6 +17,10 @@ public class GameRoomDAO extends NamedIdentityBaseDAO<GameRoom> {
     @Override public Object preCreate(@Valid GameRoom room) {
         gamesMaster.newRoom(room);
         return super.preCreate(room);
+    }
+
+    public List<GameRoom> findTemplates() {
+        return cacheLookup("findTemplates", o -> findByField("template", Boolean.TRUE));
     }
 
 }

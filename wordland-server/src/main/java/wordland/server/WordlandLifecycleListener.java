@@ -102,12 +102,7 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
         final DAO dao = configuration.getDaoForEntityType(type);
         for (Identifiable thing : things) {
             final NamedIdentityBase named = (NamedIdentityBase) thing;
-            if (dao.findByUuid(named.getName()) == null) {
-                dao.create(named);
-                log.info("created: "+named.getClass().getSimpleName()+"/"+named.getName());
-            } else if (named instanceof SymbolSet) {
-                log.warn("WTF");
-            }
+            if (dao.findByUuid(named.getName()) == null) dao.create(named);
 
             if (thing instanceof ParentEntity) {
                 Map<String, JsonNode[]> children = ((ParentEntity) thing).getChildren();

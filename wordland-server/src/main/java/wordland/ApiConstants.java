@@ -82,6 +82,8 @@ public class ApiConstants {
             ArrayUtil.concat(CIRCULAR_SEARCH_1, CIRCULAR_SEARCH_2, CIRCULAR_SEARCH_3)
     };
 
+    public static final String SKIP_CAPTCHA_SECRET = "skipCaptcha";
+
     public static AccountSession accountPrincipal(HttpContext ctx) {
         final AccountSession session = userPrincipal(ctx);
         return session.isAnonymous() ? null : session;

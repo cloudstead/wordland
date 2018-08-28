@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.collection.NameAndValue;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
@@ -22,9 +23,15 @@ public class RegistrationRequest {
     @JsonIgnore @Getter @Setter private String userAgent;
     @JsonIgnore @Getter @Setter private String captcha;
 
+    @Getter @Setter private NameAndValue[] secrets;
+
     public boolean hasId() { return !empty(id); }
     public boolean hasEmail() { return !empty(email); }
     public boolean hasUsername() { return !empty(username); }
     public boolean hasPassword() { return !empty(password); }
+
+    public boolean hasSecrets() { return !empty(secrets); }
+    public boolean hasSecret(String secret) { return hasSecrets() && getSecret(secret) != null; }
+    public String getSecret(String secret) { return hasSecrets() ? NameAndValue.find(secrets, secret) : null; }
 
 }

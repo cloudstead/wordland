@@ -35,8 +35,8 @@ public class AuthResource {
 
     @GET
     public Response currentSession (@Context HttpContext ctx) {
-        final Account account = optionalUserPrincipal(ctx);
-        return account == null ? notFound() : ok(account);
+        final AccountSession session = optionalUserPrincipal(ctx);
+        return session == null ? notFound() : ok(session);
     }
 
     /**
@@ -74,7 +74,7 @@ public class AuthResource {
      * Register a new account. There are a few different scenarios for this endpoint:
      *  - If no user is logged in
      *     - If the request includes a name+email+password, then a normal account is created
-     *     - Otherwise a validation error is returned
+     *     - Otherwise the user is logged in to an anonymous account, using the username provided, or one will be generated
      *  - If the user has already logged in
      *    - If the currently logged-in account is non-anonymous, the current session is returned
      *    - If the currently logged-in account is anonymous
@@ -93,29 +93,32 @@ public class AuthResource {
         if (alreadyLoggedIn != null) {
             if (!alreadyLoggedIn.isAnonymous()) return ok(alreadyLoggedIn);
 
-            validateRegistration(request, true);
-
-            // has username, email and password, try to convert anonymous account into normal account
-            // update existing session to preserve session id
-            final String apiKey = alreadyLoggedIn.getApiToken();
-            final AccountSession session = new AccountSession(accountDAO.register(request));
-            session.setApiToken(apiKey);
-            sessionDAO.update(apiKey, session);
-            return ok(session);
+            final ValidationResult validation = validateRegistration(request, true);
+            if (validation.isValid()) {
+                // has username, email and password, try to convert anonymous account into normal account
+                // update existing session to preserve session id
+                final String apiKey = alreadyLoggedIn.getApiToken();
+                final AccountSession session = new AccountSession(accountDAO.register(request));
+                session.setApiToken(apiKey);
+                sessionDAO.update(apiKey, session);
+                return ok(session);
+            }
         }
 
-        validateRegistration(request, false);
+        final ValidationResult validation = validateRegistration(request, false);
+        if (validation.isInvalid()) return login(ctx, new LoginRequest(request.getUsername(), null));
+
         account = accountDAO.register(request);
         return ok(startSession(new AccountSession(account)));
     }
 
-    protected void validateRegistration(RegistrationRequest request, boolean checkUuid) {
+    protected ValidationResult validateRegistration(RegistrationRequest request, boolean checkUuid) {
         final ValidationResult validation = new ValidationResult();
         if (!request.hasUsername()) validation.addViolation("err.username.empty");
         if (!request.hasEmail()) validation.addViolation("err.email.empty");
         if (!request.hasPassword()) validation.addViolation("err.password.empty");
         if (checkUuid && !request.hasId()) validation.addViolation("err.id.empty");
-        if (validation.isInvalid()) throw invalidEx(validation);
+        return validation;
     }
 
     protected String anonymousUsername() { return TestNames.animal() + " " + TestNames.fruit(); }

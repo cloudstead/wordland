@@ -1,0 +1,13 @@
+[
+  {
+    "comment": "register for an account",
+    "request": {
+      "uri": "auth/register",
+      "entity": {
+        "username": "tester",
+        "email": "tester@example.com",
+        "password": "tester123"
+      }
+    }
+  }
+]

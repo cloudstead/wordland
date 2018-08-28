@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.cobbzilla.mail.SimpleEmailMessage;
 import org.cobbzilla.mail.sender.SmtpMailConfig;
 import org.cobbzilla.mail.service.TemplatedMailSenderConfiguration;
+import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.javascript.StandardJsEngine;
 import org.cobbzilla.util.reflect.ReflectionUtil;
@@ -34,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
+import static wordland.ApiConstants.SKIP_CAPTCHA_SECRET;
 
 @Configuration @NoArgsConstructor @Slf4j
 public class WordlandConfiguration extends RestServerConfiguration
@@ -121,5 +123,19 @@ public class WordlandConfiguration extends RestServerConfiguration
         HandlebarsUtil.registerDateHelpers(hbs);
         HandlebarsUtil.registerJavaScriptHelper(hbs, StandardJsEngine::new);
         return hbs;
+    }
+
+    @Getter @Setter private Map<String, String> secrets;
+
+    public boolean isCorrectSecret(String name, String value) {
+        if (empty(value)) return false;
+        return value.equals(secrets.get(name));
+    }
+
+    public boolean isSkipCaptchaSecret(NameAndValue[] secrets) {
+        final String skipCaptchaKey = this.secrets.get(SKIP_CAPTCHA_SECRET);
+        if (empty(skipCaptchaKey)) return false;
+        final String secret = this.secrets.get(skipCaptchaKey);
+        return !empty(secret) && secret.equals(NameAndValue.find(secrets, skipCaptchaKey));
     }
 }

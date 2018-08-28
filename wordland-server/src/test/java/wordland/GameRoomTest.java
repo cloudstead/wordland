@@ -28,4 +28,9 @@ public class GameRoomTest extends ApiModelTestBase {
         runScript("play_for_wrong_player");
     }
 
+    @Test public void testRegisterAccount () throws Exception {
+        apiDocs.startRecording(DOC_TARGET, "register an account");
+        runScript("register_account");
+    }
+
 }

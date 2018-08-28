@@ -94,9 +94,17 @@ public class AccountDAO extends AccountBaseDAOBase<Account> {
             throw invalidEx("err.email.notUnique", "Email was not unique");
         }
 
-        if (!configuration.getRecaptcha().verify(request.getCaptcha())) {
-            log.warn("register: captcha failed, returning invalid");
-            throw invalidEx(ApiConstants.ERR_CAPTCHA_INCORRECT);
+        boolean checkCaptcha = true;
+        if (request.hasSecrets()) {
+            if (configuration.isSkipCaptchaSecret(request.getSecrets())) {
+                checkCaptcha = false;
+            }
+        }
+        if (checkCaptcha) {
+            if (!configuration.getRecaptcha().verify(request.getCaptcha())) {
+                log.warn("register: captcha failed, returning invalid");
+                throw invalidEx(ApiConstants.ERR_CAPTCHA_INCORRECT);
+            }
         }
 
         final Account account = (Account) new Account()
@@ -110,6 +118,14 @@ public class AccountDAO extends AccountBaseDAOBase<Account> {
         final Account created = create(account);
         sendWelcomeEmail(created);
         return created;
+    }
+
+    @Override public Object preCreate(Account account) {
+        if (account.getFirstName() == null) account.setFirstName(account.hasName() ? account.getName() : "?");
+        if (account.getLastName() == null) account.setLastName("?");
+        if (account.getMobilePhone() == null) account.setMobilePhone("??????????");
+        if (account.getMobilePhoneCountryCode() == null) account.setMobilePhoneCountryCode(1);
+        return super.preCreate(account);
     }
 
     public void removeAccount(Account account) {
