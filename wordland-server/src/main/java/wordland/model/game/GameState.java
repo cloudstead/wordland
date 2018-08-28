@@ -86,16 +86,16 @@ public class GameState {
         final GameBoard board = roomSettings().getBoard();
         final GameBoardSettings settings = board.getSettings();
 
-        if (settings.hasLength()) {
+        if (settings.hasWidth()) {
             if (x1 < 0) x1 = 0;
-            if (settings.getLength() > x2) x2 = settings.getLength();
+            if (x2 > settings.getWidth()) x2 = settings.getWidth();
         }
         if (x2 - x1 >= MAX_BOARD_DETAIL_VIEW) {
             x2 = x1 + MAX_BOARD_DETAIL_VIEW - 1;
         }
-        if (settings.hasWidth()) {
+        if (settings.hasLength()) {
             if (y1 < 0) y1 = 0;
-            if (settings.getWidth() > y2) y2 = settings.getLength();
+            if (y2 > settings.getLength()) y2 = settings.getLength();
         }
         if (y2 - y1 >= MAX_BOARD_DETAIL_VIEW) {
             y2 = y1 + MAX_BOARD_DETAIL_VIEW - 1;
@@ -229,16 +229,16 @@ public class GameState {
         final GameBoard board = roomSettings().getBoard();
         final GameBoardSettings settings = board.getSettings();
 
-        if (settings.hasLength()) {
+        if (settings.hasWidth()) {
             if (x1 < 0) x1 = 0;
-            if (x2 > settings.getLength()) x2 = settings.getLength();
+            if (x2 > settings.getWidth()) x2 = settings.getWidth();
         }
         if (x2 - x1 >= MAX_BOARD_VIEW) {
             x2 = x1 + MAX_BOARD_VIEW - 1;
         }
-        if (settings.hasWidth()) {
+        if (settings.hasLength()) {
             if (y1 < 0) y1 = 0;
-            if (y2 > settings.getWidth()) y2 = settings.getWidth();
+            if (y2 > settings.getLength()) y2 = settings.getLength();
         }
         if (y2 - y1 >= MAX_BOARD_VIEW) {
             y2 = y1 + MAX_BOARD_VIEW - 1;

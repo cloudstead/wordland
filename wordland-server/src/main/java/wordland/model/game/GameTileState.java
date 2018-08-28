@@ -67,6 +67,7 @@ public class GameTileState {
             header.insert(0, "    ");
             header.insert(0, setFgColor(new Color(palette.getBlankColorRgb())));
             b.insert(0, header);
+            b.append("\\033[0m");
         }
 
         return b.toString();
