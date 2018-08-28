@@ -11,16 +11,42 @@ function die {
   exit 1
 }
 
-function sign_up {
+function wl_auth {
   USERNAME="${1}"
   ASK_TO_SIGNUP="${2:-Y}"
   OPTIONAL=""
-  if [[ -z "${ASK_TO_SIGNUP}" || ${ASK_TO_SIGNUP} == "Y" ]] ; then
-  OPTIONAL=" (optional)"
+
+
+  if [[ -z "${ASK_TO_SIGNUP}" || ( ${ASK_TO_SIGNUP} == "Y" || ${ASK_TO_SIGNUP} == "y" ) ]] ; then
+    OPTIONAL=" (optional)"
+
+    response=$(curl --silent --write-out "\n%{http_code}\n" ${WL_API}/auth)
+    status_code=$(echo "$response" | sed -n '$p')
+    json=$(echo "$response" | sed '$d')
+
+    if [ -z "${status_code}" ] ; then
+      die "error checking session: ${json}"
+    fi
+    if [ ${status_code} -eq 200 ] ; then
+      echo "${json}" > ${SESSION_JSON}
+      return
+    elif [[ ${status_code} -eq 404 || -z "${USERNAME}" ]] ; then
+      echo -n "Username${OPTIONAL}: "
+      read USERNAME
+    else
+      die "error checking status: ${status_code} / ${json}"
+    fi
+  fi
+  if [[ -z "${USERNAME}" && ( -z "${ASK_TO_SIGNUP}" || ${ASK_TO_SIGNUP} == "N" || ${ASK_TO_SIGNUP} == "n" ) ]] ; then
+    die "username is required"
   fi
 
-  echo -n "Your email${OPTIONAL}: "
+  echo -n "Email${OPTIONAL}: "
   read EMAIL
+
+  if [[ -z "${EMAIL}" && ( -z "${ASK_TO_SIGNUP}" || ${ASK_TO_SIGNUP} == "N" || ${ASK_TO_SIGNUP} == "n" ) ]] ; then
+    die "email is required"
+  fi
 
   if [[ ! -z "${EMAIL}" ]] ; then
     if [[ -z "${ASK_TO_SIGNUP}" || ${ASK_TO_SIGNUP} == "Y" ]] ; then
@@ -69,10 +95,10 @@ function sign_up {
 }
 
 function get_session_name {
-  echo -n "$(cat ${SESSION_JSON} | grep -m 1 '\"name\"' | awk -F '"' '{print $4}' | tr -d ' \n')"
+  echo -n "$(cat ${SESSION_JSON} 2> /dev/null | grep -m 1 '\"name\"' | awk -F '"' '{print $4}' | tr -d ' \n')"
 }
 function get_session_email {
-  echo -n "$(cat ${SESSION_JSON} | grep -m 1 '\"email\"' | awk -F '"' '{print $4}' | tr -d ' \n')"
+  echo -n "$(cat ${SESSION_JSON} 2> /dev/null | grep -m 1 '\"email\"' | awk -F '"' '{print $4}' | tr -d ' \n')"
 }
 
 if [ -f ${HOME}/.wordland.env ] ; then
@@ -90,30 +116,14 @@ fi
 WL_DIR="${HOME}/.wordland"
 SESSION_JSON="${WL_DIR}/session.json"
 
-if [ ! -f ${SESSION_JSON} ] ; then
-
-  response=$(curl --silent --write-out "\n%{http_code}\n" ${WL_API}/auth)
-  status_code=$(echo "$response" | sed -n '$p')
-  json=$(echo "$response" | sed '$d')
-  if [ -z "${status_code}" ] ; then
-    die "error checking session: ${json}"
-  fi
-  if [ ${status_code} -eq 200 ] ; then
-    echo "${json}" > ${SESSION_JSON}
-
-  elif [ ${status_code} -eq 404 ] ; then
-    echo -n "Your username (optional): "
-    read USERNAME
-    sign_up ${USERNAME} "Y"
-
-  else
-    die "error checking status: ${status_code} / ${json}"
-  fi
-
+if [[ ! -f ${SESSION_JSON} && $(basename $0) != "wl_sign_up"  ]] ; then
+  wl_auth "${__no_value__}" "Y"
 fi
 
 WL_API_KEY="x-wordland-api-key"
-SESSION_TOKEN="${WL_API_KEY}: $(cat ${SESSION_JSON} | grep apiToken | awk -F '"' '{print $4}')"
+if [ ! -z "${SESSION_JSON}" ] ; then
+  SESSION_TOKEN="${WL_API_KEY}: $(cat ${SESSION_JSON} 2> /dev/null | grep apiToken | awk -F '"' '{print $4}')"
+fi
 
 function wl_get {
   URL="${1}"
