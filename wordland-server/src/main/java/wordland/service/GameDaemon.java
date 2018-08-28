@@ -69,6 +69,10 @@ public class GameDaemon extends SimpleDaemon {
     }
 
     public void addPlayer(GamePlayer player) {
+        if (findPlayer(player.getId()) != null) {
+            log.info("addPlayer: not adding existing player: "+player.getId());
+            return;
+        }
         final GameStateChange stateChange;
         synchronized (gameState) {
             stateChange = gameState.get().addPlayer(player).setRoom(room.getName());

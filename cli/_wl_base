@@ -59,13 +59,15 @@ function wl_get {
 }
 
 function wl_post {
-  URL="${1}"
-  DATA="${2}"
-  ERR_MESSAGE="${3:-error}"
+  SESSION_TOKEN="${1}"
+  URL="${2}"
+  DATA="${3}"
+  OUTFILE="${4:-/dev/null}"
+  ERR_MESSAGE="${5:-error}"
 
   response=$(echo "${DATA}" | curl --silent --write-out "\n%{http_code}\n" --header "Content-Type: application/json" --header "${SESSION_TOKEN}" -X POST -d @- ${URL})
   status_code=$(echo "${response}" | sed -n '$p')
-  json=$(echo "${response}" | sed '$d')
+  json=$(echo "${response}" | sed '$d' | tee ${OUTFILE})
   if [ -z "${status_code}" ] ; then
     die "${ERR_MESSAGE}: ${json}"
   fi

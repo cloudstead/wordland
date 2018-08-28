@@ -6,4 +6,4 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 
 MODEL="${1:?no model name specified}"
 
-wl_post "${WL_API}/entityConfigs/populate/${MODEL}"
+wl_post "${SESSION_TOKEN}" "${WL_API}/entityConfigs/populate/${MODEL}"
