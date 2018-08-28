@@ -1,0 +1,24 @@
+#!/bin/bash
+
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/_wl_common
+
+if [[ ! -f ${SESSION_JSON} ]] ; then
+  echo "not signed in"
+  exit 0
+fi
+
+email="$(get_session_email)"
+if [[ ! -z "${email}" ]] ; then
+  echo "signed in as ${email}"
+  exit 0
+fi
+
+name="$(get_session_name)"
+if [[ ! -z "${name}" ]] ; then
+  echo "signed in as ${name} (anonymous user)"
+  exit 0
+fi
+
+die "not sure who you might be signed in as, here's your session: $(cat ${SESSION_JSON})"

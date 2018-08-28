@@ -13,6 +13,6 @@ if [[ -z "${name}" ]] ; then
   name="$(get_session_name) (anonymous user)"
 fi
 
-wl_get ${WL_API}/auth/logout
+wl_get "${SESSION_TOKEN}" ${WL_API}/auth/logout
 rm -f ${SESSION_JSON}
 echo "signed out as ${name}"

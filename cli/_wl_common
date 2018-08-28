@@ -1,24 +1,17 @@
 #!/bin/bash
 
-set -e
-
-function die {
-  if [[ -z "${SCRIPT}" ]] ; then
-    echo 1>&2 "${1}"
-  else
-    echo 1>&2 "${SCRIPT}: ${1}"
-  fi
-  exit 1
-}
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/_wl_base
 
 function wl_auth {
   USERNAME="${1}"
   ASK_TO_SIGNUP="${2:-Y}"
   OPTIONAL=""
-
-
-  if [[ -z "${ASK_TO_SIGNUP}" || ( ${ASK_TO_SIGNUP} == "Y" || ${ASK_TO_SIGNUP} == "y" ) ]] ; then
+  if [[ ${ASK_TO_SIGNUP} == "Y" || ${ASK_TO_SIGNUP} == "y" ]] ; then
     OPTIONAL=" (optional)"
+  fi
+
+  if [[ -z "${USERNAME}" || ( ${ASK_TO_SIGNUP} == "Y" || ${ASK_TO_SIGNUP} == "y" ) ]] ; then
 
     response=$(curl --silent --write-out "\n%{http_code}\n" ${WL_API}/auth)
     status_code=$(echo "$response" | sed -n '$p')
@@ -101,42 +94,12 @@ function get_session_email {
   echo -n "$(cat ${SESSION_JSON} 2> /dev/null | grep -m 1 '\"email\"' | awk -F '"' '{print $4}' | tr -d ' \n')"
 }
 
-if [ -f ${HOME}/.wordland.env ] ; then
-  . ${HOME}/.wordland.env
-fi
-
-DEFAULT_API="http://127.0.0.1:9091/api"
-
-if [ -z "${WL_API}" ] ; then
-  #die "no WL_API defined"
-  #echo "No WL_API defined, using default ${DEFAULT_API}"
-  WL_API="${DEFAULT_API}"
-fi
-
-WL_DIR="${HOME}/.wordland"
-SESSION_JSON="${WL_DIR}/session.json"
-
-if [[ ! -f ${SESSION_JSON} && $(basename $0) != "wl_sign_up"  ]] ; then
+if [[ ! -f ${SESSION_JSON} && $(basename $0) != "wl_sign_up" && $(basename $0) != "wl_whoami" ]] ; then
   wl_auth "${__no_value__}" "Y"
+#else
+#  echo "not signing in (already have session, or command that does not require session)..."
 fi
 
-WL_API_KEY="x-wordland-api-key"
-if [ ! -z "${SESSION_JSON}" ] ; then
+if [ -f "${SESSION_JSON}" ] ; then
   SESSION_TOKEN="${WL_API_KEY}: $(cat ${SESSION_JSON} 2> /dev/null | grep apiToken | awk -F '"' '{print $4}')"
 fi
-
-function wl_get {
-  URL="${1}"
-  ERR_MESSAGE="${2:-error}"
-  response=$(curl --silent --write-out "\n%{http_code}\n" --header "${SESSION_TOKEN}" ${URL})
-  status_code=$(echo "$response" | sed -n '$p')
-  json=$(echo "$response" | sed '$d')
-  if [ -z "${status_code}" ] ; then
-    die "${ERR_MESSAGE}: ${json}"
-  fi
-  if [ ${status_code} -eq 200 ] ; then
-    echo "${json}"
-  else
-    die "${ERR_MESSAGE}: ${status_code} / ${json}"
-  fi
-}

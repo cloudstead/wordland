@@ -37,6 +37,7 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
             SymbolSet.class,
             GameBoard.class
     };
+    public static final String CREATE_SUPERUSER = "WORDLAND_CREATE_SUPERUSER";
 
     @Getter private WordlandConfiguration configuration;
 
@@ -63,8 +64,9 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
 
         for (Class<? extends Identifiable> seedClass : SEED_CLASSES) populate(configuration, seedClass);
 
-        if (includeTestData || Boolean.valueOf(System.getenv("WORDLAND_CREATE_SUPERUSER"))) {
-            final Map<String, String> env = server.getConfiguration().getEnvironment();
+        final Map<String, String> env = server.getConfiguration().getEnvironment();
+        if (includeTestData || Boolean.valueOf(System.getenv(CREATE_SUPERUSER)) || Boolean.valueOf(env.get(CREATE_SUPERUSER))) {
+
             if (env.containsKey("WORDLAND_SUPERUSER") && env.containsKey("WORDLAND_SUPERUSER_PASS")) {
                 final AccountDAO accountDAO = configuration.getBean(AccountDAO.class);
                 if (accountDAO.adminsExist()) {

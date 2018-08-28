@@ -1,0 +1,15 @@
+#!/bin/bash
+
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/_wl_base
+
+# login as superuser
+response=$(curl --header "Content-Type: application/json" --silent --write-out "\n%{http_code}\n" -X POST -d '{"name": "'$(env_val WORDLAND_SUPERUSER)'", "password": "'$(env_val WORDLAND_SUPERUSER_PASS)'"}' ${WL_API}/auth/login)
+status_code=$(echo "${response}" | sed -n '$p')
+json=$(echo "${response}" | sed '$d')
+
+if [[ -z "${status_code}" || ${status_code} -ne 200 ]] ; then
+  die "error signing in as superuser: ${status_code} / ${json}"
+fi
+
+SESSION_TOKEN="${WL_API_KEY}: $(echo "${json}" | grep apiToken | awk -F '"' '{print $4}')"

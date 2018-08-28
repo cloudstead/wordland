@@ -1,0 +1,9 @@
+#!/bin/bash
+
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/_wl_root
+
+MODEL="${1:?no model name specified}"
+
+wl_post "${WL_API}/entityConfigs/populate/${MODEL}"

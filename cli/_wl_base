@@ -1,0 +1,77 @@
+#!/bin/bash
+
+ENV_FILE="${HOME}/.wordland.env"
+
+WL_DIR="${HOME}/.wordland"
+SESSION_JSON="${WL_DIR}/session.json"
+
+DEFAULT_API="http://127.0.0.1:9091/api"
+WL_API_KEY="x-wordland-api-key"
+
+function die {
+  if [[ -z "${SCRIPT}" ]] ; then
+    echo 1>&2 "${1}"
+  else
+    echo 1>&2 "${SCRIPT}: ${1}"
+  fi
+  exit 1
+}
+
+function env_val {
+  param="${1}"
+  cat ${ENV_FILE} | grep "export ${param}=" | awk -F '=' '{print $2}'
+}
+
+if [ -f ${ENV_FILE} ] ; then
+  . ${ENV_FILE}
+fi
+
+if [ -z "${WL_API}" ] ; then
+  #die "no WL_API defined"
+  #echo "No WL_API defined, using default ${DEFAULT_API}"
+  WL_API="${DEFAULT_API}"
+fi
+
+# check API availability
+response=$(curl --silent --write-out "\n%{http_code}\n" ${WL_API}/auth/ping)
+status_code=$(echo "${response}" | sed -n '$p')
+if [[ -z "${status_code}" || ${status_code} -ne 200 ]] ; then
+  die "API server unavailable: ${WL_API}"
+fi
+
+function wl_get {
+  SESSION_TOKEN="${1}"
+  URL="${2}"
+  ERR_MESSAGE="${3:-error}"
+  FAIL_ON_EMPTY_RESPONSE="${4:-N}"
+
+  response=$(curl --silent --write-out "\n%{http_code}\n" --header "${SESSION_TOKEN}" ${URL})
+  status_code=$(echo "${response}" | sed -n '$p')
+  json=$(echo "${response}" | sed '$d')
+  if [ -z "${status_code}" ] ; then
+    die "${ERR_MESSAGE}: ${json}"
+  fi
+  if [[ ${status_code} -eq 200 && ( ! -z "${json}" || ${FAIL_ON_EMPTY_RESPONSE} != "Y"  ) ]] ; then
+    echo "${json}"
+  else
+    die "${ERR_MESSAGE}: ${status_code} / ${json}"
+  fi
+}
+
+function wl_post {
+  URL="${1}"
+  DATA="${2}"
+  ERR_MESSAGE="${3:-error}"
+
+  response=$(echo "${DATA}" | curl --silent --write-out "\n%{http_code}\n" --header "Content-Type: application/json" --header "${SESSION_TOKEN}" -X POST -d @- ${URL})
+  status_code=$(echo "${response}" | sed -n '$p')
+  json=$(echo "${response}" | sed '$d')
+  if [ -z "${status_code}" ] ; then
+    die "${ERR_MESSAGE}: ${json}"
+  fi
+  if [[ ${status_code} -eq 200 && ! -z "${json}" ]] ; then
+    echo "${json}"
+  else
+    die "${ERR_MESSAGE}: ${status_code} / ${json}"
+  fi
+}

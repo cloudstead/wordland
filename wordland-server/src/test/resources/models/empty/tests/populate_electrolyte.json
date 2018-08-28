@@ -1,0 +1,41 @@
+[
+  {
+    "comment": "login as superuser",
+    "include": "parts/login_superuser"
+  },
+
+  {
+    "comment": "verify there are no rooms",
+    "request": {
+      "uri": "rooms"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length == 0"}
+      ]
+    }
+  },
+
+  {
+    "comment": "populate electrolyte model",
+    "request": {
+      "uri": "entityConfigs/populate/electrotype",
+      "method": "post"
+    }
+  },
+
+  {
+    "comment": "verify there is now one room",
+    "request": {
+      "uri": "rooms"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "json[0].name == '5x5'"},
+        {"condition": "json[0].settings.board.name == 'electrotype'"}
+      ]
+    }
+  }
+
+]

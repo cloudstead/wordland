@@ -33,6 +33,12 @@ public class AuthResource {
     @Autowired private AccountDAO accountDAO;
     @Autowired private SessionDAO sessionDAO;
 
+    @GET @Path("/ping")
+    public Response ping (@Context HttpContext ctx) {
+        final AccountSession session = optionalUserPrincipal(ctx);
+        return ok();
+    }
+
     @GET
     public Response currentSession (@Context HttpContext ctx) {
         final AccountSession session = optionalUserPrincipal(ctx);
@@ -125,7 +131,7 @@ public class AuthResource {
     }
 
     @GET @Path(EP_LOGOUT)
-    public Response register (@Context HttpContext ctx) {
+    public Response logout (@Context HttpContext ctx) {
         final AccountSession session = optionalUserPrincipal(ctx);
         if (session == null) return ok();
         sessionDAO.invalidate(session.getApiToken());

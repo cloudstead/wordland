@@ -5,7 +5,7 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/_wl_common
 
 ROOM_NAME="${1:?no room name specified}"
-PLAYER_NAME="${2:?no player name specified}"
+PLAYER_NAME="${2-$(get_session_name)}"
 
 function join_obj () {
   cat <<EOF
@@ -17,7 +17,7 @@ EOF
 
 ROOM_DIR="${WL_DIR}/rooms/${ROOM_NAME}"
 mkdir -p ${ROOM_DIR}
-curl --header "Content-Type: application/json" -X POST -d "$(join_obj)" ${WL_API}/rooms/${ROOM_NAME}/join > ${ROOM_DIR}/player.json \
+curl --header "Content-Type: application/json" -X POST -d "$(join_obj)" ${WL_API}/rooms/${ROOM_NAME}/join > ${ROOM_DIR}/session.json \
   || die "error joining game"
 
 echo "${ROOM_NAME}" > ${WL_DIR}/current_room
