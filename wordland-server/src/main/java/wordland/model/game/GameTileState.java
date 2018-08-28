@@ -38,7 +38,7 @@ public class GameTileState {
                     rowVal.append(TXT_SPACER);
                 } else {
                     if (palette != null) {
-                        rowVal.append(i).append(i <= 10 ? TXT_SPACER : TXT_SHORT_SPACER);
+                        rowVal.append(i).append(i < 10 ? TXT_SPACER : TXT_SHORT_SPACER);
                     }
                 }
                 rowVal.append(tile.getSymbol());
@@ -57,6 +57,7 @@ public class GameTileState {
                 header.append(i);
             }
             header.append("\n");
+            header.insert(0, "  | ");
             b.insert(0, header);
         }
 

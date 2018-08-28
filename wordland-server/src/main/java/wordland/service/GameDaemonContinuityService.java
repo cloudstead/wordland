@@ -1,6 +1,7 @@
 package wordland.service;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -10,7 +11,11 @@ import wordland.model.GameRoom;
 import javax.annotation.PostConstruct;
 import java.util.Set;
 
-@Service
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.cobbzilla.util.daemon.ZillaRuntime.daemon;
+import static org.cobbzilla.util.system.Sleep.sleep;
+
+@Service @Slf4j
 public class GameDaemonContinuityService {
 
     public static final String K_ROOMS = "rooms";
@@ -24,15 +29,19 @@ public class GameDaemonContinuityService {
 
     @PostConstruct
     public void restartIdleDaemons () {
-        final Set<String> rooms = getGameDaemonCache().smembers(K_ROOMS);
-        if (rooms != null) {
-            for (String room : rooms) {
-                final GameRoom gameRoom = gameRoomDAO.findByName(room);
-                if (gameRoom != null) {
-                    gamesMaster.newRoom(gameRoom);
+        daemon(() ->{
+            sleep(SECONDS.toMillis(5), "waiting to restart idle GameDaemons");
+            final Set<String> rooms = getGameDaemonCache().smembers(K_ROOMS);
+            if (rooms != null) {
+                for (String room : rooms) {
+                    final GameRoom gameRoom = gameRoomDAO.findByName(room);
+                    if (gameRoom != null) {
+                        gamesMaster.newRoom(gameRoom);
+                    }
                 }
             }
-        }
+            log.info("restartIdleDaemons: refreshed "+rooms.size()+" room daemons");
+        });
     }
 
     public void register(GameDaemon daemon) {
