@@ -20,16 +20,16 @@ wl_post "${SESSION_TOKEN}" ${WL_API}/rooms/${ROOM_NAME}/join "$(join_obj)" ${TEM
 if [[ ! -f ${TEMP_SESSION} || ! -s ${TEMP_SESSION} ]] ; then
   die "error joining game"
 fi
+
 ROOM_NAME="$(cat ${TEMP_SESSION} | grep -m 1 '"room"' | awk -F '"' '{print $4}')"
 ROOM_DIR="${WL_DIR}/rooms/${ROOM_NAME}"
 mkdir -p ${ROOM_DIR}
 
 echo "${ROOM_NAME}" > ${WL_DIR}/current_room
+cat ${TEMP_SESSION} > ${WL_DIR}/current_room.json
 echo "0" > ${ROOM_DIR}/x1
 echo "0" > ${ROOM_DIR}/y1
 echo "10" > ${ROOM_DIR}/view_size
 
-exit 0
-
 # show board
-${SCRIPT_DIR}/board
+${SCRIPT_DIR}/wl_board

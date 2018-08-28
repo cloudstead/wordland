@@ -1,9 +1,11 @@
 package wordland.server;
 
+import edu.emory.mathcs.backport.java.util.Arrays;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.system.CommandShell;
 import org.cobbzilla.wizard.server.RestServerBase;
+import org.cobbzilla.wizard.server.RestServerLifecycleListener;
 import org.cobbzilla.wizard.server.config.factory.ConfigurationSource;
 
 import java.util.List;
@@ -16,6 +18,10 @@ public class WordlandServer extends RestServerBase<WordlandConfiguration> {
 
     public static final String[] API_CONFIG_YML = {"wordland-config.yml"};
     public static final WordlandLifecycleListener WORDLAND_LIFECYCLE_LISTENER = new WordlandLifecycleListener();
+
+    private static final List<RestServerLifecycleListener> WORDLAND_LIFECYCLE_LISTENERS = Arrays.asList(new RestServerLifecycleListener[]{
+            WORDLAND_LIFECYCLE_LISTENER
+    });
 
     //    @Override protected String getListenAddress() { return LOCALHOST; }
     @Override protected String getListenAddress() { return IPv4_ALL_ADDRS; }
@@ -32,7 +38,7 @@ public class WordlandServer extends RestServerBase<WordlandConfiguration> {
         }
 
         // todo: in a clustered environment, only 1 server needs to seed the DB upon startup
-        main(WordlandServer.class, WORDLAND_LIFECYCLE_LISTENER, configSources, env);
+        main(args, WordlandServer.class, WORDLAND_LIFECYCLE_LISTENERS, configSources, env);
     }
 
     public static List<ConfigurationSource> getConfigurationSources() {

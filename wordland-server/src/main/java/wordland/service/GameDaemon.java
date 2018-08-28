@@ -24,6 +24,7 @@ public class GameDaemon extends SimpleDaemon {
     private AtmosphereEventsService eventService;
 
     @Autowired private WordlandConfiguration configuration;
+    @Autowired private GameDaemonContinuityService daemonContinuityService;
 
     private final AtomicReference<GameState> gameState = new AtomicReference<>();
 
@@ -63,6 +64,7 @@ public class GameDaemon extends SimpleDaemon {
                 return this;
             }
             gameState.set(room.init(getGameStateStorage()));
+            daemonContinuityService.register(this);
             start();
         }
         return this;
