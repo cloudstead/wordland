@@ -5,12 +5,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.awt.*;
+
 @NoArgsConstructor @Accessors(chain=true)
 public class GameTileState {
 
     public static final GameTileState[][] EMPTY_STATE = new GameTileState[0][0];
-    public static final String TXT_SPACER = " | ";
-    public static final String TXT_SHORT_SPACER = "| ";
+    public static final String TXT_SPACER = "   ";
+    public static final String TXT_SHORT_SPACER = "  ";
 
     @Getter @Setter private String symbol;
     @Getter @Setter private String owner;
@@ -41,6 +43,11 @@ public class GameTileState {
                         rowVal.append(i).append(i < 10 ? TXT_SPACER : TXT_SHORT_SPACER);
                     }
                 }
+                if (palette != null) {
+                    final Color color;
+                    color = new Color(palette.rgbFor(tile));
+                    rowVal.append(setFgColor(color));
+                }
                 rowVal.append(tile.getSymbol());
             }
             if (b.length() > 0) b.append("\n");
@@ -57,10 +64,20 @@ public class GameTileState {
                 header.append(i);
             }
             header.append("\n");
-            header.insert(0, "  | ");
+            header.insert(0, "    ");
+            header.insert(0, setFgColor(new Color(palette.getBlankColorRgb())));
             b.insert(0, header);
         }
 
+        return b.toString();
+    }
+
+    protected static String setFgColor(Color color) {
+        StringBuilder b = new StringBuilder();
+        b.append("\\033[38;2;")
+                .append(color.getRed()).append(";")
+                .append(color.getGreen()).append(";")
+                .append(color.getBlue()).append("m");
         return b.toString();
     }
 }

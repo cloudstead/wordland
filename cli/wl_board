@@ -19,5 +19,8 @@ X1=${2:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)}
 Y1=${3:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)}
 VIEW_SIZE=${4:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/view_size)}
 
-wl_get "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/board/view.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" \
+board="$(wl_get "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/board/view.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})")" \
   || die "error joining game"
+
+printf "${board}"
+echo

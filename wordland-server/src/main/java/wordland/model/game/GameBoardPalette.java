@@ -1,5 +1,6 @@
 package wordland.model.game;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,6 +29,8 @@ public class GameBoardPalette {
     @Getter @Setter private String currentPlayerColor;
     @Getter @Setter private NameAndValue[] playerColors;
 
+    @JsonIgnore public int getBlankColorRgb () { return parseColor(blankColor, DEFAULT_BLANK_RGB); }
+
     @Getter(lazy=true) private final Map<String, String> colorsByPlayer = initColorsByPlayer();
 
     public GameBoardPalette(GameBoardPalette other) { copy(this, other); }
@@ -48,7 +51,7 @@ public class GameBoardPalette {
     }
 
     public int rgbFor(GameTileState tile) {
-        if (!tile.hasOwner()) return getBlankRgb();
+        if (tile == null || !tile.hasOwner()) return getBlankRgb();
         if (currentPlayerColor != null && tile.getOwner().equals(currentPlayerId)) {
             return parseColor(currentPlayerColor, DEFAULT_CURRENT_PLAYER_RGB);
         }
