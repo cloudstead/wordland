@@ -114,7 +114,7 @@ public class AtmosphereEventsService {
             log.warn("onMessage: no player");
             return null;
         }
-        if (!player.getApiKey().equals(request.getApiKey())) {
+        if (!player.getApiToken().equals(request.getApiToken())) {
             log.warn("onMessage: invalid apiKey");
             return null;
         }
@@ -137,7 +137,7 @@ public class AtmosphereEventsService {
                 final String word = request.getWord();
                 final PlayedTile[] tiles = request.getTiles();
                 try {
-                    final GameStateChange stateChange = getGamesMaster().playWord(request.getRoom(), request.getApiKey(), player, word, tiles);
+                    final GameStateChange stateChange = getGamesMaster().playWord(request.getRoom(), request.getApiToken(), player, word, tiles);
                     return stateChange != null ? json(stateChange) : null;
                 } catch (GameNotificationException e) {
                     send(entry, e.getGameNotification());

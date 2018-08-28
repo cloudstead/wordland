@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,15 +14,18 @@ import wordland.model.game.GamePlayer;
 import wordland.model.game.GameState;
 import wordland.model.game.GameStateChange;
 import wordland.model.json.GameRoomSettings;
+import wordland.model.support.GameRoomJoinResponse;
 import wordland.model.support.PlayedTile;
 import wordland.server.WordlandConfiguration;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.security.ShaUtil.sha256_hex;
-import static org.cobbzilla.wizard.model.StrongIdentifiableBase.newStrongUuid;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 
@@ -34,6 +38,7 @@ public class GamesMaster {
     @Autowired private PointSystemDAO pointSystemDAO;
     @Autowired private GameDictionaryDAO dictionaryDAO;
     @Autowired private GameBoardDAO gameBoardDAO;
+    @Autowired private GameRoomDAO gameRoomDAO;
 
     @Autowired private RedisService redisService;
 
@@ -44,7 +49,7 @@ public class GamesMaster {
 
     public Map<String, GameDaemon> rooms = new ConcurrentHashMap<>();
 
-    public void newRoom(GameRoom room) {
+    public GameDaemon newRoom(GameRoom room) {
         if (rooms.containsKey(room.getName())) throw invalidEx("err.room.alreadyExists");
 
         // fill out settings, based on names
@@ -75,9 +80,15 @@ public class GamesMaster {
         if (board == null) throw notFoundEx(boardName);
         roomSettings.setBoard(board);
 
-        final GameDaemon gameDaemon = newGameDaemon(room);
-        rooms.put(room.getName(), gameDaemon);
-        gameDaemon.startGame();
+        if (room.isTemplate()) {
+            rooms.put(room.getName(), GameDaemon.templateDaemon(room.getName()));
+            return null;
+        } else {
+            final GameDaemon gameDaemon = newGameDaemon(room);
+            rooms.put(room.getName(), gameDaemon);
+            gameDaemon.initGame();
+            return gameDaemon;
+        }
     }
 
     protected GameDaemon newGameDaemon(GameRoom room) {
@@ -92,12 +103,75 @@ public class GamesMaster {
         return daemon;
     }
 
-    public void addPlayer(String roomName, GamePlayer player) {
-        getGameDaemon(roomName).addPlayer(player);
+    private final Map<String, Collection<GameDaemon>> templateDaemons = new ConcurrentHashMap<>();
 
-        final String apiKey = newStrongUuid();
-        getSessions().set(apiKey, json(player.setApiKey(apiKey)));
-        getSessions().sadd(getRoomSessionKey(roomName, player.getId()), apiKey);
+    public GameRoomJoinResponse addPlayer(GameRoom room, GamePlayer player) {
+
+        if (room.isTemplate()) {
+            // find daemons for template
+            final Collection<GameDaemon> roomDaemons;
+            synchronized (templateDaemons) {
+                roomDaemons = templateDaemons.computeIfAbsent(room.getName(), (k) -> new ArrayList<>());
+
+                GameRoomJoinResponse joinResponse = null;
+                if (empty(roomDaemons)) {
+                    // no rooms for template room, create first one
+                    joinResponse = newRoomFromTemplate(room, player);
+
+                } else {
+                    // todo: strategy for adding players to room. perhaps based on ELO score?
+                    for (GameDaemon daemon : roomDaemons) {
+                        try {
+                            joinResponse = addPlayerToRoom(daemon, player);
+                        } catch (Exception e) {
+                            log.warn("addPlayer: error adding to room: " + daemon.getRoom().getName() + ": " + e, e);
+                        }
+                    }
+                    if (joinResponse == null) {
+                        // all existing rooms full, create a new room based on template
+                        // todo: enforce max total rooms?
+                        joinResponse = newRoomFromTemplate(room, player);
+                    }
+                }
+
+                roomDaemons.add(getGameDaemon(joinResponse.getRoom()));
+                return joinResponse;
+            }
+
+        } else {
+            return addPlayerToRoom(room, player);
+        }
+    }
+
+    private GameRoomJoinResponse newRoomFromTemplate(GameRoom room, GamePlayer player) {
+        GameRoom newRoom = new GameRoom(room);
+        newRoom.setName(room.getName()+"_"+RandomStringUtils.randomAlphanumeric(12));
+        newRoom.setAccountOwner(player.getId());
+        newRoom.setTemplate(false);
+        newRoom = gameRoomDAO.create(newRoom);
+        return addPlayerToRoom(newRoom, player);
+    }
+
+    private GameRoomJoinResponse addPlayerToRoom(GameRoom room, GamePlayer player) {
+        GameDaemon gameDaemon = getGameDaemon(room.getName(), false);
+        if (gameDaemon == null) {
+            gameDaemon = newRoom(room);
+        }
+        return addPlayerToRoom(gameDaemon, player);
+    }
+
+    private GameRoomJoinResponse addPlayerToRoom(GameDaemon daemon, GamePlayer player) {
+
+        final String roomName = daemon.getRoom().getName();
+
+        final GamePlayer currentPlayer = daemon.findPlayer(player);
+        if (currentPlayer == null) {
+            daemon.addPlayer(player);
+            final String apiKey = player.getApiToken();
+            getSessions().set(apiKey, json(player));
+            getSessions().sadd(getRoomSessionKey(roomName, player.getId()), apiKey);
+        }
+        return new GameRoomJoinResponse(roomName, player);
     }
 
     protected String getRoomSessionKey(String roomName, String uuid) {
@@ -141,7 +215,7 @@ public class GamesMaster {
     }
 
     public GamePlayer getSessionPlayer(GamePlayer player) {
-        final String apiKey = player.getApiKey();
+        final String apiKey = player.getApiToken();
         final String id = player.getId();
         return getSessionPlayer(apiKey, id);
     }

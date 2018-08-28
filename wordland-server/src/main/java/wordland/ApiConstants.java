@@ -1,21 +1,43 @@
 package wordland;
 
+import com.sun.jersey.api.core.HttpContext;
 import org.cobbzilla.util.collection.ArrayUtil;
+import wordland.model.support.AccountSession;
 
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
-import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.wizard.resources.ResourceUtil.userPrincipal;
 
 public class ApiConstants {
 
     public static final String API_TOKEN = "x-wordland-api-key";
+    public static final String ROOM_TOKEN = "x-wordland-room-api-key";
     public static final String EVENTS_API_TOKEN = "x-wordland-events-api-key";
 
-    public static final String ACCOUNTS_ENDPOINT = "/accounts";
-    public static final String EP_REGISTER = "/register";
+    public static final String AUTH_ENDPOINT = "/auth";
     public static final String EP_LOGIN = "/login";
+    public static final String EP_REGISTER = "/register";
+    public static final String REGISTER_URL = AUTH_ENDPOINT + EP_REGISTER;
+    public static final String LOGIN_URL = AUTH_ENDPOINT + EP_LOGIN;
+
+    public static final String ACCOUNTS_ENDPOINT = "/accounts";
     public static final String EP_REMOVE = "/remove";
 
+
     public static final String ENTITY_CONFIGS_ENDPOINT = "/entityConfigs";
+
+    public static final String SYMBOL_SETS_ENDPOINT = "/alphabets";
+    public static final String EP_POINT_SYSTEMS = "/pointSystems";
+    public static final String EP_DISTRIBUTIONS = "/distributions";
+    public static final String EP_DICTIONARIES = "/dictionaries";
+
+    public static final String GAME_BOARDS_ENDPOINT = "/boards";
+    public static final String GAME_ROOMS_ENDPOINT = "/rooms";
+    public static final String EP_JOIN = "/join";
+    public static final String EP_PLAY = "/play";
+    public static final String EP_QUIT = "/quit";
+    public static final String EP_BOARD = "/board";
+    public static final String EP_VIEW_PNG = "/view.png";
+    public static final String EP_VIEW_TXT = "/view.txt";
+    public static final String EP_SETTINGS = "/settings";
 
     public static final String INFO_ENDPOINT = "/info";
     public static final String ERR_ALREADY_LOGGED_IN = "err.alreadyLoggedIn";
@@ -60,20 +82,8 @@ public class ApiConstants {
             ArrayUtil.concat(CIRCULAR_SEARCH_1, CIRCULAR_SEARCH_2, CIRCULAR_SEARCH_3)
     };
 
-    public static String anonymousEmail() { return ANONYMOUS_EMAIL.replace("#STAMP#", randomAlphanumeric(10)+"-"+now()); }
-
-    public static final String SYMBOL_SETS_ENDPOINT = "/alphabets";
-    public static final String EP_POINT_SYSTEMS = "/pointSystems";
-    public static final String EP_DISTRIBUTIONS = "/distributions";
-    public static final String EP_DICTIONARIES = "/dictionaries";
-
-    public static final String GAME_BOARDS_ENDPOINT = "/boards";
-    public static final String GAME_ROOMS_ENDPOINT = "/rooms";
-    public static final String EP_JOIN = "/join";
-    public static final String EP_PLAY = "/play";
-    public static final String EP_QUIT = "/quit";
-    public static final String EP_BOARD = "/board";
-    public static final String EP_VIEW_PNG = "/view.png";
-    public static final String EP_SETTINGS = "/settings";
-
+    public static AccountSession accountPrincipal(HttpContext ctx) {
+        final AccountSession session = userPrincipal(ctx);
+        return session.isAnonymous() ? null : session;
+    }
 }

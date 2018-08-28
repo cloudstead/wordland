@@ -18,4 +18,14 @@ public class GameRoomTest extends ApiModelTestBase {
         runScript("join_and_play");
     }
 
+    @Test public void testPlayingOutOfTurn () throws Exception {
+        apiDocs.startRecording(DOC_TARGET, "verify playing out of turn is not allowed in a round-robin game");
+        runScript("play_out_of_turn");
+    }
+
+    @Test public void testPlayForWrongPlayer () throws Exception {
+        apiDocs.startRecording(DOC_TARGET, "verify playing for another player is not allowed");
+        runScript("play_for_wrong_player");
+    }
+
 }

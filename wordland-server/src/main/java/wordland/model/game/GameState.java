@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.daemon.Await;
 import org.cobbzilla.util.daemon.AwaitResult;
 import org.cobbzilla.util.time.TimeUtil;
-import org.cobbzilla.wizard.validation.SimpleViolationException;
 import wordland.model.GameBoard;
 import wordland.model.GameBoardBlock;
 import wordland.model.GameRoom;
@@ -42,17 +41,18 @@ import static wordland.model.support.PlayedTile.letterFarFromOthers;
 @Slf4j
 public class GameState {
 
-    private static final int MAX_BOARD_IMAGE_WIDTH = 1000;
-    private static final int MAX_BOARD_IMAGE_HEIGHT = 1000;
+    public static final int MAX_BOARD_IMAGE_WIDTH = 1000;
+    public static final int MAX_BOARD_IMAGE_HEIGHT = 1000;
     public static final int TILE_PIXEL_SIZE = 10;
     public static final double TILE_PIXEL_SIZE_DOUBLE = (double) TILE_PIXEL_SIZE;
+    public static final long BOARD_RENDER_TIMEOUT = 20 * TimeUtil.SECOND;
 
     private final GameRoom room;
     private final GameStateStorageService stateStorage;
 
-    public GameState(GameRoom room, GameStateStorageService stateStorage) {
+    public GameState(GameRoom room, GameStateStorageService storage) {
         this.room = room;
-        this.stateStorage = stateStorage;
+        this.stateStorage = storage;
     }
 
     private GameRoomSettings roomSettings() { return room.getSettings(); }
@@ -61,8 +61,20 @@ public class GameState {
 
     public GameStateChange addPlayer(GamePlayer player) {
         // todo check maxPlayers. if maxPlayers reached, see if any can be evicted? maybe not, let GameDaemon handle that...
-        if (stateStorage.getPlayerCount() >= roomSettings().getMaxPlayers()) throw new SimpleViolationException("err.maxPlayersInRoom", "maximum "+roomSettings().getMaxPlayers()+" players allowed in room", ""+roomSettings().getMaxPlayers());
-        return stateStorage.addPlayer(player);
+        synchronized (stateStorage) {
+            final RoomState roomState = stateStorage.getRoomState();
+            if (roomState == RoomState.game_ended) throw new GameEndedException(room);
+
+            int playerCount = stateStorage.getPlayerCount();
+            if (roomSettings().hasMaxPlayers() && playerCount >= roomSettings().getMaxPlayers()) throw new RoomFullException(room);
+            if (roomState == RoomState.awaiting_players
+                    && (!roomSettings().hasMinPlayersToStart() || playerCount+1 >= roomSettings().getMinPlayersToStart())) {
+                return stateStorage.addPlayerStartGame(player);
+
+            } else {
+                return stateStorage.addPlayer(player);
+            }
+        }
     }
 
     public GameStateChange removePlayer(String id) {
@@ -139,6 +151,7 @@ public class GameState {
         if (!roomSettings().getDictionary().isWord(word)) {
             throw new GameNotificationException(invalidWord(word));
         }
+
         if (roomSettings().hasMaxLetterDistance()) {
             final PlayedTile farTile = letterFarFromOthers(tiles, roomSettings().getMaxLetterDistance());
             if (farTile != null) {
@@ -148,7 +161,14 @@ public class GameState {
 
         final Map<String, GameBoardBlock> alteredBlocks = new HashMap<>();
         synchronized (stateStorage) {
-            // determine applicable board blocks, create change set
+
+            // is it our turn?
+            if (roomSettings().hasRoundRobinPolicy()) {
+                final String nextPlayerId = stateStorage.getCurrentPlayerId();
+                if (nextPlayerId == null || !nextPlayerId.equals(player.getId())) throw new NotYourTurnException();
+            }
+
+            // determine applicable board blocks, fromString change set
             for (int i=0; i<tiles.length; i++) {
                 final PlayedTile tile = tiles[i];
                 final String blockKey = getBlockKeyForTile(tile.getX(), tile.getY());
@@ -204,11 +224,10 @@ public class GameState {
 
     public GameBoardView getBoardView(int x1, int x2, int y1, int y2,
                                       int imageWidth, int imageHeight,
-                                      GameBoardPalette renderPalette) throws IOException {
+                                      GameBoardPalette palette) throws IOException {
 
         final GameBoard board = roomSettings().getBoard();
         final GameBoardSettings settings = board.getSettings();
-        final GameBoardPalette palette = renderPalette == null ? GameBoardPalette.defaultPalette() : renderPalette;
 
         if (settings.hasLength()) {
             if (x1 < 0) x1 = 0;
@@ -299,7 +318,7 @@ public class GameState {
             }));
 
         }
-        final AwaitResult<Object> result = Await.awaitAll(futures, 10 * TimeUtil.SECOND);
+        final AwaitResult<Object> result = Await.awaitAll(futures, BOARD_RENDER_TIMEOUT);
         final String duration = formatDuration(now() - start);
         log.info("mapping of view took "+ duration);
         if (!result.allSucceeded()) {

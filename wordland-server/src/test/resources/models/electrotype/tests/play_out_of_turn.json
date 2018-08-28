@@ -1,0 +1,307 @@
+[
+  {
+    "comment": "login as anonymous player 1",
+    "request": { "uri": "auth/login", "method": "post" },
+    "response": {
+      "sessionName": "player1",
+      "session": "apiToken"
+    }
+  },
+
+  {
+    "comment": "list available rooms",
+    "request": { "uri": "rooms" },
+    "response": {
+      "store": "rooms",
+      "check": [
+        {"condition": "json.length >= 1"},
+        {"condition": "find(json, 'name', '5x5') != null"}
+      ]
+    }
+  },
+
+  {
+    "comment": "join room",
+    "request": {
+      "uri": "rooms/5x5/join",
+      "entity": {
+        "name": "Joe Smith"
+      }
+    },
+    "response": {
+      "store": "p1room",
+      "check": [
+        {"condition": "json.player.name == 'Joe Smith'"},
+        {"condition": "json.room.startsWith('5x5_')"},
+        {"condition": "json.room != '5x5'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player1 requests more board state",
+    "request": {
+      "uri": "rooms/{{p1room.room}}/board"
+    },
+    "response": {
+      "store": "board"
+    }
+  },
+
+  {
+    "comment": "player1 plays word",
+    "before": "find-word-and-tiles board word1",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/play",
+      "entity": {
+        "room": "{{p1room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p1room.player.id}}",
+        "clientId": "{{p1room.player.id}}",
+        "apiToken": "{{p1room.player.apiToken}}",
+        "word": "{{word1.word}}",
+        "tilesJson": "{{escaped_json word1.tiles}}"
+      }
+    }
+  },
+
+  {
+    "comment": "player1 tries to play another word, fails because it's not their turn",
+    "before": "find-word-and-tiles board word_fail",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/play",
+      "entity": {
+        "room": "{{p1room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p1room.player.id}}",
+        "clientId": "{{p1room.player.id}}",
+        "apiToken": "{{p1room.player.apiToken}}",
+        "word": "{{word_fail.word}}",
+        "tilesJson": "{{escaped_json word_fail.tiles}}"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.game.notYourTurn')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player1 requests board state, verify updates",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/board"
+    },
+    "response": {
+      "store": "board",
+      "check": [
+        {"condition": "json.claimedWord('{{word1.word}}')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "login as anonymous player 2",
+    "request": {
+      "session": "new",
+      "method": "post",
+      "uri": "auth/login"
+    },
+    "response": {
+      "sessionName": "player2",
+      "session": "apiToken"
+    }
+  },
+
+  {
+    "comment": "player 2 joins game, verify same room",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/5x5/join",
+      "entity": {
+        "name": "Steve Johnson"
+      }
+    },
+    "response": {
+      "store": "p2room",
+      "check": [
+        {"condition": "json.player.name == 'Steve Johnson'"},
+        {"condition": "json.room == p1room.room"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player1 tries AGAIN to play another word, STILL fails because it's not their turn",
+    "before": "find-word-and-tiles board word_fail",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/play",
+      "entity": {
+        "room": "{{p1room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p1room.player.id}}",
+        "clientId": "{{p1room.player.id}}",
+        "apiToken": "{{p1room.player.apiToken}}",
+        "word": "{{word_fail.word}}",
+        "tilesJson": "{{escaped_json word_fail.tiles}}"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.game.notYourTurn')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player2 plays word",
+    "before": "find-word-and-tiles board word2",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/{{p2room.room}}/play",
+      "entity": {
+        "room": "{{p2room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p2room.player.id}}",
+        "clientId": "{{p2room.player.id}}",
+        "apiToken": "{{p2room.player.apiToken}}",
+        "word": "{{word2.word}}",
+        "tilesJson": "{{escaped_json word2.tiles}}"
+      }
+    }
+  },
+
+  {
+    "comment": "player1 plays a second word",
+    "before": "find-word-and-tiles board word3",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/play",
+      "entity": {
+        "room": "{{p1room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p1room.player.id}}",
+        "clientId": "{{p1room.player.id}}",
+        "apiToken": "{{p1room.player.apiToken}}",
+        "word": "{{word3.word}}",
+        "tilesJson": "{{escaped_json word3.tiles}}"
+      }
+    }
+  },
+
+  {
+    "comment": "player2 plays a second word",
+    "before": "find-word-and-tiles board word4",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/{{p2room.room}}/play",
+      "entity": {
+        "room": "{{p2room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p2room.player.id}}",
+        "clientId": "{{p2room.player.id}}",
+        "apiToken": "{{p2room.player.apiToken}}",
+        "word": "{{word4.word}}",
+        "tilesJson": "{{escaped_json word4.tiles}}"
+      }
+    }
+  },
+
+  {
+    "comment": "player2 tries to plays a third word, fails because it's not their turn",
+    "before": "find-word-and-tiles board word_fail",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/{{p2room.room}}/play",
+      "entity": {
+        "room": "{{p2room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p2room.player.id}}",
+        "clientId": "{{p2room.player.id}}",
+        "apiToken": "{{p2room.player.apiToken}}",
+        "word": "{{word_fail.word}}",
+        "tilesJson": "{{escaped_json word_fail.tiles}}"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.game.notYourTurn')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player1 plays a third word",
+    "before": "find-word-and-tiles board word5",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/play",
+      "entity": {
+        "room": "{{p1room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p1room.player.id}}",
+        "clientId": "{{p1room.player.id}}",
+        "apiToken": "{{p1room.player.apiToken}}",
+        "word": "{{word5.word}}",
+        "tilesJson": "{{escaped_json word5.tiles}}"
+      }
+    }
+  },
+
+  {
+    "comment": "player 1 quit game",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/quit",
+      "entity": {
+        "room": "{{p1room.room}}",
+        "stateChange": "player_left",
+        "id": "{{p1room.player.id}}",
+        "clientId": "{{p1room.player.id}}",
+        "apiToken": "{{p1room.player.apiToken}}"
+      }
+    },
+    "response": {
+      "status": 200
+    }
+  },
+
+  {
+    "comment": "player 2 quit game",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/{{p1room.room}}/quit",
+      "entity": {
+        "room": "{{p2room.room}}",
+        "stateChange": "player_left",
+        "id": "{{p2room.player.id}}",
+        "clientId": "{{p2room.player.id}}",
+        "apiToken": "{{p2room.player.apiToken}}"
+      }
+    },
+    "response": {
+      "status": 200
+    }
+  },
+
+  {
+    "comment": "player 2 requests more board state, succeeds",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/{{p1room.room}}/board"
+    },
+    "response": {
+      "store": "board",
+      "check": [
+        {"condition": "json.claimedWord('{{word1.word}}')"}
+      ]
+    }
+  }
+]

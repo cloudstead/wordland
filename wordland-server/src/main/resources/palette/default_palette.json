@@ -1,5 +1,6 @@
 {
   "blankColor": "0xffffff",
+  "currentPlayerColor": "0xff0000",
   "playerColors": [
     {"name": "*", "value": "#DC3D24"},
     {"name": "*", "value": "#232B2B"},

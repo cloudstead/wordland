@@ -22,9 +22,18 @@ import static wordland.ApiConstants.GAME_ROOMS_ENDPOINT;
 @Entity @NoArgsConstructor @Accessors(chain=true)
 public class GameRoom extends NamedIdentityBase {
 
-    public GameRoom (GameRoom other) { super(other.getName()); setSettings(other.getSettings()); }
+    public GameRoom (GameRoom other) {
+        super(other.getName());
+        setTemplate(other.isTemplate());
+        setSettings(other.getSettings());
+    }
 
     public GameRoom (String name) { super(name); }
+
+    @Column(updatable=false)
+    @Getter @Setter private String accountOwner;
+
+    @Getter @Setter private boolean template;
 
     @Override public NamedIdentityBase update(NamedIdentityBase other) {
         return setSettings(((GameRoom) other).getSettings());
@@ -33,7 +42,9 @@ public class GameRoom extends NamedIdentityBase {
     @Type(type=GameRoomSettings.JSONB_TYPE) @Column(nullable=false, updatable=false)
     @Getter @Setter private GameRoomSettings settings;
 
-    public GameState initializeBoard(GameStateStorageService stateStorage) {
+    public GameRoom mergeSettings(GameRoomSettings other) { settings.mergeSettings(other); return this; }
+
+    public GameState init(GameStateStorageService stateStorage) {
         return new GameState(this, stateStorage);
     }
 

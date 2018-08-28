@@ -21,7 +21,8 @@ public class Account extends AccountBase implements TokenPrincipal {
     public static final String[] VALUE_FIELDS_ADMIN
             = ArrayUtil.append(VALUE_FIELDS, "lastLogin", "emailVerified", "suspended", "admin", "twoFactor");
 
-    @Getter @Setter private boolean anonymous;
+    @Override public void beforeCreate() { if (!hasUuid()) initUuid(); }
+
     @Getter @Setter private boolean subscriber;
 
     // Set by WordlandAuthFilter

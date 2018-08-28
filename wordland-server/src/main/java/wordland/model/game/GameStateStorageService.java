@@ -10,10 +10,18 @@ public interface GameStateStorageService {
 
     long getVersion();
 
+    RoomState getRoomState();
+    void startGame();
+    void endGame();
+
     GamePlayer getPlayer(String id);
     int getPlayerCount();
+
     GameStateChange addPlayer(GamePlayer player);
+    GameStateChange addPlayerStartGame(GamePlayer player);
+
     GameStateChange removePlayer(String id);
+    GameStateChange removePlayerEndGame(String id);
 
     GameBoardBlock getBlock(String blockKey);
     GameBoardBlock getBlockOrCreate(String blockKey, SymbolDistribution distribution);
@@ -22,4 +30,5 @@ public interface GameStateStorageService {
                              Collection<GameBoardBlock> blocks,
                              PlayedTile[] tiles);
 
+    String getCurrentPlayerId();
 }

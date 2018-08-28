@@ -5,16 +5,13 @@ import com.sun.jersey.api.core.HttpContext;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.mail.service.TemplatedMailService;
-import org.cobbzilla.wizard.auth.AuthResponse;
-import org.cobbzilla.wizard.auth.AuthenticationException;
-import org.cobbzilla.wizard.auth.LoginRequest;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import wordland.auth.AccountAuthResponse;
 import wordland.dao.AccountDAO;
 import wordland.dao.SessionDAO;
 import wordland.model.Account;
+import wordland.model.support.AccountSession;
 import wordland.model.support.AccountUpdateRequest;
 import wordland.model.support.RegistrationRequest;
 import wordland.server.WordlandConfiguration;
@@ -59,30 +56,6 @@ public class AccountsResource extends AuthResourceBase<Account> {
     }
 
     /**
-     * Login. Upon successful login, this returns an AccountAuthResponse containing the session ID and account information.
-     * If there is already a logged in user, a 422 error is returned. If the username/password does not match an existing user,
-     * then a 404 error is returned.
-     * @param ctx session info
-     * @return Upon success, an AccountAuthResponse containing the session ID and account information
-     */
-    @POST @Path(EP_LOGIN)
-    public Response login (@Context HttpContext ctx, LoginRequest request) {
-
-        final Account alreadyLoggedIn = optionalUserPrincipal(ctx);
-        if (alreadyLoggedIn != null && !alreadyLoggedIn.isAnonymous()) return invalid(ERR_ALREADY_LOGGED_IN);
-
-        try {
-            request.setUserAgent(ctx.getRequest().getHeaderValue(USER_AGENT));
-            final Account account = accountDAO.authenticate(request);
-            return account != null ? ok(startSession(account)) : notFound(request.getName());
-
-        } catch (AuthenticationException e) {
-            log.warn("login: unexpected error: "+e, e);
-            return notFound(request.getName());
-        }
-    }
-
-    /**
      * Edit account details - only name, email, and password are editable
      * @param ctx session info
      * @param request Updates to the account
@@ -123,47 +96,9 @@ public class AccountsResource extends AuthResourceBase<Account> {
         if (request.getSubscribe() != null) account.setSubscriber(request.getSubscribe());
 
         final Account updated = accountDAO.update(account);
-        sessionDAO.update(sessionAccount.getApiToken(), updated);
+        sessionDAO.update(sessionAccount.getApiToken(), new AccountSession(updated));
 
         return ok(updated);
-    }
-
-    /**
-     * Register a new account. There are a few different scenarios for this endpoint:
-     *  - If no user is logged in:
-     *    - If the request has no login name (email) or password, an anonymous account is created
-     *    - If the request includes a name+password, then a normal account is created
-     *  - If the user has already logged in
-     *    - If the currently logged-in account is non-anonymous, a 422 error is returned
-     *    - If the currently logged-in account is anonymous
-     *      - If this request includes a name+password, the anonymous account is updated to a normal account
-     *      - If this request does not include a name+password, nothing happens and the same anonymous account is returned
-     * @param ctx session info
-     * @return Upon success, an AccountAuthResponse containing the session ID and account information
-     */
-    @POST @Path(EP_REGISTER)
-    public Response register (@Context HttpContext ctx, @Valid RegistrationRequest request) {
-
-        request.setUserAgent(ctx.getRequest().getHeaderValue(USER_AGENT));
-
-        final Account alreadyLoggedIn = optionalUserPrincipal(ctx);
-        final Account account;
-        if (alreadyLoggedIn != null) {
-            if (!alreadyLoggedIn.isAnonymous()) return invalid(ERR_ALREADY_LOGGED_IN);
-
-            // already logged in, but this request has no name/password -- just start a new session
-            if (request.isEmpty()) return ok(startSession(alreadyLoggedIn));
-
-            // try to convert anonymous account into normal account
-            return ok(startSession(accountDAO.registerAnonymous(alreadyLoggedIn, request)));
-        }
-
-        account = accountDAO.register(request);
-        return ok(startSession(account != null ? account : accountDAO.anonymousAccount()));
-    }
-
-    private AuthResponse<Account> startSession(Account account) {
-        return new AccountAuthResponse(sessionDAO.create(account), account);
     }
 
     @Override protected String getResetPasswordUrl(String token) { return configuration.getResetPasswordUrl(token); }

@@ -24,9 +24,9 @@ public class GameRuntimeEvent {
     @Getter @Setter private String clientId;
     public boolean hasClientId () { return clientId != null && clientId.trim().length() >= 36; }
 
-    @HasValue(message="err.apiKey.empty")
-    @Size(max=Identifiable.UUID_MAXLEN, message="err.apiKey.length")
-    @Getter @Setter private String apiKey;
+    @HasValue(message="err.apiToken.empty")
+    @Size(max=Identifiable.UUID_MAXLEN, message="err.apiToken.length")
+    @Getter @Setter private String apiToken;
 
     @HasValue(message="err.room.empty")
     @Size(max=Identifiable.UUID_MAXLEN, message="err.room.length")

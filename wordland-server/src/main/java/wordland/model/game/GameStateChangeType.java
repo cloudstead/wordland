@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public enum GameStateChangeType {
 
-    player_joined, player_left, word_played, sync;
+    player_joined, player_joined_game_started,
+    player_left,   player_left_game_ended,
+    word_played;
 
-    @JsonCreator public static GameStateChangeType create (String val) { return valueOf(val.toLowerCase()); }
+    @JsonCreator public static GameStateChangeType fromString(String val) { return valueOf(val.toLowerCase()); }
 
     public JsonNode adjustJson(JsonNode node) {
         if (node instanceof ObjectNode) {

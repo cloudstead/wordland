@@ -1,0 +1,87 @@
+<html>
+<head>
+  <title>wordland.io</title>
+  <link rel="stylesheet" type="text/css" href="/css/wordland.css"/>
+  <link rel="stylesheet" type="text/css" href="/css/players.css"/>
+  <meta charset="utf-8">
+</head>
+
+<body id="wordland_body">
+
+<div id="gameRoomContainer">
+  <div id="status_panel">
+    <span id="current_room_name" class="roomName"></span> /
+    <span id="current_player_name" class="playerName"></span> /
+    <span id="current_player_score" class="playerScore"></span>
+  </div>
+  <div id="quit_button" class="quitButton">
+    <button onclick="Wordland.quit();">quit</button>
+  </div>
+  <div id="game_board">
+      <table align="center" border="0">
+          <tbody>
+          <tr><td height="50" colspan="3">
+
+      <div id="game_tray">
+          <table align="center">
+              <tbody>
+               <tr>
+                <td><button class="trayButton" onclick="WLTray.clear()">clear</button></td>
+                <td>
+                  <table>
+                    <tbody id="game_tray_tbody">
+                      <tr id="game_tray_tr" class="gameTray"><td class="game_tray_help">
+                          <span id="game_tray_help">pick some letters, or start typing</span>
+                      </td></tr>
+                    </tbody>
+                  </table>
+                </td>
+                <td><button class="trayButton" onclick="WLTray.submit()">submit</button></td>
+               </tr>
+              </tbody>
+          </table>
+      </div>
+
+          </td></tr>
+          <tr>
+            <td></td>
+            <td>
+
+      <table cellspacing="2px" align="center">
+          <tbody id="game_tbody"></tbody>
+      </table>
+            <td height="100%">
+              <div id="game_log"><span id="logInsertPoint"></span></div>
+            </td>
+          </tr>
+          </tbody>
+      </table>
+  </div>
+</div>
+
+<div id="wordland_global_error"></div>
+
+<h5 class="h5title"><a href="https://wordland.io">wordland.io</a></h5>
+
+<div id="lobbyContainer">
+    <div id="lobbyControlsContainer">
+        <input type="text" id="player_name" name="player_name" class="lobbyControl" placeholder="nickname"/>
+        <select id="room_to_join" name="room_to_join" class="lobbyControl"></select>
+        <button id="join_button" class="lobbyControl">join</button>
+    </div>
+</div>
+
+</body>
+
+<script src="lib/jquery.js"></script>
+<script src="lib/interact.min.js"></script>
+<script src="lib/atmosphere.js"></script>
+<script src="js/util.js"></script>
+<script src="js/api.js"></script>
+<script src="js/wordland_lobby.js"></script>
+<script src="js/wordland_status.js"></script>
+<script src="js/wordland_tray.js"></script>
+<script src="js/wordland_log.js"></script>
+<script src="js/wordland_game.js"></script>
+<script src="js/wordland.js"></script>
+</html>

@@ -1,5 +1,14 @@
 [
   {
+    "comment": "login as anonymous player",
+    "request": { "uri": "auth/login", "method": "post" },
+    "response": {
+      "sessionName": "player",
+      "session": "apiToken"
+    }
+  },
+
+  {
     "comment": "lookup standard game board",
     "request": { "uri": "boards/standard" },
     "response": {

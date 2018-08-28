@@ -1,0 +1,9 @@
+#!/bin/bash
+
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/common
+
+dropdb -U postgres wordland || echo "warning: couldn't dropdb"
+createdb -U postgres wordland || die "error: couldn't createdb"
+pg_dump -U postgres wordland_test | psql -U postgres wordland || die "error: couldn't init db"

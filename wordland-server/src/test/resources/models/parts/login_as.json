@@ -13,7 +13,7 @@
     "comment": "login as <<login>> to start session <<sessionName>>",
     "request": {
       "session": "new",
-      "uri": "accounts/login",
+      "uri": "auth/login",
       "entity": {
         "name": "<<login>>",
         "password": "<<password>>"
@@ -21,7 +21,7 @@
     },
     "response": {
       "sessionName": "<<sessionName>>",
-      "session": "sessionId"
+      "session": "apiToken"
     }
   }
 ]

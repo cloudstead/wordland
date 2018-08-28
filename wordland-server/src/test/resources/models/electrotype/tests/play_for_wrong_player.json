@@ -1,0 +1,90 @@
+[
+  {
+    "comment": "login as anonymous player 1",
+    "request": { "uri": "auth/login", "method": "post" },
+    "response": {
+      "sessionName": "player1",
+      "session": "apiToken"
+    }
+  },
+
+  {
+    "comment": "join room",
+    "request": {
+      "uri": "rooms/5x5/join",
+      "entity": {
+        "name": "Joe Smith"
+      }
+    },
+    "response": {
+      "store": "p1room",
+      "check": [
+        {"condition": "json.player.name == 'Joe Smith'"},
+        {"condition": "json.room.startsWith('5x5_')"},
+        {"condition": "json.room != '5x5'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player1 requests board state",
+    "request": {
+      "uri": "rooms/{{p1room.room}}/board"
+    },
+    "response": {
+      "store": "board"
+    }
+  },
+
+  {
+    "comment": "login as anonymous player 2",
+    "request": {
+      "session": "new",
+      "method": "post",
+      "uri": "auth/login"
+    },
+    "response": {
+      "sessionName": "player2",
+      "session": "apiToken"
+    }
+  },
+
+  {
+    "comment": "player 2 joins game, verify same room",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/5x5/join",
+      "entity": {
+        "name": "Steve Johnson"
+      }
+    },
+    "response": {
+      "store": "p2room",
+      "check": [
+        {"condition": "json.player.name == 'Steve Johnson'"},
+        {"condition": "json.room == p1room.room"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player2 plays word for player 1, fails because wrong session",
+    "before": "find-word-and-tiles board word_fail",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/{{p1room.room}}/play",
+      "entity": {
+        "room": "{{p1room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p1room.player.id}}",
+        "clientId": "{{p1room.player.id}}",
+        "apiToken": "{{p1room.player.apiToken}}",
+        "word": "{{word_fail.word}}",
+        "tilesJson": "{{escaped_json word_fail.tiles}}"
+      }
+    },
+    "response": {
+      "status": 403
+    }
+  }
+]

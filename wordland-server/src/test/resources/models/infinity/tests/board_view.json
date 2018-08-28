@@ -1,19 +1,28 @@
 [
   {
-    "comment": "join infinity board as player1",
+    "comment": "login as anonymous player 1",
     "request": {
-      "uri": "rooms/the_expanse/join",
-      "entity": {
-        "name": "player1"
-      }
+      "uri": "auth/login",
+      "entity": {"name": "player1"}
     },
     "response": {
-      "store": "player1",
       "sessionName": "player1",
-      "session": "apiKey",
+      "session": "apiToken"
+    }
+  },
+
+  {
+    "comment": "join infinity board as player1",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/the_expanse/join",
+      "entity": {}
+    },
+    "response": {
+      "store": "p1room",
       "check": [
-        {"condition": "json.name == 'player1'"},
-        {"condition": "json.id != null"}
+        {"condition": "json.player.name == 'player1'"},
+        {"condition": "json.room.startsWith('the_expanse')"}
       ]
     }
   },
@@ -22,7 +31,7 @@
     "comment": "player 1 requests initial board state",
     "request": {
       "session": "player1",
-      "uri": "rooms/the_expanse/board"
+      "uri": "rooms/{{p1room.room}}/board"
     },
     "response": {
       "store": "initial_board",
@@ -42,13 +51,13 @@
     "before": "find-word-and-tiles initial_board word1",
     "request": {
       "session": "player1",
-      "uri": "rooms/the_expanse/play",
+      "uri": "rooms/{{p1room.room}}/play",
       "entity": {
-        "room": "the_expanse",
+        "room": "{{p1room.room}}",
         "stateChange": "word_played",
-        "id": "{{player1.id}}",
-        "clientId": "{{player1.id}}",
-        "apiKey": "{{player1.apiKey}}",
+        "id": "{{p1room.player.id}}",
+        "clientId": "{{p1room.player.id}}",
+        "apiToken": "{{p1room.player.apiToken}}",
         "word": "{{word1.word}}",
         "tilesJson": "{{escaped_json word1.tiles}}"
       }
@@ -59,7 +68,7 @@
     "comment": "player 1 requests board overview for initial view",
     "request": {
       "session": "player1",
-      "uri": "rooms/the_expanse/board/view.png?x1={{initial_board.x1}}&x2={{initial_board.x2}}&y1={{initial_board.y1}}&y2={{initial_board.y2}}&height=32&width=32"
+      "uri": "rooms/{{p1room.room}}/board/view.png?x1={{initial_board.x1}}&x2={{initial_board.x2}}&y1={{initial_board.y1}}&y2={{initial_board.y2}}&height=32&width=32"
     },
     "after": "save-board-view /tmp/views/initial_{{date_format 'now' 'yyyy-MM-dd_HH-mm'}}.png"
   }

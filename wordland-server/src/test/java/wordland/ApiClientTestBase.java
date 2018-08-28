@@ -15,19 +15,21 @@ import org.cobbzilla.wizard.server.config.factory.StreamConfigurationSource;
 import org.cobbzilla.wizard.util.RestResponse;
 import org.cobbzilla.wizardtest.resources.ApiDocsResourceIT;
 import org.cobbzilla.wizardtest.server.config.DummyRecaptchaConfig;
-import wordland.auth.AccountAuthResponse;
 import wordland.model.*;
 import wordland.model.json.GameRoomSettings;
+import wordland.model.support.AccountSession;
 import wordland.model.support.RegistrationRequest;
 import wordland.server.WordlandConfiguration;
 import wordland.server.WordlandLifecycleListener;
 import wordland.server.WordlandServer;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.*;
+import static org.cobbzilla.util.system.CommandShell.execScript;
 import static wordland.ApiConstants.*;
 
 @Slf4j
@@ -44,16 +46,39 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
 
     public boolean seedTestData() { return true; }
 
+    @Override public boolean useTestSpecificDatabase() { return true; }
+
+    @Override protected void createDb(WordlandConfiguration config, String dbName) {
+        execScript(config.pgCommand("createdb", null, "postgres"), config.pgEnv());
+    }
+
+    public static final List<Integer> DROP_EXIT_VALUES = Arrays.asList(0, 1);
+
+    @Override protected boolean dropDb (WordlandConfiguration config, String dbName, boolean background) {
+        final String dropCommand = config.pgCommand("dropdb", null, "postgres");
+        final String command = background ? "set -m ; " + dropCommand + " &" : dropCommand;
+        execScript(command, config.pgEnv(), DROP_EXIT_VALUES);
+        return true;
+    }
+
     @Override public void beforeStart(RestServer<WordlandConfiguration> server) {
         super.beforeStart(server);
         server.getConfiguration().getRedis().setKey(null); // disable redis encryption in tests
     }
 
     @Override public void onStart(RestServer<WordlandConfiguration> server) {
-        // disable captcha for tests
+
         final WordlandConfiguration config = server.getConfiguration();
+
+        // flush DAO caches since DB objects are reset between test runs
+        config.flushDAOs();
+
+        // disable captcha for tests
         config.setRecaptcha(DummyRecaptchaConfig.instance);
+
+        // seed data if we should
         new WordlandLifecycleListener().seed(server, seedTestData());
+
         super.onStart(server);
     }
 
@@ -76,17 +101,14 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
         return (MockTemplatedMailSender) getTemplatedMailService().getMailSender();
     }
 
-    public static final String REGISTER_URL = ACCOUNTS_ENDPOINT + EP_REGISTER;
-    public static final String LOGIN_URL = ACCOUNTS_ENDPOINT + EP_LOGIN;
-
-    public AccountAuthResponse login(String email, String password) {
-        AccountAuthResponse response;
+    public AccountSession login(String email, String password) {
+        AccountSession response;
         try {
-            response = fromJson(post(LOGIN_URL, toJson(new LoginRequest(email, password))).json, AccountAuthResponse.class);
+            response = fromJson(post(LOGIN_URL, toJson(new LoginRequest(email, password))).json, AccountSession.class);
         } catch (Exception e) {
             return die("login: "+e, e);
         }
-        pushToken(response.getSessionId());
+        pushToken(response.getApiToken());
         return response;
     }
 
@@ -95,13 +117,13 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
         login(env.get("WORDLAND_SUPERUSER"), env.get("WORDLAND_SUPERUSER_PASS"));
     }
 
-    public AccountAuthResponse register(RegistrationRequest request) throws Exception {
+    public AccountSession register(RegistrationRequest request) throws Exception {
         return register(request, true);
     }
-    public AccountAuthResponse register(RegistrationRequest request, boolean logout) throws Exception {
+    public AccountSession register(RegistrationRequest request, boolean logout) throws Exception {
         if (logout) logout();
-        AccountAuthResponse response = post(REGISTER_URL, request, AccountAuthResponse.class);
-        if (response != null) pushToken(response.getSessionId());
+        AccountSession response = post(REGISTER_URL, request, AccountSession.class);
+        if (response != null) pushToken(response.getApiToken());
         return response;
     }
 

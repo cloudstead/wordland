@@ -23,6 +23,7 @@ import org.cobbzilla.wizard.dao.DAO;
 import org.cobbzilla.wizard.server.config.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import wordland.model.GameRoom;
 import wordland.model.game.GameStateStorageService;
 import wordland.service.state.RedisGameStateStorageService;
 
@@ -53,11 +54,11 @@ public class WordlandConfiguration extends RestServerConfiguration
     }
 
     private final Map<String, GameStateStorageService> cachedStorageServices = new HashMap<>();
-    public GameStateStorageService getGameStateStorage(String roomName) {
+    public GameStateStorageService getGameStateStorage(final GameRoom room) {
         final RedisService redis = getBean(RedisService.class);
         synchronized (cachedStorageServices) {
-            return cachedStorageServices.computeIfAbsent(roomName,
-                    (name) -> new RedisGameStateStorageService(redis, getServerName() + "/rooms/" + name));
+            return cachedStorageServices.computeIfAbsent(room.getName(),
+                    (name) -> new RedisGameStateStorageService(redis, room));
         }
     }
 
@@ -89,6 +90,10 @@ public class WordlandConfiguration extends RestServerConfiguration
     }
 
     public static final Map<Class, DAO> daoCache = new ConcurrentHashMap<>();
+    @Override public void flushDAOs() {
+        super.flushDAOs();
+        daoCache.clear();
+    }
 
     public DAO getDaoForEntityType(Class entityType) {
         DAO entityDao = daoCache.get(entityType);

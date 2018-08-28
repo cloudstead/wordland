@@ -1,0 +1,18 @@
+#!/bin/bash
+
+function die {
+  if [[ -z "${SCRIPT}" ]] ; then
+    echo 1>&2 "${1}"
+  else
+    echo 1>&2 "${SCRIPT}: ${1}"
+  fi
+  exit 1
+}
+
+DEFAULT_API="http://127.0.0.1:9091/api"
+
+if [ -z "${WL_API}" ] ; then
+  #die "no WL_API defined"
+  #echo "No WL_API defined, using default ${DEFAULT_API}"
+  WL_API="${DEFAULT_API}"
+fi

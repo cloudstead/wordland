@@ -22,6 +22,10 @@ public class GameTileState {
     public boolean unclaimed () { return !hasOwner(); }
 
     public static String grid (GameTileState[][] tiles) {
+        return grid(tiles, null);
+    }
+
+    public static String grid (GameTileState[][] tiles, GameBoardPalette palette) {
         final StringBuilder b = new StringBuilder();
         for (GameTileState[] row : tiles) {
             final StringBuilder rowVal = new StringBuilder();

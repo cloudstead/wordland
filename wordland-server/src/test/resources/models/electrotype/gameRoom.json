@@ -1,8 +1,18 @@
 [
   {
     "name": "5x5",
+    "template": true,
     "settings": {
-      "board": { "name": "electrotype" }
+      "board": { "name": "electrotype" },
+      "maxPlayers": 2,
+      "turnPolicies": [
+        {
+          "name": "round_robin",
+          "type": "round_robin",
+          "params": [{"name": "max_turn_duration", "value": "5d"}]
+        }
+      ],
+      "missedTurnPolicy": "forfeit_game"
     }
   }
 ]

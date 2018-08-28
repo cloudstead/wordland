@@ -1,15 +1,13 @@
 package wordland.model.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.reflect.ReflectionUtil;
 import org.cobbzilla.wizard.model.json.JSONBUserType;
 import wordland.model.*;
 
-import static org.cobbzilla.util.time.TimeUtil.formatDuration;
-import static org.cobbzilla.util.time.TimeUtil.parseDuration;
 import static wordland.ApiConstants.STANDARD;
 
 @Accessors(chain=true)
@@ -24,15 +22,27 @@ public class GameRoomSettings {
     @Getter @Setter private GameDictionary dictionary;
 
     @Getter @Setter private TeamPlayMode teamPlayMode;
-    @Getter @Setter private int maxPlayers = 100;
+
+    @Getter @Setter private Integer minPlayersToStart = 2;
+    public boolean hasMinPlayersToStart () { return minPlayersToStart != null; }
+
+    @Getter @Setter private Integer maxPlayers = 100;
+    public boolean hasMaxPlayers () { return maxPlayers != null; }
+
     @Getter @Setter private Integer maxLetterDistance;
     public boolean hasMaxLetterDistance () { return maxLetterDistance != null; }
 
     @Getter @Setter private TurnPolicy[] turnPolicies;
 
-    @JsonIgnore @Getter @Setter private Long turnInterval;
-    @JsonProperty public String getTurnDuration () { return turnInterval == null ? null : formatDuration(turnInterval); }
-    public GameRoomSettings setTurnDuration (String duration) { return setTurnInterval(parseDuration(duration)); }
+    @JsonIgnore public TurnPolicy getRoundRobinPolicy () {
+        if (turnPolicies != null) {
+            for (TurnPolicy p : turnPolicies) {
+                if (p.getType() == TurnPolicyType.round_robin) return p;
+            }
+        }
+        return null;
+    }
+    public boolean hasRoundRobinPolicy () { return getRoundRobinPolicy() != null; }
 
     @Getter @Setter private MissedTurnPolicy missedTurnPolicy;
     @Getter @Setter private BonusPolicy[] bonusPolicies;
@@ -56,4 +66,7 @@ public class GameRoomSettings {
     public String boardName() {
         return board != null && board.getName() != null ? board.getName() : STANDARD;
     }
+
+    public void mergeSettings(GameRoomSettings other) { ReflectionUtil.copy(this, other); }
+
 }

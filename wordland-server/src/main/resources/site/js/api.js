@@ -85,7 +85,7 @@ Api = {
             url: API_PREFIX + url,
             async: (typeof success != "undefined" && success != null),
             beforeSend: add_api_auth,
-            'success': function (accounts, status, jqXHR) {
+            'success': function (data, status, jqXHR) {
                 ok = true;
                 if (typeof success != "undefined" && success != null) success();
             },
@@ -131,6 +131,10 @@ Api = {
 
     list_rooms: function (success, fail) {
         Api._get('rooms', success, fail);
+    },
+
+    create_room: function (room, success, fail) {
+        Api._put('rooms/' + room.name, room, success, fail);
     },
 
     join_game: function (room_name, player_info, success, fail) {

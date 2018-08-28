@@ -11,5 +11,6 @@ public class PointSystemSettings {
     public static final String JSONB_TYPE = JSONBUserType.JSONB_TYPE+"_PointSystemSettings";
 
     @Getter @Setter private SymbolScore[] symbolScoring;
+    @Getter @Setter private WordScore[] wordScoring;
 
 }

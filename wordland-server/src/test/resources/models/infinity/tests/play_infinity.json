@@ -1,38 +1,61 @@
 [
   {
-    "comment": "join infinity board as player1",
+    "comment": "login as anonymous player 1",
     "request": {
-      "uri": "rooms/the_expanse/join",
-      "entity": {
-        "name": "player1"
-      }
+      "uri": "auth/login",
+      "entity": {"name": "player1"}
     },
     "response": {
       "store": "player1",
       "sessionName": "player1",
-      "session": "apiKey",
+      "session": "apiToken"
+    }
+  },
+
+  {
+    "comment": "join infinity board as player1",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/the_expanse/join",
+      "entity": {}
+    },
+    "response": {
+      "store": "p1room",
       "check": [
-        {"condition": "json.name == 'player1'"},
-        {"condition": "json.id != null"}
+        {"condition": "json.player.name == 'player1'"},
+        {"condition": "json.room.startsWith('the_expanse')"}
       ]
     }
   },
 
   {
-    "comment": "join infinity board as player2",
+    "comment": "login as anonymous player 2",
     "request": {
+      "session": "new",
+      "uri": "auth/login",
+      "entity": {"name": "player2"}
+    },
+    "response": {
+      "store": "player2",
+      "sessionName": "player2",
+      "session": "apiToken"
+    }
+  },
+
+  {
+    "comment": "join infinity board as player2, ensure same room",
+    "request": {
+      "session": "player2",
       "uri": "rooms/the_expanse/join",
       "entity": {
         "name": "player2"
       }
     },
     "response": {
-      "store": "player2",
-      "sessionName": "player2",
-      "session": "apiKey",
+      "store": "p2room",
       "check": [
-        {"condition": "json.name == 'player2'"},
-        {"condition": "json.id != null"}
+        {"condition": "json.player.name == 'player2'"},
+        {"condition": "json.room == p1room.room"}
       ]
     }
   },
@@ -41,7 +64,7 @@
     "comment": "player 1 requests initial board state",
     "request": {
       "session": "player1",
-      "uri": "rooms/the_expanse/board"
+      "uri": "rooms/{{p1room.room}}/board"
     },
     "response": {
       "store": "initial_board",
@@ -66,7 +89,7 @@
     "comment": "player 1 requests board state, requires 4 game state blocks",
     "request": {
       "session": "player1",
-      "uri": "rooms/the_expanse/board?x1=-5&x2=5&y1=-5&y2=5"
+      "uri": "rooms/{{p1room.room}}/board?x1=-5&x2=5&y1=-5&y2=5"
     },
     "response": {
       "check": [
@@ -93,7 +116,7 @@
     "comment": "player 1 requests board state for large random area, server limits to 50x50",
     "request": {
       "session": "player1",
-      "uri": "rooms/the_expanse/board?x1=-128&x2=109&y1=-132&y2=128"
+      "uri": "rooms/{{p1room.room}}/board?x1=-128&x2=109&y1=-132&y2=128"
     },
     "response": {
       "store": "big_board",
@@ -113,13 +136,13 @@
     "before": "find-word-and-tiles big_board player1_word1",
     "request": {
       "session": "player1",
-      "uri": "rooms/the_expanse/play",
+      "uri": "rooms/{{p1room.room}}/play",
       "entity": {
-        "room": "the_expanse",
+        "room": "{{p1room.room}}",
         "stateChange": "word_played",
         "id": "{{player1.id}}",
         "clientId": "{{player1.id}}",
-        "apiKey": "{{player1.apiKey}}",
+        "apiToken": "{{player1.apiToken}}",
         "word": "{{player1_word1.word}}",
         "tilesJson": "{{escaped_json player1_word1.tiles}}"
       }
@@ -131,13 +154,13 @@
     "before": "find-word-and-tiles big_board player2_word1",
     "request": {
       "session": "player2",
-      "uri": "rooms/the_expanse/play",
+      "uri": "rooms/{{p1room.room}}/play",
       "entity": {
-        "room": "the_expanse",
+        "room": "{{p1room.room}}",
         "stateChange": "word_played",
         "id": "{{player2.id}}",
         "clientId": "{{player2.id}}",
-        "apiKey": "{{player2.apiKey}}",
+        "apiToken": "{{player2.apiToken}}",
         "word": "{{player2_word1.word}}",
         "tilesJson": "{{escaped_json player2_word1.tiles}}"
       }
@@ -147,7 +170,7 @@
   {
     "comment": "player 1 requests more board state, verify updates",
     "request": {
-      "uri": "rooms/the_expanse/board?x1=-128&x2=109&y1=-132&y2=128"
+      "uri": "rooms/{{p1room.room}}/board?x1=-128&x2=109&y1=-132&y2=128"
     },
     "response": {
       "store": "big_board",
@@ -164,7 +187,7 @@
     "comment": "player 1 requests board overview for large area",
     "request": {
       "session": "player1",
-      "uri": "rooms/the_expanse/board/view.png?x1=-1000&x2=1000&y1=-1000&y2=1000&height=600&width=800"
+      "uri": "rooms/{{p1room.room}}/board/view.png?x1=-1000&x2=1000&y1=-1000&y2=1000&height=600&width=800"
     },
     "after": "save-board-view /tmp/views/{{date_format 'now' 'yyyy-MM-dd_HH-mm'}}.png"
   }/*,

@@ -1,0 +1,37 @@
+<html>
+<head>
+    <title>wordland.io - create room</title>
+    <meta charset="utf-8">
+</head>
+<body>
+
+<form>
+    Name: <input type="text" id="name" name="name"/> <br/>
+    Maximum number of players: <input type="text" id="maxPlayers" name="maxPlayers"/> <br/>
+    Maximum distance between letters of a played word: <input type="text" id="maxLetterDistance" name="maxLetterDistance"/> <br/>
+    <input type="button" name="create" value="create" onclick="createRoom(this);">
+    <br/>
+</form>
+
+</body>
+
+<script src="/lib/jquery.js"></script>
+<script src="/js/util.js"></script>
+<script src="/js/api.js"></script>
+
+<script language="JavaScript">
+    function createRoom(form) {
+        var room = {
+            name: $('#name').val(),
+            maxPlayers: $('#maxPlayers').val(),
+            maxLetterDistance: $('#maxLetterDistance').val()
+        };
+        Api.create_room(room, function (data, status, jqXHR) {
+            location.href = "/play/?room=" + data.link;
+        }, function (jqXHR, status, error) {
+            alert("error creating room: "+error);
+        })
+    }
+</script>
+
+</html>

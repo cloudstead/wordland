@@ -23,7 +23,18 @@ public class GameDaemon extends SimpleDaemon {
     @Getter private GameRoom room;
     private AtmosphereEventsService eventService;
 
+    @Autowired private WordlandConfiguration configuration;
+
     private final AtomicReference<GameState> gameState = new AtomicReference<>();
+
+    public GameDaemon(GameRoom room, AtmosphereEventsService eventService) {
+        this.room = room;
+        this.eventService = eventService;
+    }
+
+    public static GameDaemon templateDaemon (String room) {
+        return new GameDaemon((GameRoom) new GameRoom().setTemplate(true).setName(room), null);
+    }
 
     public GameState getGameState () {
         synchronized (gameState) {
@@ -31,14 +42,8 @@ public class GameDaemon extends SimpleDaemon {
         }
     }
 
-    protected GameStateStorageService getGameStateStorage() { return configuration.getGameStateStorage(room.getName()); }
+    protected GameStateStorageService getGameStateStorage() { return configuration.getGameStateStorage(room); }
 
-    public GameDaemon(GameRoom room, AtmosphereEventsService eventService) {
-        this.room = room;
-        this.eventService = eventService;
-    }
-
-    @Autowired private WordlandConfiguration configuration;
     private static final long SLEEP_TIME = TimeUnit.SECONDS.toMillis(5);
 
     @Override protected long getSleepTime() { return SLEEP_TIME; }
@@ -51,13 +56,15 @@ public class GameDaemon extends SimpleDaemon {
         return eventService == null ? null : eventService.getBroadcaster().broadcast(stateChange);
     }
 
-    public GameDaemon startGame() {
-        if (gameState.get() != null) {
-            log.warn("startGame: game already started: "+room.getName());
-            return this;
+    public GameDaemon initGame() {
+        synchronized (gameState) {
+            if (gameState.get() != null) {
+                log.warn("initGame: game already started: " + room.getName());
+                return this;
+            }
+            gameState.set(room.init(getGameStateStorage()));
+            start();
         }
-        gameState.set(room.initializeBoard(getGameStateStorage()));
-        start();
         return this;
     }
 
@@ -70,7 +77,7 @@ public class GameDaemon extends SimpleDaemon {
     }
 
     public GamePlayer findPlayer(GamePlayer player) {
-        return gameState.get().getPlayer(player.getAccount());
+        return gameState.get() == null ? null : gameState.get().getPlayer(player.getId());
     }
 
     public GamePlayer findPlayer(String uuid) {

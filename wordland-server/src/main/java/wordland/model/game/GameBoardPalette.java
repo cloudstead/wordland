@@ -1,7 +1,9 @@
 package wordland.model.game;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.apache.commons.lang3.RandomUtils;
 import org.cobbzilla.util.collection.NameAndValue;
 
@@ -11,19 +13,28 @@ import java.util.Map;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 
+@NoArgsConstructor @Accessors(chain=true)
 public class GameBoardPalette {
 
     private static final String ANY_UNASSIGNED = "*";
 
+    public static final int DEFAULT_BLANK_RGB = 0xffffff;
+    public static final int DEFAULT_CURRENT_PLAYER_RGB = 0xff0000;
+
     @Getter @Setter private String blankColor;
+    @Getter @Setter private String currentPlayerId;
+    @Getter @Setter private String currentPlayerColor;
     @Getter @Setter private NameAndValue[] playerColors;
 
     @Getter(lazy=true) private final Map<String, String> colorsByPlayer = initColorsByPlayer();
-    public static final int DEFAULT_BLANK_RGB = 0xffffff;
 
-    public static GameBoardPalette defaultPalette() {
-        return json(stream2string("palette/default_palette.json"), GameBoardPalette.class);
+    public GameBoardPalette(GameBoardPalette other) { copy(this, other); }
+
+    public static GameBoardPalette defaultPalette(String currentPlayerId) {
+        return json(stream2string("palette/default_palette.json"), GameBoardPalette.class)
+                .setCurrentPlayerId(currentPlayerId);
     }
 
     private Map<String, String> initColorsByPlayer() {
@@ -38,6 +49,9 @@ public class GameBoardPalette {
 
     public int rgbFor(GameTileState tile) {
         if (!tile.hasOwner()) return getBlankRgb();
+        if (currentPlayerColor != null && tile.getOwner().equals(currentPlayerId)) {
+            return parseColor(currentPlayerColor, DEFAULT_CURRENT_PLAYER_RGB);
+        }
         final String colorString = getColorsByPlayer().get(tile.getOwner());
         if (!empty(colorString)) return parseColor(colorString, nextRandomColor(tile.getOwner()));
         return randomColor();

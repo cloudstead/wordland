@@ -21,6 +21,7 @@ public class GameBoardState {
     }
 
     public String grid () { return GameTileState.grid(tiles); }
+    public String grid (GameBoardPalette palette) { return GameTileState.grid(tiles, palette); }
 
     @SuppressWarnings("unused") // used in JSON tests. see models/infinity/tests/play_infinity.json
     public boolean claimedWord(String word) {

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/common
+
+ROOM_NAME="${1:?no room name specified}"
+BOARD_NAME="${2:?no board name specified}"
+MAX_LETTER_DISTANCE=${3:-5}
+
+function room_obj () {
+  cat <<EOF
+  {
+    "name":"${ROOM_NAME}",
+    "settings": {
+      "board": {"name": "${BOARD_NAME}"},
+      "maxLetterDistance": ${MAX_LETTER_DISTANCE}
+    }
+  }
+EOF
+}
+
+curl --header "Content-Type: application/json" -X PUT -d "$(room_obj)" ${WL_API}/rooms/${ROOM_NAME}

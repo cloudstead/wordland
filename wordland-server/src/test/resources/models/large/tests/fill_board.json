@@ -7,20 +7,32 @@
       },
       "scripts": [
         {
-          "comment": "join fun_land board as player [[player]]",
+          "comment": "login as player [[player]]",
           "request": {
-            "uri": "rooms/fun_land/join",
-            "entity": {
-              "name": "player[[player]]"
-            }
+            "session": "new",
+            "uri": "auth/login",
+            "entity": {"name": "player[[player]]"}
           },
           "response": {
             "store": "player[[player]]",
             "sessionName": "player[[player]]",
-            "session": "apiKey",
+            "session": "apiToken"
+          }
+        },
+
+        {
+          "comment": "join fun_land board as player [[player]], ensure same room",
+          "request": {
+            "session": "player[[player]]",
+            "uri": "rooms/fun_land/join",
+            "entity": {}
+          },
+          "response": {
+            "store": "p[[player]]room",
             "check": [
-              {"condition": "json.name == 'player[[player]]'"},
-              {"condition": "json.id != null"}
+              {"condition": "json.player.name == 'player[[player]]'"},
+              {"condition": "json.room.startsWith('fun_land')"},
+              {"condition": "p1room.room == p[[player]]room.room"}
             ]
           }
         }
@@ -32,7 +44,7 @@
     "comment": "player 1 requests initial board state",
     "request": {
       "session": "player1",
-      "uri": "rooms/fun_land/board?x2=50&y2=50"
+      "uri": "rooms/{{p1room.room}}/board?x2=50&y2=50"
     },
     "response": {
       "store": "board"
@@ -57,14 +69,14 @@
                 "comment": "play word #[[turn]] for player ((player))",
                 "before": "find-word-and-tiles board player((player))_word[[turn]] (2*[[turn]]) (3*[[turn]])",
                 "request": {
-                  "session": "player1",
-                  "uri": "rooms/fun_land/play",
+                  "session": "player((player))",
+                  "uri": "rooms/{{p1room.room}}/play",
                   "entity": {
-                    "room": "fun_land",
+                    "room": "{{p1room.room}}",
                     "stateChange": "word_played",
                     "id": "{{player((player)).id}}",
                     "clientId": "{{player((player)).id}}",
-                    "apiKey": "{{player((player)).apiKey}}",
+                    "apiToken": "{{player((player)).apiToken}}",
                     "word": "{{player((player))_word[[turn]].word}}",
                     "tilesJson": "{{escaped_json player((player))_word[[turn]].tiles}}"
                   }
@@ -81,7 +93,7 @@
     "comment": "player 1 requests board overview for entire board",
     "request": {
       "session": "player1",
-      "uri": "rooms/fun_land/board/view.png?x1=-1000&x2=1000&y1=-1000&y2=1000&height=1000&width=1000"
+      "uri": "rooms/{{p1room.room}}/board/view.png?x1=-1000&x2=1000&y1=-1000&y2=1000&height=1000&width=1000"
     },
     "after": "save-board-view /tmp/views/big_board_{{date_format 'now' 'yyyy-MM-dd_HH-mm'}}.png"
   }

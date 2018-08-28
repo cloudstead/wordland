@@ -6,10 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.resources.NamedSystemResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import wordland.dao.GameRoomDAO;
-import wordland.model.Account;
+import wordland.dao.*;
 import wordland.model.GameRoom;
 import wordland.model.game.*;
+import wordland.model.json.GameRoomSettings;
+import wordland.model.support.AccountSession;
 import wordland.model.support.GameRoomJoinRequest;
 import wordland.model.support.GameRuntimeEvent;
 import wordland.service.GamesMaster;
@@ -20,6 +21,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 
+import static org.cobbzilla.util.http.HttpContentTypes.TEXT_PLAIN;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static wordland.ApiConstants.*;
@@ -30,34 +32,88 @@ import static wordland.model.GameBoardBlock.BLOCK_SIZE;
 public class GameRoomsResource extends NamedSystemResource<GameRoom> {
 
     @Getter @Autowired private GameRoomDAO dao;
+    @Getter @Autowired private GameBoardDAO gameBoardDAO;
     @Getter @Autowired private GamesMaster gamesMaster;
+    @Getter @Autowired private SymbolSetDAO symbolSetDAO;
+    @Getter @Autowired private SymbolDistributionDAO distributionDAO;
+    @Getter @Autowired private PointSystemDAO pointSystemDAO;
+    @Getter @Autowired private GameDictionaryDAO dictionaryDAO;
+
+    @Override protected boolean canCreate(HttpContext ctx) { return true; }
+
     @PUT
     public Response create (@Context HttpContext ctx,
                             @Valid GameRoom gameRoom) {
         return create(ctx, gameRoom.getName(), gameRoom);
     }
 
-    @PUT @Path("/{name}")
+    @PUT @Path("/{room}")
     public Response create (@Context HttpContext ctx,
-                            @PathParam("name") String room,
+                            @PathParam("room") String room,
                             @Valid GameRoom gameRoom) {
-        final Account account = userPrincipal(ctx);
+
+        final AccountSession account = accountPrincipal(ctx);
+        final GameRoom existing = dao.findByName(room);
+        if (existing != null) return invalid("err.room.exists");
+
+        final GameRoomSettings rs = gameRoom.getSettings();
+        if (rs.getSymbolSet() == null) {
+            rs.setSymbolSet(symbolSetDAO.findByName(STANDARD));
+        }
+        if (rs.getSymbolDistribution() == null) {
+            rs.setSymbolDistribution(distributionDAO.findByName(STANDARD));
+        }
+        if (rs.getPointSystem() == null) {
+            rs.setPointSystem(pointSystemDAO.findByName(STANDARD));
+        }
+        if (rs.getDictionary() == null) {
+            rs.setDictionary(dictionaryDAO.findByName(STANDARD));
+        }
+        if (rs.getBoard() == null) {
+            rs.setBoard(gameBoardDAO.findByName(STANDARD));
+        }
+        if (account != null) gameRoom.setAccountOwner(account.getUuid());
+
         return super.create(ctx, gameRoom);
     }
 
-    @POST @Path("/{name}"+EP_JOIN)
+    @POST @Path("/{room}"+EP_JOIN)
     public Response join (@Context HttpContext ctx,
-                          @PathParam("name") String room,
+                          @PathParam("room") String room,
                           @Valid GameRoomJoinRequest request) {
 
-        final Account account = optionalUserPrincipal(ctx);
-        final GamePlayer player = new GamePlayer(account, request);
+        final AccountSession session = userPrincipal(ctx);
+        final GamePlayer player = new GamePlayer(session, request);
+
+        final GameRoom gameRoom = dao.findByName(room);
+        if (gameRoom == null) return notFound(room);
 
         final GamePlayer found = gamesMaster.findPlayer(room, player);
         if (found != null) return ok(found);
 
-        gamesMaster.addPlayer(room, player);
-        return ok(player.getCredentials());
+        return ok(gamesMaster.addPlayer(gameRoom, player));
+    }
+
+    @GET @Path("/{name}"+EP_BOARD)
+    public Response board (@Context HttpContext ctx,
+                           @PathParam("name") String room,
+                           @QueryParam("x1") Integer x1,
+                           @QueryParam("x2") Integer x2,
+                           @QueryParam("y1") Integer y1,
+                           @QueryParam("y2") Integer y2) {
+        return ok(getGameBoardState(room, x1, x2, y1, y2));
+    }
+
+    protected GameBoardState getGameBoardState(@PathParam("name") String room, @QueryParam("x1") Integer x1, @QueryParam("x2") Integer x2, @QueryParam("y1") Integer y1, @QueryParam("y2") Integer y2) {
+        final GameState state = gamesMaster.getGameState(room);
+        if (state == null) throw  notFoundEx(room);
+
+        if (x1 == null) x1 = 0;
+        if (x2 == null) x2 = BLOCK_SIZE-1;
+        if (y1 == null) y1 = 0;
+        if (y2 == null) y2 = BLOCK_SIZE-1;
+
+        return state.getBoard(x1, x2, y1, y2);
     }
 
     @POST @Path("/{name}"+EP_PLAY)
@@ -65,11 +121,13 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                           @PathParam("name") String room,
                           @Valid GameRuntimeEvent request) {
 
-        final Account account = optionalUserPrincipal(ctx);
+        final AccountSession account = userPrincipal(ctx);
+        if (!request.getId().equals(account.getId())) return forbidden();
+
         final GamePlayer player = gamesMaster.findPlayer(room, request.getId());
         if (player == null) return notFound(request.getId());
 
-        return ok(gamesMaster.playWord(room, request.getApiKey(), player, request.getWord(), request.getTiles()));
+        return ok(gamesMaster.playWord(room, request.getApiToken(), player, request.getWord(), request.getTiles()));
     }
 
     @POST @Path("/{name}"+EP_QUIT)
@@ -77,39 +135,45 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                           @PathParam("name") String room,
                           @Valid GameRuntimeEvent request) {
 
+        final AccountSession account = userPrincipal(ctx);
+        if (!request.getId().equals(account.getId())) return forbidden();
         if (request.getStateChange() != GameStateChangeType.player_left) return invalid("err.type.invalid", request.getStateChange().name());
+
         final GamePlayer found = gamesMaster.findPlayer(room, request.getId());
-        if (found == null) return notFound(request.getId());
-        gamesMaster.removePlayer(room, request.getApiKey(), found.getId());
+        if (found == null || !found.getApiToken().equals(account.getApiToken())) return notFound(request.getId());
+
+        gamesMaster.removePlayer(room, request.getApiToken(), found.getId());
         return ok();
     }
 
     @GET @Path("/{name}"+EP_BOARD+EP_VIEW_PNG)
-    public Response boardView (@Context HttpContext ctx,
-                               @PathParam("name") String room,
-                               @QueryParam("x1") Integer x1,
-                               @QueryParam("x2") Integer x2,
-                               @QueryParam("y1") Integer y1,
-                               @QueryParam("y2") Integer y2,
-                               @QueryParam("width") Integer width,
-                               @QueryParam("height") Integer height,
-                               @QueryParam("palette") String paletteJson) {
+    public Response boardImageView(@Context HttpContext ctx,
+                                   @PathParam("name") String room,
+                                   @QueryParam("x1") Integer x1,
+                                   @QueryParam("x2") Integer x2,
+                                   @QueryParam("y1") Integer y1,
+                                   @QueryParam("y2") Integer y2,
+                                   @QueryParam("width") Integer width,
+                                   @QueryParam("height") Integer height,
+                                   @QueryParam("palette") String paletteJson) {
         final GameBoardPalette palette = paletteJson != null
                 ? json(paletteJson, GameBoardPalette.class)
                 : null;
-        return boardView(ctx, room, x1, x2, y1, y2, width, height, palette);
+        return boardImageView(ctx, room, x1, x2, y1, y2, width, height, palette);
     }
 
     @POST @Path("/{name}"+EP_BOARD+EP_VIEW_PNG)
-    public Response boardView (@Context HttpContext ctx,
-                               @PathParam("name") String room,
-                               @QueryParam("x1") Integer x1,
-                               @QueryParam("x2") Integer x2,
-                               @QueryParam("y1") Integer y1,
-                               @QueryParam("y2") Integer y2,
-                               @QueryParam("width") Integer width,
-                               @QueryParam("height") Integer height,
-                               GameBoardPalette palette) {
+    public Response boardImageView(@Context HttpContext ctx,
+                                   @PathParam("name") String room,
+                                   @QueryParam("x1") Integer x1,
+                                   @QueryParam("x2") Integer x2,
+                                   @QueryParam("y1") Integer y1,
+                                   @QueryParam("y2") Integer y2,
+                                   @QueryParam("width") Integer width,
+                                   @QueryParam("height") Integer height,
+                                   GameBoardPalette palette) {
+
+        final AccountSession account = userPrincipal(ctx);
         final GameState state = gamesMaster.getGameState(room);
         if (state == null) return notFound(room);
 
@@ -120,31 +184,45 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (height == null) height = 300;
         if (width == null) width = 400;
 
+        if (palette == null) palette = GameBoardPalette.defaultPalette(account.getId());
+
         try {
             return ok(state.getBoardView(x1, x2, y1, y2, width, height, palette));
         } catch (IOException e) {
-            return invalid("err.boardView.rendering");
+            return invalid("err.boardImageView.rendering");
         }
     }
 
-    @GET @Path("/{name}"+EP_BOARD)
-    public Response board (@Context HttpContext ctx,
-                           @PathParam("name") String room,
-                           @QueryParam("x1") Integer x1,
-                           @QueryParam("x2") Integer x2,
-                           @QueryParam("y1") Integer y1,
-                           @QueryParam("y2") Integer y2) {
+    @GET @Path("/{name}"+EP_BOARD+EP_VIEW_TXT)
+    @Produces(TEXT_PLAIN)
+    public Response boardTextView (@Context HttpContext ctx,
+                                   @PathParam("name") String room,
+                                   @QueryParam("x1") Integer x1,
+                                   @QueryParam("x2") Integer x2,
+                                   @QueryParam("y1") Integer y1,
+                                   @QueryParam("y2") Integer y2,
+                                   @QueryParam("palette") String paletteJson) {
+        final GameBoardPalette palette = paletteJson != null
+                ? json(paletteJson, GameBoardPalette.class)
+                : null;
+        return boardTextView(ctx, room, x1, x2, y1, y2, palette);
+    }
 
-        final GameState state = gamesMaster.getGameState(room);
-        if (state == null) return notFound(room);
+    @POST @Path("/{name}"+EP_BOARD+EP_VIEW_TXT)
+    @Produces(TEXT_PLAIN)
+    public Response boardTextView (@Context HttpContext ctx,
+                                   @PathParam("name") String room,
+                                   @QueryParam("x1") Integer x1,
+                                   @QueryParam("x2") Integer x2,
+                                   @QueryParam("y1") Integer y1,
+                                   @QueryParam("y2") Integer y2,
+                                   GameBoardPalette palette) {
 
-        if (x1 == null) x1 = 0;
-        if (x2 == null) x2 = BLOCK_SIZE-1;
-        if (y1 == null) y1 = 0;
-        if (y2 == null) y2 = BLOCK_SIZE-1;
+        final AccountSession account = userPrincipal(ctx);
+        if (palette == null) palette = GameBoardPalette.defaultPalette(account.getId());
 
-        final GameBoardState board = state.getBoard(x1, x2, y1, y2);
-        return ok(board);
+        final GameBoardState board = getGameBoardState(room, x1, x2, y1, y2);
+        return ok(board.grid(palette));
     }
 
     @GET @Path("/{name}"+EP_SETTINGS)

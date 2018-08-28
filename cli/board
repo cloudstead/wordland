@@ -1,0 +1,23 @@
+#!/bin/bash
+
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/common
+
+case ${1} in
+    ''|*[!0-9]*) if [ -r ${WL_DIR}/current_room ] ; then
+        ROOM_NAME=$(cat ${WL_DIR}/current_room)
+         else
+           die "Room name not provided and no current room selected"
+         fi
+    ;;
+    *) ROOM_NAME="${1}" ; shift
+    ;;
+esac
+
+X1=${2:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)}
+Y1=${3:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)}
+VIEW_SIZE=${4:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/view_size)}
+
+curl --header "Content-Type: application/json" "${WL_API}/rooms/${ROOM_NAME}/board/view.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" \
+  || die "error joining game"

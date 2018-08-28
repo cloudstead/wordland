@@ -1,0 +1,36 @@
+<html>
+<head>
+    <title>wordland.io</title>
+</head>
+<body>
+
+</body>
+
+<script src="/lib/jquery.js"></script>
+<script src="/js/util.js"></script>
+<script src="/js/api.js"></script>
+
+<script language="JavaScript">
+$(function() {
+    var room = getUrlParameter("room");
+    if (room == null) {
+        alert('no room selected');
+    } else {
+        var playerName = localStorage.getItem('playerName');
+        if (playerName == null) {
+            playerName = prompt("player name");
+            localStorage.setItem('playerName', playerName);
+        }
+        Api.join_game(room, {name: playerName}, function (data) {
+            Wordland.room = room;
+            Wordland.player = data;
+            Wordland.send({stateChange: 'player_joined', id: Wordland.player.id, apiKey: Wordland.player.apiKey, room: Wordland.room});
+            WLGame.start();
+
+        }, Wordland.apiError("error joining game"));
+    }
+
+})
+</script>
+
+</html>

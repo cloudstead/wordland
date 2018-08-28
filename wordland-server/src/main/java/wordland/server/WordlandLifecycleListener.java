@@ -72,7 +72,6 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
                 } else {
                     final String name = env.get("WORDLAND_SUPERUSER");
                     final Account created = accountDAO.create((Account) new Account()
-                            .setAnonymous(false)
                             .setFirstName("admin")
                             .setLastName("admin")
                             .setMobilePhone("0000000000")
@@ -103,14 +102,22 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
         final DAO dao = configuration.getDaoForEntityType(type);
         for (Identifiable thing : things) {
             final NamedIdentityBase named = (NamedIdentityBase) thing;
-            if (dao.findByUuid(named.getName()) == null) dao.create(named);
+            if (dao.findByUuid(named.getName()) == null) {
+                dao.create(named);
+                log.info("created: "+named.getClass().getSimpleName()+"/"+named.getName());
+            } else if (named instanceof SymbolSet) {
+                log.warn("WTF");
+            }
+
             if (thing instanceof ParentEntity) {
                 Map<String, JsonNode[]> children = ((ParentEntity) thing).getChildren();
                 for (String childType : children.keySet()) {
                     final EntityConfig childConfig = entityConfig.getChildren().get(childType);
                     if (childConfig == null) die("populateType: no child config found for "+childType);
-                    //noinspection RedundantCast -- removing it breaks compilation
+
                     final Class<? extends Identifiable> childClass = forName(childConfig.getClassName());
+
+                    //noinspection RedundantCast -- removing it breaks compilation
                     final Identifiable[] childObjects = (Identifiable[]) json(json(children.get(childType)), arrayClass(childClass));
                     for (Identifiable child : childObjects) {
                         ReflectionUtil.set(child, childConfig.getParentField().getName(), thing.getUuid());
