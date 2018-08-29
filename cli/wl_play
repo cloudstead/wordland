@@ -33,6 +33,25 @@ function current_word {
   done
 }
 
+function subtract_letter {
+  if [[ -z "$(current_word)" ]] ; then
+    return
+  fi
+  unset 'TILES[${#TILES[@]}-1]'
+  unset 'LETTERS[${#LETTERS[@]}-1]'
+  unset 'INDEXES[${#INDEXES[@]}-1]'
+  if [[ ${#LETTERS[@]} -gt 0 ]] ; then
+    ACTIVE_CHAR="${LETTERS[${#LETTERS[@]}-1]}"
+  else
+    ACTIVE_CHAR=""
+  fi
+  if [[ ${#INDEXES[@]} -gt 0 ]] ; then
+    ACTIVE_CHAR_INDEX="${INDEXES[${#INDEXES[@]}-1]}"
+  else
+    ACTIVE_CHAR_INDEX=1
+  fi
+}
+
 function play_obj {
   if [[ ! -z ${CURRENT_PLAY} ]] ; then
     cat <<EOF
@@ -73,8 +92,8 @@ VIEW_SIZE=${3:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/view_size)}
 board="$(echo "{}" | wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})")" \
   || die "error previewing board"
 
-printf " $(printf "$(echo ${board} | jq '.grid' | tr -d '"')")"
-echo
+printf "$(printf "$(json_node "${board}" grid | tr -d '"')")"
+echo ; echo ; echo -n "wordland>>> "
 
 while IFS= read -s -r -n1 char ; do
   reset=0
@@ -126,19 +145,7 @@ while IFS= read -s -r -n1 char ; do
       fi
     ;;
     '-')
-      unset 'TILES[${#TILES[@]}-1]'
-      unset 'LETTERS[${#LETTERS[@]}-1]'
-      unset 'INDEXES[${#INDEXES[@]}-1]'
-      if [[ ${#LETTERS[@]} -gt 0 ]] ; then
-        ACTIVE_CHAR="${LETTERS[${#LETTERS[@]}-1]}"
-      else
-        ACTIVE_CHAR=""
-      fi
-      if [[ ${#INDEXES[@]} -gt 0 ]] ; then
-        ACTIVE_CHAR_INDEX="${INDEXES[${#INDEXES[@]}-1]}"
-      else
-        ACTIVE_CHAR_INDEX=1
-      fi
+      subtract_letter
     ;;
     ' ')
       echo ; echo "reset"
@@ -160,20 +167,17 @@ while IFS= read -s -r -n1 char ; do
     || die "error previewing board"
 
   echo
-  printf " $(printf "$(echo ${board} | jq '.grid' | tr -d '"')")"
-  echo ; echo
+  printf "$(printf "$(json_node "${board}" grid | tr -d '"')")"
 
-  echo -n "wordland>>> "
   if [[ ${#TILES[*]} -gt 0 ]] ; then
-    echo -n "$(current_word)"
-
-    SUCCESS="$(echo ${board} | jq '.success')"
+    SUCCESS="$(json_val "${board}" success)"
     if [[ -z "${SUCCESS}" || "${SUCCESS}" != "true" ]] ; then
       error "word cannot be played"
       CURRENT_PLAY=""
     else
-      CURRENT_PLAY="$(echo ${board} | jq '.playedTiles')"
+      CURRENT_PLAY="$(json_node "${board}" playedTiles)"
     fi
-
   fi
+  echo ; echo ; echo -n "wordland>>> $(current_word)"
+
 done

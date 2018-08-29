@@ -29,8 +29,11 @@ function env_val {
   cat ${ENV_FILE} | grep "export ${param}=" | awk -F '=' '{print $2}'
 }
 
+function json_node {
+  echo "${1}" | jq .${2}
+}
 function json_val {
-  echo "${1}" | jq ".${2}" | tr -d '" '
+  json_node "${1}" "${2}" | tr -d '" '
 }
 function session_val {
   if [[ -f ${SESSION_JSON} ]] ; then
@@ -38,7 +41,7 @@ function session_val {
   fi
 }
 function session_player {
-  session_val 'player.id'
+  session_val id
 }
 function session_apiToken {
   session_val apiToken
