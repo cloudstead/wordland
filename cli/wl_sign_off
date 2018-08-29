@@ -5,7 +5,7 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/_wl_common
 
 if [[ ! -f ${SESSION_JSON} ]] ; then
-  die "$(translate_message err.notLoggedIn)"
+  die "$(translate_message msg.notLoggedIn)"
 fi
 
 name="$(session_email)"

@@ -4,8 +4,8 @@ SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/_wl_common
 
-ROOM_NAME="${1:?no room name specified}"
-BOARD_NAME="${2:?no board name specified}"
+ROOM_NAME="${1:?$(translate_message err.room.required)}"
+BOARD_NAME="${2:?$(translate_message err.board.required)}"
 MAX_LETTER_DISTANCE=${3:-5}
 
 function room_obj () {
