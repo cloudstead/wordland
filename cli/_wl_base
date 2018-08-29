@@ -77,7 +77,7 @@ function lang {
 function lang_pack_msg {
   LANG_PACK="${1}"
   msg_key="${2}"
-  cat ${LANG_PACK} 2> /dev/null | grep -m 1 ${msg_key} | awk -F '=' '{print $2}'
+  echo "$(. ${LANG_PACK} && echo "${!msg_key}")"
 }
 
 function translate_message {
@@ -181,7 +181,7 @@ function wl_post {
   if [[ ${status_code} -eq 200 && ! -z "${json}" ]] ; then
     echo "${json}"
   elif [[ ${status_code} -eq 422 ]] ; then
-    error_stdout "$(translate_messages $(echo "${json}" | jq .[].messageTemplate | tr -d '"'))"
+    error_stdout "$(translate_messages $(echo "${json}" | jq .[].messageTemplate | tr -d '"' | tr '.' '_'))"
   else
     die "${ERR_MESSAGE}: ${status_code} / ${json}"
   fi
@@ -201,5 +201,5 @@ fi
 response=$(curl --silent --write-out "\n%{http_code}\n" ${WL_API}/auth/ping)
 status_code=$(echo "${response}" | sed -n '$p')
 if [[ -z "${status_code}" || ${status_code} -ne 200 ]] ; then
-  die "$(translate_message err.api.unavailable): ${WL_API}"
+  die "$(translate_message err_api_unavailable): ${WL_API}"
 fi

@@ -5,20 +5,20 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/_wl_common
 
 if [[ ! -f ${SESSION_JSON} ]] ; then
-  error "$(translate_message msg.notLoggedIn)"
+  error "$(translate_message msg_notLoggedIn)"
   exit 1
 fi
 
 email="$(session_email)"
 if [[ ! -z "${email}" ]] ; then
-  echo "$(translate_message msg.signin.success) ${email}"
+  echo "$(translate_message msg_signin_success) ${email}"
   exit 0
 fi
 
 name="$(session_name)"
 if [[ ! -z "${name}" ]] ; then
-  echo "$(translate_message msg.signin.success) ${name} $(translate_message msg.user.anonymousFlag)"
+  echo "$(translate_message msg_signin_success) ${name} $(translate_message msg_user_anonymousFlag)"
   exit 0
 fi
 
-die "$(translate_message err.userUnknown_sessionDump): $(cat ${SESSION_JSON})"
+die "$(translate_message err_userUnknown_sessionDump): $(cat ${SESSION_JSON})"

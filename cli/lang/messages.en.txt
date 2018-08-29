@@ -1,46 +1,46 @@
-err.room.noCurrentRoom=please join a room first. view rooms with wl_rooms, join with wl_join
-err.room.notFound=room not found
-err.game.notYourTurn=it's not your turn
-err.game.invalidPlay=word cannot be played
-err.game.noCurrentPlay=no current word to play
-err.api.boardView=error viewing board
-err.api.unavailable=wordland server unavailable
-err.api.checkingSession=error checking session
-err.api.login=error signing on
-err.api.registration=error signing up
-err.api.play=error playing word
-msg.signup.success=Successfully signed up and logged in as
-msg.signin.success=Successfully signed in as
-msg.signoff.success=Successfully signed off as
-msg.user.anonymousFlag=(anonymous)
-msg.notLoggedIn=not signed in
-err.api.join=error joining room
-err.api.noSessionId=session ID is missing, try signing off and signing back on
-err.username.required=username is required
-err.email.required=email is required
-err.room.required=room name is required
-err.board.required=board name is required
-err.model.required=model name is required
-err.word.invalid=not a word
-msg.wantToSignUp=Sign up for an account? [Y/N] (enter Y if you already have an account, you'll be signed in)
-label.username=Username
-label.email=Email
-label.password=Password
-label.optional=(optional)
-msg.availableRooms=Available rooms:
-msg.roomDetails=Details for room: 
-label.board.name=Board name:       
-label.board.dimensions=Board dimensions: 
-label.maxPlayers=Max players:      
-msg.chooseRoom=Enter a room name or number to see more info, or Control-C to exit
-msg.roomOptions="
+err_room_noCurrentRoom="please join a room first. view rooms with wl_rooms, join with wl_join"
+err_room_notFound="room not found"
+err_game_notYourTurn="it's not your turn"
+err_game_invalidPlay="word cannot be played"
+err_game_noCurrentPlay="no current word to play"
+err_api_boardView="error viewing board"
+err_api_unavailable="wordland server unavailable"
+err_api_checkingSession="error checking session"
+err_api_login="error signing on"
+err_api_registration="error signing up"
+err_api_play="error playing word"
+msg_signup_success="Successfully signed up and logged in as"
+msg_signin_success="Successfully signed in as"
+msg_signoff_success="Successfully signed off as"
+msg_user_anonymousFlag="(anonymous)"
+msg_notLoggedIn="not signed in"
+err_api_join="error joining room"
+err_api_noSessionId="session ID is missing, try signing off and signing back on"
+err_username_required="username is required"
+err_email_required="email is required"
+err_room_required="room name is required"
+err_board_required="board name is required"
+err_model_required="model name is required"
+err_word_invalid="not a word"
+msg_wantToSignUp="Sign up for an account? [Y/N] (enter Y if you already have an account, you'll be signed in)"
+label_username="Username"
+label_email="Email"
+label_password="Password"
+label_optional="(optional)"
+msg_availableRooms="Available rooms:"
+msg_roomDetails="Details for room:"
+label_board_name="Board name:"
+label_board_dimensions="Board dimensions:"
+label_maxPlayers="Max players:"
+msg_chooseRoom="Enter a room name or number to see more info, or Control-C to exit"
+msg_roomOptions="
 Commands:
-  n   - start a new game in this room"
-  r   - back to rooms list"
-  v   - show verbose room definition (JSON)"
-  q   - quit (or Control-C)"
+  n   - start a new game in this room
+  r   - back to rooms list
+  v   - show verbose room definition (JSON)
+  q   - quit (or Control-C)
 "
-msg.word.reset=resetting letter tray
-Y=Y
-N=N
-err.userUnknown_sessionDump=not sure who you might be signed in as, here's your session
+msg_word_reset="resetting letter tray"
+Y="Y"
+N="N"
+err_userUnknown_sessionDump="not sure who you might be signed in as, here's your session"

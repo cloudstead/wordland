@@ -4,7 +4,7 @@ SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/_wl_common
 
-ROOM_NAME="${1:?$(translate_message err.room.required)}"
+ROOM_NAME="${1:?$(translate_message err_room_required)}"
 PLAYER_NAME="${2-$(session_name)}"
 
 function join_obj () {
@@ -16,9 +16,9 @@ EOF
 }
 
 TEMP_SESSION=$(mktemp /tmp/wl_room_session.XXXXXXXX.json)
-wl_post "${SESSION_TOKEN}" ${WL_API}/rooms/${ROOM_NAME}/join "$(join_obj)" ${TEMP_SESSION}  > /dev/null || die "$(translate_message err.api.join)"
+wl_post "${SESSION_TOKEN}" ${WL_API}/rooms/${ROOM_NAME}/join "$(join_obj)" ${TEMP_SESSION}  > /dev/null || die "$(translate_message err_api_join)"
 if [[ ! -f ${TEMP_SESSION} || ! -s ${TEMP_SESSION} ]] ; then
-  die "$(translate_message err.api.join)"
+  die "$(translate_message err_api_join)"
 fi
 
 ROOM_NAME="$(json_val "$(cat ${TEMP_SESSION})" room)"
@@ -26,7 +26,7 @@ ROOM_DIR="${WL_DIR}/rooms/${ROOM_NAME}"
 mkdir -p ${ROOM_DIR}
 
 if [[ -z "${CURRENT_ROOM}" ]] ; then
-  die "$(translate_message err.room.noCurrentRoom)"
+  die "$(translate_message err_room_noCurrentRoom)"
 fi
 
 echo "${ROOM_NAME}" > ${CURRENT_ROOM}
