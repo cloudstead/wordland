@@ -73,6 +73,12 @@ function translate_message {
     fi
   fi
   case ${1} in
+    'err.room.noCurrentRoom')
+      echo "please join a room first. view rooms with wl_rooms, join with wl_join"
+    ;;
+    'err.room.notFound')
+      echo "room not found, try signing off and signing back on"
+    ;;
     'err.game.notYourTurn')
       echo "it's not your turn"
     ;;

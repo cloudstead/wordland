@@ -6,7 +6,13 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 
 ROOM_NAME="${1}"
 if [[ -z "${ROOM_NAME}" ]] ; then
+  if [[ ! -f "${CURRENT_ROOM}" ]] ; then
+    die "$(translate_message err.room.noCurrentRoom)"
+  fi
   ROOM_NAME="$(cat ${CURRENT_ROOM})"
+fi
+if [[ ! -f "${WL_DIR}/rooms/${ROOM_NAME}/room.json" ]] ; then
+  die "$(translate_message err.room.notFound)"
 fi
 
 TILES_JSON_PREFIX="{ \"tiles\": [ "
@@ -86,6 +92,14 @@ function board_preview_obj {
   echo -n "${TILES_JSON_SUFFIX}"
 }
 
+function wl_prompt {
+  name="$(session_name)"
+  if [[ -z "${name}" ]] ; then
+    name="not-signed-on"
+  fi
+  echo "${name}@$(echo "${WL_API}" | awk -F[/:] '{print $4}')>>> "
+}
+
 X1=${1:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)}
 Y1=${2:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)}
 VIEW_SIZE=${3:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/view_size)}
@@ -93,7 +107,7 @@ board="$(echo "{}" | wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/bo
   || die "$(translate_message err.api.boardPreview)"
 
 printf "$(printf "$(json_node "${board}" grid | tr -d '"')")"
-echo ; echo ; echo -n "wordland>>> "
+echo ; echo ; echo -n "$(wl_prompt)"
 
 while IFS= read -s -r -n1 char ; do
   reset=0
@@ -183,6 +197,6 @@ while IFS= read -s -r -n1 char ; do
       CURRENT_PLAY="$(json_node "${board}" playedTiles)"
     fi
   fi
-  echo ; echo ; echo -n "wordland>>> $(current_word)"
+  echo ; echo ; echo -n "$(wl_prompt)$(current_word)"
 
 done
