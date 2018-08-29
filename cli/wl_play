@@ -27,12 +27,28 @@ function reset_play {
   ACTIVE_CHAR_INDEX=1
 }
 
+function current_word {
+  for c in "${LETTERS[@]}" ; do
+    echo -n "${c}"
+  done
+}
+
 function play_obj {
-  cat <<EOF
+  if [[ ! -z ${CURRENT_PLAY} ]] ; then
+    cat <<EOF
   {
-    "name":"${PLAYER_NAME}"
+    "room": "${ROOM_NAME}",
+    "stateChange": "word_played",
+    "id": "$(session_player)",
+    "clientId": "$(session_player)",
+    "apiToken": "$(session_apiToken)",
+    "word": "$(current_word)",
+    "tiles": ${CURRENT_PLAY}
   }
 EOF
+  else
+    error "no valid word to play"
+  fi
 }
 
 function board_preview_obj {
@@ -149,9 +165,7 @@ while IFS= read -s -r -n1 char ; do
 
   echo -n "wordland>>> "
   if [[ ${#TILES[*]} -gt 0 ]] ; then
-    for c in "${LETTERS[@]}" ; do
-      echo -n "${c}"
-    done
+    echo -n "$(current_word)"
 
     SUCCESS="$(echo ${board} | jq '.success')"
     if [[ -z "${SUCCESS}" || "${SUCCESS}" != "true" ]] ; then

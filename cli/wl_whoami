@@ -9,13 +9,13 @@ if [[ ! -f ${SESSION_JSON} ]] ; then
   exit 0
 fi
 
-email="$(get_session_email)"
+email="$(session_email)"
 if [[ ! -z "${email}" ]] ; then
   echo "signed in as ${email}"
   exit 0
 fi
 
-name="$(get_session_name)"
+name="$(session_name)"
 if [[ ! -z "${name}" ]] ; then
   echo "signed in as ${name} (anonymous user)"
   exit 0

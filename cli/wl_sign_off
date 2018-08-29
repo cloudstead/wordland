@@ -8,9 +8,9 @@ if [[ ! -f ${SESSION_JSON} ]] ; then
   die "not signed in"
 fi
 
-name="$(get_session_email)"
+name="$(session_email)"
 if [[ -z "${name}" ]] ; then
-  name="$(get_session_name) (anonymous user)"
+  name="$(session_name) (anonymous user)"
 fi
 
 wl_get "${SESSION_TOKEN}" ${WL_API}/auth/logout

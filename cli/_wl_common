@@ -87,19 +87,16 @@ function wl_auth {
 
 }
 
-function get_session_name {
-  echo -n "$(cat ${SESSION_JSON} 2> /dev/null | grep -m 1 '\"name\"' | awk -F '"' '{print $4}' | tr -d ' \n')"
-}
-function get_session_email {
-  echo -n "$(cat ${SESSION_JSON} 2> /dev/null | grep -m 1 '\"email\"' | awk -F '"' '{print $4}' | tr -d ' \n')"
-}
-
 if [[ ! -f ${SESSION_JSON} && $(basename $0) != "wl_sign_up" && $(basename $0) != "wl_whoami" ]] ; then
   wl_auth "${__no_value__}" "Y"
 #else
 #  echo "not signing in (already have session, or command that does not require session)..."
 fi
 
-if [ -f "${SESSION_JSON}" ] ; then
-  SESSION_TOKEN="${WL_API_KEY}: $(cat ${SESSION_JSON} 2> /dev/null | grep apiToken | awk -F '"' '{print $4}')"
+if [[ -f "${SESSION_JSON}" ]] ; then
+  SESSION_ID="$(session_apiToken)"
+  if [[ -z ${SESSION_ID} ]] ; then
+    die "no apiToken found in session: ${SESSION_JSON}"
+  fi
+  SESSION_TOKEN="${WL_API_KEY}: ${SESSION_ID}"
 fi

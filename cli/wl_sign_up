@@ -10,11 +10,11 @@ if [[ -z "${HAS_ACCOUNT}" ]] ; then
 fi
 
 if [[ ${HAS_ACCOUNT} -eq 1 ]] ; then
-  echo "account successfully signed up and logged in as $(get_session_email)"
+  echo "account successfully signed up and logged in as $(session_email)"
 else
   NAME="$(cat ${SESSION_JSON} 2> /dev/null | grep -m 1 name | awk -F '"' '{print $4}' | tr -d ' \n')"
   wl_auth "${NAME}" "N"
   echo ""
-  echo "Successfully signed up and logged in as $(get_session_name)"
+  echo "Successfully signed up and logged in as $(session_name)"
   echo ""
 fi

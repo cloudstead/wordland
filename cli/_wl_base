@@ -21,7 +21,7 @@ function die {
 function error {
   RED='\033[38;5;9m'
   NC='\033[0m' # No Color
-  echo ; echo -e "${RED}${@}${NC}"
+  echo 1>&2 -e "\n${RED}${@}${NC}"
 }
 
 function env_val {
@@ -29,22 +29,26 @@ function env_val {
   cat ${ENV_FILE} | grep "export ${param}=" | awk -F '=' '{print $2}'
 }
 
-if [ -f ${ENV_FILE} ] ; then
-  . ${ENV_FILE}
-fi
-
-if [ -z "${WL_API}" ] ; then
-  #die "no WL_API defined"
-  #echo "No WL_API defined, using default ${DEFAULT_API}"
-  WL_API="${DEFAULT_API}"
-fi
-
-# check API availability
-response=$(curl --silent --write-out "\n%{http_code}\n" ${WL_API}/auth/ping)
-status_code=$(echo "${response}" | sed -n '$p')
-if [[ -z "${status_code}" || ${status_code} -ne 200 ]] ; then
-  die "wordland server unavailable: ${WL_API}"
-fi
+function json_val {
+  echo "${1}" | jq ".${2}" | tr -d '" '
+}
+function session_val {
+  if [[ -f ${SESSION_JSON} ]] ; then
+    json_val "$(cat ${SESSION_JSON})" "${1}"
+  fi
+}
+function session_player {
+  session_val 'player.id'
+}
+function session_apiToken {
+  session_val apiToken
+}
+function session_name {
+  session_val name
+}
+function session_email {
+  session_val email
+}
 
 function wl_get {
   SESSION_TOKEN="${1}"
@@ -84,3 +88,20 @@ function wl_post {
     die "${ERR_MESSAGE}: ${status_code} / ${json}"
   fi
 }
+
+if [ -f ${ENV_FILE} ] ; then
+  . ${ENV_FILE}
+fi
+
+if [ -z "${WL_API}" ] ; then
+  #die "no WL_API defined"
+  #echo "No WL_API defined, using default ${DEFAULT_API}"
+  WL_API="${DEFAULT_API}"
+fi
+
+# check API availability
+response=$(curl --silent --write-out "\n%{http_code}\n" ${WL_API}/auth/ping)
+status_code=$(echo "${response}" | sed -n '$p')
+if [[ -z "${status_code}" || ${status_code} -ne 200 ]] ; then
+  die "wordland server unavailable: ${WL_API}"
+fi
