@@ -111,6 +111,7 @@ echo ; echo ; echo -n "$(wl_prompt)"
 while IFS= read -s -r -n1 char ; do
   reset=0
   case ${char} in
+    # Add a letter to the tray
     [a-zA-z])
       ACTIVE_CHAR="${char}"
       ACTIVE_CHAR_INDEX=1
@@ -123,6 +124,8 @@ while IFS= read -s -r -n1 char ; do
       LETTERS+=("${char}")
       INDEXES+=(${ACTIVE_CHAR_INDEX})
     ;;
+
+    # Increment current active char index
     '>')
       if [[ ${#TILES[@]} -gt 0 ]] ; then
         ACTIVE_CHAR_INDEX=$(expr ${ACTIVE_CHAR_INDEX} + 1)
@@ -134,6 +137,8 @@ while IFS= read -s -r -n1 char ; do
         continue
       fi
     ;;
+
+    # Decrement current active char index, if possible
     '<')
       if [[ ${#TILES[@]} -gt 0 ]] ; then
         ACTIVE_CHAR_INDEX=$(expr ${ACTIVE_CHAR_INDEX} - 1)
@@ -148,28 +153,44 @@ while IFS= read -s -r -n1 char ; do
         continue
       fi
     ;;
+
+    # Submit the letters in the tray as our play, if there are any
     '')
       if [[ -z "${CURRENT_PLAY}" ]] ; then
         error "$(translate_message err.game.noCurrentPlay)"
       else
-        play_output="$(wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/play" "$(play_obj)" || die "error playing word")"
-        reset_play
-        reset=1
+        play_output="$(wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/play" "$(play_obj)" || die "$(translate_error err.api.play)")"
+        if [[ -z "${play_output}" ]] ; then
+          reset_play
+          reset=1
+        fi
       fi
     ;;
+
+    # Remove the most recently added letter from the tray
     '-')
       subtract_letter
     ;;
+
+    # Clear the tray
     ' ')
+      echo ; echo "$(translate_message msg.word.reset)"
+      reset_play
+      reset=1
+    ;;
+    '?')
       echo ; echo "reset"
       reset_play
       reset=1
     ;;
+
+    # Didn't understand that, skip it
     *)
       continue
     ;;
   esac
 
+  # Get the board preview
   if [[ ${reset} -eq 1 ]] ; then
     POST_ENTITY="{}"
     reset=0
@@ -179,14 +200,17 @@ while IFS= read -s -r -n1 char ; do
   board="$(wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "${POST_ENTITY}")" \
     || die "$(translate_message err.api.boardView)"
 
+  # Show the board preview
   echo
   printf "$(printf "$(json_node "${board}" grid | tr -d '"')")"
 
+  # If the play resulted in a message to the user, show that here
   if [[ ! -z "${play_output}" ]] ; then
     echo -n "${play_output}"
     play_output=""
   fi
 
+  # Show the tray
   if [[ ${#TILES[*]} -gt 0 ]] ; then
     SUCCESS="$(json_val "${board}" success)"
     if [[ -z "${SUCCESS}" || "${SUCCESS}" != "true" ]] ; then
@@ -196,6 +220,20 @@ while IFS= read -s -r -n1 char ; do
       CURRENT_PLAY="$(json_node "${board}" playedTiles)"
     fi
   fi
-  echo ; echo ; echo -n "$(wl_prompt)$(current_word)"
+  echo
+  if [[ -z "$(current_word)" ]] ; then
+    echo "   [  (empty)  ]"
+  else
+    echo "   [  $(current_word)  ]"
+    echo -n "     "
+    i=0
+    while [[ ${i} -lt $(echo -n "$(current_word)" | wc -c | tr -d ' ') ]] ; do
+      echo -n " "
+      i=$(expr ${i} + 1)
+    done
+    echo "^"
+  fi
+
+  echo ; echo -n "$(wl_prompt)"
 
 done

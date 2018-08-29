@@ -74,130 +74,39 @@ function lang {
   echo "${LANG}" | awk -F '_' '{print $1}'| tr '[:upper:]' '[:lower:]'
 }
 
+function lang_pack_msg {
+  LANG_PACK="${1}"
+  msg_key="${2}"
+  cat ${LANG_PACK} 2> /dev/null | grep -m 1 ${msg_key} | awk -F '=' '{print $2}'
+}
+
 function translate_message {
   LANG_PACK="${WL_DIR}/messages.$(lang).txt"
   if [[ -f ${LANG_PACK} ]] ; then
-    message="$(cat ${LANG_PACK} | grep -m 1 ${1} | awk -F '=' '{print $2}')"
+    message="$(lang_pack_msg ${LANG_PACK} ${@})"
     if [[ ! -z "${message}" ]] ; then
       echo "${message}"
       return
     fi
   fi
-  case ${1} in
-    'err.room.noCurrentRoom')
-      echo "please join a room first. view rooms with wl_rooms, join with wl_join"
-    ;;
-    'err.room.notFound')
-      echo "room not found"
-    ;;
-    'err.game.notYourTurn')
-      echo "it's not your turn"
-    ;;
-    'err.game.invalidPlay')
-      echo "word cannot be played"
-    ;;
-    'err.game.noCurrentPlay')
-      echo "no current word to play"
-    ;;
-    'err.api.boardView')
-      echo "error viewing board"
-    ;;
-    'err.api.unavailable')
-      echo "wordland server unavailable"
-    ;;
-    'err.api.checkingSession')
-      echo "error checking session"
-    ;;
-    'err.api.login')
-      echo "error signing on"
-    ;;
-    'err.api.registration')
-      echo "error signing up"
-    ;;
-    'msg.signup.success')
-      echo "Successfully signed up and logged in as"
-    ;;
-    'msg.signin.success')
-      echo "Successfully signed in as"
-    ;;
-    'msg.signoff.success')
-      echo "Successfully signed off as"
-    ;;
-    'msg.user.anonymousFlag')
-      echo "(anonymous)"
-    ;;
-    'err.notLoggedIn')
-      echo "not logged in"
-    ;;
-    'err.api.join')
-      echo "error joining room"
-    ;;
-    'err.api.noSessionId')
-      echo "session ID is missing, try signing off and signing back on"
-    ;;
-    'err.username.required')
-      echo "username is required"
-    ;;
-    'err.email.required')
-      echo "email is required"
-    ;;
-    'err.room.required')
-      echo "room name is required"
-    ;;
-    'err.word.invalid')
-      echo "not a word"
-    ;;
-    'msg.wantToSignUp')
-      echo "Sign up for an account? [Y/N] (enter Y if you already have an account, you'll be signed in)"
-    ;;
-    'label.username')
-      echo "Username"
-    ;;
-    'label.email')
-      echo "Email"
-    ;;
-    'label.password')
-      echo "Password"
-    ;;
-    'label.optional')
-      echo "(optional)"
-    ;;
-    'msg.availableRooms')
-      echo "Available rooms:"
-    ;;
-    'msg.roomDetails')
-      echo "Details for room: "
-    ;;
-    'label.board.name')
-      echo "Board name:       "
-    ;;
-    'label.board.dimensions')
-      echo "Board dimensions: "
-    ;;
-    'label.maxPlayers')
-      echo "Max players:      "
-    ;;
-    'msg.chooseRoom')
-      echo "Enter a room name or number to see more info, or Control-C to exit"
-    ;;
-    'msg.roomOptions')
-      echo "Commands: "
-      echo "  n   - start a new game in this room"
-      echo "  r   - back to rooms list"
-      echo "  v   - show verbose room definition (JSON)"
-      echo "  q   - quit (or Control-C)"
-      echo ; echo ""
-    ;;
-    'Y')
-      echo "Y"
-    ;;
-    'N')
-      echo "N"
-    ;;
-    *)
-      echo "${1}"
-    ;;
-  esac
+  LOCAL_LANG_PACK="${SCRIPT_DIR}/lang/messages.$(lang).txt"
+  if [[ -f ${LOCAL_LANG_PACK} ]] ; then
+    message="$(lang_pack_msg ${LOCAL_LANG_PACK} ${@})"
+    if [[ ! -z "${message}" ]] ; then
+      echo "${message}"
+      return
+    fi
+  fi
+  DEFAULT_LANG_PACK="${SCRIPT_DIR}/lang/messages.en.txt"
+  if [[ -f ${DEFAULT_LANG_PACK} ]] ; then
+    message="$(lang_pack_msg ${DEFAULT_LANG_PACK} ${@})"
+    if [[ ! -z "${message}" ]] ; then
+      echo "${message}"
+      return
+    fi
+  fi
+
+  echo "??? ${@}"
 }
 
 function translate_messages {

@@ -9,7 +9,7 @@ status_code=$(echo "${response}" | sed -n '$p')
 json=$(echo "${response}" | sed '$d')
 
 if [[ -z "${status_code}" || ${status_code} -ne 200 ]] ; then
-  die "error signing in as superuser: ${status_code} / ${json}"
+  die "$(translate_message err.api.login): ${status_code} / ${json}"
 fi
 
 SESSION_TOKEN="${WL_API_KEY}: $(echo "${json}" | grep apiToken | awk -F '"' '{print $4}')"

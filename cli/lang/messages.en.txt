@@ -1,0 +1,43 @@
+err.room.noCurrentRoom=please join a room first. view rooms with wl_rooms, join with wl_join
+err.room.notFound=room not found
+err.game.notYourTurn=it's not your turn
+err.game.invalidPlay=word cannot be played
+err.game.noCurrentPlay=no current word to play
+err.api.boardView=error viewing board
+err.api.unavailable=wordland server unavailable
+err.api.checkingSession=error checking session
+err.api.login=error signing on
+err.api.registration=error signing up
+err.api.play=error playing word
+msg.signup.success=Successfully signed up and logged in as
+msg.signin.success=Successfully signed in as
+msg.signoff.success=Successfully signed off as
+msg.user.anonymousFlag=(anonymous)
+err.notLoggedIn=not logged in
+err.api.join=error joining room
+err.api.noSessionId=session ID is missing, try signing off and signing back on
+err.username.required=username is required
+err.email.required=email is required
+err.room.required=room name is required
+err.word.invalid=not a word
+msg.wantToSignUp=Sign up for an account? [Y/N] (enter Y if you already have an account, you'll be signed in)
+label.username=Username
+label.email=Email
+label.password=Password
+label.optional=(optional)
+msg.availableRooms=Available rooms:
+msg.roomDetails=Details for room: 
+label.board.name=Board name:       
+label.board.dimensions=Board dimensions: 
+label.maxPlayers=Max players:      
+msg.chooseRoom=Enter a room name or number to see more info, or Control-C to exit
+msg.roomOptions="
+Commands:
+  n   - start a new game in this room"
+  r   - back to rooms list"
+  v   - show verbose room definition (JSON)"
+  q   - quit (or Control-C)"
+"
+msg.word.reset=resetting letter tray
+Y=Y
+N=N
