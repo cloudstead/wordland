@@ -6,15 +6,15 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 
 HAS_ACCOUNT=$(cat ${SESSION_JSON} 2> /dev/null | awk -F '"' '{print $2}' | grep ^account$ | wc -l | tr -d ' ')
 if [[ -z "${HAS_ACCOUNT}" ]] ; then
-  die "error determining account status"
+  die "$(translate_message err.api.checkingSession)"
 fi
 
 if [[ ${HAS_ACCOUNT} -eq 1 ]] ; then
-  echo "account successfully signed up and logged in as $(session_email)"
+  echo "$(translate_message msg.signin.success) $(session_email)"
 else
   NAME="$(cat ${SESSION_JSON} 2> /dev/null | grep -m 1 name | awk -F '"' '{print $4}' | tr -d ' \n')"
   wl_auth "${NAME}" "N"
   echo ""
-  echo "Successfully signed up and logged in as $(session_name)"
+  echo "$(translate_message msg.signup.success) $(session_name)"
   echo ""
 fi

@@ -4,7 +4,7 @@ SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/_wl_common
 
-ROOM_NAME="${1:?no room name specified}"
+ROOM_NAME="${1:?$(translate_message err.room.required)}"
 PLAYER_NAME="${2-$(session_name)}"
 
 function join_obj () {
@@ -16,17 +16,17 @@ EOF
 }
 
 TEMP_SESSION=$(mktemp /tmp/wl_room_session.XXXXXXXX.json)
-wl_post "${SESSION_TOKEN}" ${WL_API}/rooms/${ROOM_NAME}/join "$(join_obj)" ${TEMP_SESSION} || die "error joining game"
+wl_post "${SESSION_TOKEN}" ${WL_API}/rooms/${ROOM_NAME}/join "$(join_obj)" ${TEMP_SESSION}  > /dev/null || die "$(translate_message err.api.join)"
 if [[ ! -f ${TEMP_SESSION} || ! -s ${TEMP_SESSION} ]] ; then
-  die "error joining game"
+  die "$(translate_message err.api.join)"
 fi
 
-ROOM_NAME="$(cat ${TEMP_SESSION} | grep -m 1 '"room"' | awk -F '"' '{print $4}')"
+ROOM_NAME="$(json_val "$(cat ${TEMP_SESSION})" room)"
 ROOM_DIR="${WL_DIR}/rooms/${ROOM_NAME}"
 mkdir -p ${ROOM_DIR}
 
 if [[ -z "${CURRENT_ROOM}" ]] ; then
-  die "No CURRENT_ROOM defined, should have been defined by _wl_base"
+  die "$(translate_message err.room.noCurrentRoom)"
 fi
 
 echo "${ROOM_NAME}" > ${CURRENT_ROOM}
@@ -36,5 +36,5 @@ echo "0" > ${ROOM_DIR}/x1
 echo "0" > ${ROOM_DIR}/y1
 echo "10" > ${ROOM_DIR}/view_size
 
-# show board
-${SCRIPT_DIR}/wl_board ${ROOM_NAME}
+# show board, play game
+${SCRIPT_DIR}/wl_play ${ROOM_NAME}

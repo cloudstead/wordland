@@ -5,14 +5,14 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/_wl_common
 
 if [[ ! -f ${SESSION_JSON} ]] ; then
-  die "not signed in"
+  die "$(translate_message err.notLoggedIn)"
 fi
 
 name="$(session_email)"
 if [[ -z "${name}" ]] ; then
-  name="$(session_name) (anonymous user)"
+  name="$(session_name) $(translate_message msg.user.anonymousFlag)"
 fi
 
 wl_get "${SESSION_TOKEN}" ${WL_API}/auth/logout
 rm -f ${SESSION_JSON} ${CURRENT_ROOM} ${CURRENT_ROOM}.json
-echo "signed out as ${name}"
+echo "$(translate_message msg.signoff.success) ${name}"

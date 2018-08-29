@@ -7,12 +7,18 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 ROOM_NAME="${1}"
 if [[ -z "${ROOM_NAME}" ]] ; then
   if [[ ! -f "${CURRENT_ROOM}" ]] ; then
-    die "$(translate_message err.room.noCurrentRoom)"
+    error "$(translate_message err.room.noCurrentRoom)"
+    exec ${SCRIPT_DIR}/wl_rooms
   fi
-  ROOM_NAME="$(cat ${CURRENT_ROOM})"
+  ROOM_NAME="$(current_room)"
+  if [[ -z "${ROOM_NAME}" ]] ; then
+    error "$(translate_message err.room.noCurrentRoom)"
+    exec ${SCRIPT_DIR}/wl_rooms
+  fi
 fi
 if [[ ! -f "${WL_DIR}/rooms/${ROOM_NAME}/room.json" ]] ; then
-  die "$(translate_message err.room.notFound)"
+    error "$(translate_message err.room.noCurrentRoom)"
+    exec ${SCRIPT_DIR}/wl_rooms
 fi
 
 TILES_JSON_PREFIX="{ \"tiles\": [ "
@@ -92,19 +98,12 @@ function board_preview_obj {
   echo -n "${TILES_JSON_SUFFIX}"
 }
 
-function wl_prompt {
-  name="$(session_name)"
-  if [[ -z "${name}" ]] ; then
-    name="not-signed-on"
-  fi
-  echo "${name}@$(echo "${WL_API}" | awk -F[/:] '{print $4}')>>> "
-}
+X1=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)
+Y1=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/y1)
+VIEW_SIZE=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/view_size)
 
-X1=${1:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)}
-Y1=${2:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)}
-VIEW_SIZE=${3:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/view_size)}
 board="$(echo "{}" | wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})")" \
-  || die "$(translate_message err.api.boardPreview)"
+  || die "$(translate_message err.api.boardView)"
 
 printf "$(printf "$(json_node "${board}" grid | tr -d '"')")"
 echo ; echo ; echo -n "$(wl_prompt)"
@@ -151,7 +150,7 @@ while IFS= read -s -r -n1 char ; do
     ;;
     '')
       if [[ -z "${CURRENT_PLAY}" ]] ; then
-        error "no current play"
+        error "$(translate_message err.game.noCurrentPlay)"
       else
         play_output="$(wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/play" "$(play_obj)" || die "error playing word")"
         reset_play
@@ -178,7 +177,7 @@ while IFS= read -s -r -n1 char ; do
     POST_ENTITY="$(board_preview_obj)"
   fi
   board="$(wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "${POST_ENTITY}")" \
-    || die "error previewing board"
+    || die "$(translate_message err.api.boardView)"
 
   echo
   printf "$(printf "$(json_node "${board}" grid | tr -d '"')")"
@@ -191,7 +190,7 @@ while IFS= read -s -r -n1 char ; do
   if [[ ${#TILES[*]} -gt 0 ]] ; then
     SUCCESS="$(json_val "${board}" success)"
     if [[ -z "${SUCCESS}" || "${SUCCESS}" != "true" ]] ; then
-      error "$(translate_message 'err.game.invalidPlay')"
+      error -n "$(translate_message 'err.game.invalidPlay')"
       CURRENT_PLAY=""
     else
       CURRENT_PLAY="$(json_node "${board}" playedTiles)"

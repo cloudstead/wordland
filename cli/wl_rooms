@@ -11,7 +11,7 @@ if [[ ! -z "${VERBOSE}" && "${VERBOSE}" == "-v" ]] ; then
 else
   VERBOSE=0
 fi
-ROOM="${1}"
+ROOM="$(echo ${1} | tr -d '"')"
 
 if [[ -z "${ROOM}" ]] ; then
   if [[ ${VERBOSE} -eq 1 ]] ; then
@@ -19,12 +19,42 @@ if [[ -z "${ROOM}" ]] ; then
     exit $?
   fi
 
-  echo "Available rooms:"
+  echo "$(translate_message msg.availableRooms)"
   IFS=$'\n'
-  for room in $(wl_get "${SESSION_TOKEN}" ${WL_API}/rooms | jq .[].name) ; do
-    echo "  * ${room}"
+  i=1
+  rooms="$(wl_get "${SESSION_TOKEN}" ${WL_API}/rooms | jq .[].name)"
+  for room in ${rooms} ; do
+    echo "  ${i}  : $(echo ${room} | tr -d '"')"
+    i=$(expr ${i} + 1)
   done
   echo
+  echo "$(translate_message msg.chooseRoom)"
+  echo ; echo -n "$(wl_prompt)"
+
+  while read line ; do
+    if [[ -z "${line}" ]] ; then
+      continue
+    fi
+    if [[ "${line}" =~ ^[1-9][0-9]*$ ]]; then
+      i=1
+      for room in ${rooms} ; do
+        if [[ ${i} -eq ${line} ]] ; then
+          # Re-run this command with room name
+          exec ${0} "${room}"
+        fi
+        i=$(expr ${i} + 1)
+      done
+      error "1 $(translate_message err.room.notFound): ${line}"
+    else
+      if [[ "$(wl_exists "${SESSION_TOKEN}" ${WL_API}/rooms/${ROOM})" != "true" ]] ; then
+        error "2 $(translate_message err.room.notFound): ${line}"
+      else
+        # Re-run this command with room name
+        exec ${0} "${line}"
+      fi
+    fi
+    echo ; echo -n "$(wl_prompt)"
+  done
 
 else
   if [[ ${VERBOSE} -eq 1 ]] ; then
@@ -32,26 +62,53 @@ else
     exit $?
   fi
 
+  if [[ "$(wl_exists "${SESSION_TOKEN}" ${WL_API}/rooms/${ROOM})" != "true" ]] ; then
+    error "$(translate_message err.room.notFound): ${ROOM}"
+    exec ${SCRIPT_DIR}/wl_rooms
+  fi
+
   room=$(wl_get "${SESSION_TOKEN}" ${WL_API}/rooms/${ROOM})
 
-  echo "Details for ${ROOM}"
+  echo ; echo "$(translate_message msg.roomDetails) ${ROOM}"
   board=$(json_val "${room}" settings.board.name)
   width=$(json_val "${room}" settings.board.settings.width)
   length=$(json_val "${room}" settings.board.settings.length)
   maxPlayers=$(json_val "${room}" settings.maxPlayers)
 
   if [[ -z "${width}" ]] ; then
-    width="infinite"
+    width="$(translate_message label.infinite)"
   fi
   if [[ -z "${length}" ]] ; then
-    length="infinite"
+    length="$(translate_message label.infinite)"
   fi
 
   if [[ ! -z "${board}" ]] ; then
-    echo "  Board name:       ${board}"
+    echo "  $(translate_message label.board.name): ${board}"
   fi
-  echo "  Board dimensions: ${width} x ${length}"
+  echo "  $(translate_message label.board.dimensions): ${width} x ${length}"
   if [[ ! -z "${maxPlayers}" ]] ; then
-    echo "  Max players:      ${maxPlayers}"
+    echo "  $(translate_message label.maxPlayers): ${maxPlayers}"
   fi
+
+  echo "$(translate_message msg.roomOptions)"
+  echo ; echo -n "$(wl_prompt)"
+  while read line ; do
+    case ${line} in
+      N|n)
+        ${SCRIPT_DIR}/wl_join "${ROOM}"
+      ;;
+      R|r)
+        exec ${0}
+      ;;
+      V|v)
+        ${0} -v "${ROOM}"
+      ;;
+      '')
+        ${0} "${ROOM}"
+      ;;
+      Q|q)
+        exit 0
+      ;;
+    esac
+  done
 fi

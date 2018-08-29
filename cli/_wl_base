@@ -19,9 +19,14 @@ function die {
 }
 
 function error {
+  NO_NEWLINE=""
+  if [[ ${1} == "-n" ]] ; then
+    NO_NEWLINE="-n"
+    shift
+  fi
   RED='\033[38;5;9m'
   NC='\033[0m' # No Color
-  echo 1>&2 -e -n "\n${RED}${@}${NC}"
+  echo 1>&2 -e ${NO_NEWLINE} "\n${RED}${@}${NC}"
 }
 
 function error_stdout {
@@ -59,6 +64,12 @@ function session_email {
   session_val email
 }
 
+function current_room {
+  if [[ -f ${CURRENT_ROOM} ]] ; then
+    cat ${CURRENT_ROOM}
+  fi
+}
+
 function lang {
   echo "${LANG}" | awk -F '_' '{print $1}'| tr '[:upper:]' '[:lower:]'
 }
@@ -77,7 +88,7 @@ function translate_message {
       echo "please join a room first. view rooms with wl_rooms, join with wl_join"
     ;;
     'err.room.notFound')
-      echo "room not found, try signing off and signing back on"
+      echo "room not found"
     ;;
     'err.game.notYourTurn')
       echo "it's not your turn"
@@ -85,8 +96,11 @@ function translate_message {
     'err.game.invalidPlay')
       echo "word cannot be played"
     ;;
-    'err.api.boardPreview')
-      echo "error previewing board"
+    'err.game.noCurrentPlay')
+      echo "no current word to play"
+    ;;
+    'err.api.boardView')
+      echo "error viewing board"
     ;;
     'err.api.unavailable')
       echo "wordland server unavailable"
@@ -97,6 +111,27 @@ function translate_message {
     'err.api.login')
       echo "error signing on"
     ;;
+    'err.api.registration')
+      echo "error signing up"
+    ;;
+    'msg.signup.success')
+      echo "Successfully signed up and logged in as"
+    ;;
+    'msg.signin.success')
+      echo "Successfully signed in as"
+    ;;
+    'msg.signoff.success')
+      echo "Successfully signed off as"
+    ;;
+    'msg.user.anonymousFlag')
+      echo "(anonymous)"
+    ;;
+    'err.notLoggedIn')
+      echo "not logged in"
+    ;;
+    'err.api.join')
+      echo "error joining room"
+    ;;
     'err.api.noSessionId')
       echo "session ID is missing, try signing off and signing back on"
     ;;
@@ -105,6 +140,9 @@ function translate_message {
     ;;
     'err.email.required')
       echo "email is required"
+    ;;
+    'err.room.required')
+      echo "room name is required"
     ;;
     'err.word.invalid')
       echo "not a word"
@@ -120,6 +158,35 @@ function translate_message {
     ;;
     'label.password')
       echo "Password"
+    ;;
+    'label.optional')
+      echo "(optional)"
+    ;;
+    'msg.availableRooms')
+      echo "Available rooms:"
+    ;;
+    'msg.roomDetails')
+      echo "Details for room: "
+    ;;
+    'label.board.name')
+      echo "Board name:       "
+    ;;
+    'label.board.dimensions')
+      echo "Board dimensions: "
+    ;;
+    'label.maxPlayers')
+      echo "Max players:      "
+    ;;
+    'msg.chooseRoom')
+      echo "Enter a room name or number to see more info, or Control-C to exit"
+    ;;
+    'msg.roomOptions')
+      echo "Commands: "
+      echo "  n   - start a new game in this room"
+      echo "  r   - back to rooms list"
+      echo "  v   - show verbose room definition (JSON)"
+      echo "  q   - quit (or Control-C)"
+      echo ; echo ""
     ;;
     'Y')
       echo "Y"
@@ -137,6 +204,37 @@ function translate_messages {
   for err in ${@} ; do
     translate_message "${err}"
   done
+}
+
+function wl_prompt {
+  name="$(session_name)"
+  if [[ -z "${name}" ]] ; then
+    name="not-signed-on"
+  fi
+  room="$(current_room)"
+  if [[ ! -z "${WL_VERBOSE_PROMPT}" && "${WL_VERBOSE_PROMPT}" == "Y" ]] ; then
+    if [[ ! -z "${room}" ]] ; then
+      room="/${room}"
+    fi
+    echo "${name}@$(echo "${WL_API}" | awk -F[/:] '{print $4}')${room}>>> "
+  else
+    if [[ ! -z "${room}" ]] ; then
+    room="@${room}"
+    fi
+    echo "${name}${room}>>> "
+  fi
+}
+
+function wl_exists {
+  SESSION_TOKEN="${1}"
+  URL="${2}"
+  response=$(curl --silent --write-out "\n%{http_code}\n" --header "${SESSION_TOKEN}" ${URL})
+  status_code=$(echo "${response}" | sed -n '$p')
+  if [[ -z "${status_code}" || ${status_code} -ne 200 ]] ; then
+    echo "false"
+  else
+    echo "true"
+  fi
 }
 
 function wl_get {

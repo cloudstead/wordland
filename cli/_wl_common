@@ -8,7 +8,7 @@ function wl_auth {
   ASK_TO_SIGNUP="${2:-Y}"
   OPTIONAL=""
   if [[ ${ASK_TO_SIGNUP} == "Y" || ${ASK_TO_SIGNUP} == "y" ]] ; then
-    OPTIONAL=" (optional)"
+    OPTIONAL=" $(translate_message label.optional)"
   fi
 
   if [[ -z "${USERNAME}" || ( ${ASK_TO_SIGNUP} == "Y" || ${ASK_TO_SIGNUP} == "y" ) ]] ; then
@@ -60,7 +60,7 @@ function wl_auth {
       status_code=$(echo "${response}" | sed -n '$p')
       json=$(echo "${response}" | sed '$d')
       if [[ ${status_code} -ne 200 ]] ; then
-        die "Error signing up: ${json}"
+        die "$(translate_message err.api.registration): ${json}"
       fi
       echo "${json}" > ${SESSION_JSON}
 

@@ -6,14 +6,17 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 
 case ${1} in
     # First arg is all digits, it must be X1, use default/current room
-    ''|*[!0-9]*) if [ -r ${CURRENT_ROOM} ] ; then
-        ROOM_NAME="$(cat ${CURRENT_ROOM})"
-         else
-           die "Room name not provided and no current room selected"
-         fi
+    ''|*[!0-9]*)
+      if [ -r ${CURRENT_ROOM} ] ; then
+        ROOM_NAME="$(current_room)"
+      else
+        die "$(translate_message err.room.noCurrentRoom)"
+      fi
     ;;
     # First arg is not all digits, it's a room name. shift args.
-    *) ROOM_NAME="${1}" ; shift
+    *)
+      ROOM_NAME="${1}"
+      shift
     ;;
 esac
 
@@ -22,7 +25,7 @@ Y1=${2:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)}
 VIEW_SIZE=${3:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/view_size)}
 
 board="$(wl_get "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/board/view.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})")" \
-  || die "error joining game"
+  || die "$(translate_message err.api.boardView)"
 
 printf "${board}"
 echo
