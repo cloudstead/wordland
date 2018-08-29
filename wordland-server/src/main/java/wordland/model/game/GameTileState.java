@@ -72,10 +72,6 @@ public class GameTileState {
                 final GameTileState tile = row[j];
                 if (rowVal.length() > 0) {
                     rowVal.append(TXT_SPACER);
-                } else {
-                    if (palette != null) {
-                        rowVal.append(i).append(i < 10 ? TXT_SPACER : TXT_SHORT_SPACER);
-                    }
                 }
                 if (palette != null) {
                     final Color color;
@@ -89,18 +85,6 @@ public class GameTileState {
         }
 
         if (palette != null) {
-            final StringBuilder header = new StringBuilder();
-            for (int i=0; i<tiles.length; i++) {
-                if (header.length() > 0) {
-                    if (i <= 10) header.append(TXT_SPACER);
-                    else header.append(TXT_SHORT_SPACER);
-                }
-                header.append(i);
-            }
-            header.append("\n");
-            header.insert(0, "    ");
-            header.insert(0, setFgColor(new Color(palette.getBlankColorRgb())));
-            b.insert(0, header);
             b.append("\\033[0m");
         }
 
