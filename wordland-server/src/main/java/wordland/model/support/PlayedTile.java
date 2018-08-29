@@ -3,7 +3,8 @@ package wordland.model.support;
 import lombok.*;
 import lombok.experimental.Accessors;
 
-@NoArgsConstructor @AllArgsConstructor @Accessors(chain=true) @ToString
+@NoArgsConstructor @AllArgsConstructor @Accessors(chain=true)
+@EqualsAndHashCode(of={"x", "y"}) @ToString
 public class PlayedTile {
 
     @Getter @Setter private int x;

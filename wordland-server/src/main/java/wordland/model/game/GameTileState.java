@@ -11,6 +11,10 @@ import wordland.model.support.PlayedTile;
 import wordland.model.support.TextGridResponse;
 
 import java.awt.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
@@ -52,15 +56,11 @@ public class GameTileState {
 
     public static TextGridResponse grid (GameTileState[][] tiles, GameBoardPalette palette, AttemptedTile[] attempt) {
         final StringBuilder b = new StringBuilder();
-        final AttemptState attemptState = empty(attempt) ? null : new AttemptState(attempt);
         for (int i=0; i<tiles.length; i++) {
             final GameTileState[] row = tiles[i];
             final StringBuilder rowVal = new StringBuilder();
             for (int j=0; j<row.length; j++) {
                 final GameTileState tile = row[j];
-                if (attemptState != null) {
-                    attemptState.tryMatch(tile, i, j, tiles);
-                }
                 if (rowVal.length() > 0) {
                     rowVal.append(TXT_SPACER);
                 } else {
@@ -96,10 +96,12 @@ public class GameTileState {
         }
 
         final TextGridResponse text = new TextGridResponse().setGrid(b.toString());
-        if (attemptState != null) {
-            text.setPlayedTiles(attemptState.getPlayedTiles());
+        if (!empty(attempt)) {
+            final AttemptState attemptState = new AttemptState(attempt, tiles);
+            text.setPlayedTiles(attemptState.getPlayedTilesArray());
             text.setSuccess(attemptState.successful());
         }
+
         return text;
     }
 
@@ -114,49 +116,50 @@ public class GameTileState {
 
     private static class AttemptState {
         private final AttemptedTile[] attempt;
-        private final int[] counters;
-        @Getter private final PlayedTile[] playedTiles;
 
-        public boolean successful () {
-            for (PlayedTile p : playedTiles) if (p == null) return false;
-            return true;
-        }
+        @Getter private final Set<PlayedTile> playedTiles = new HashSet<>();
 
-        public AttemptState (AttemptedTile[] attempt) {
+        public PlayedTile[] getPlayedTilesArray () { return playedTiles.toArray(new PlayedTile[playedTiles.size()]); }
+
+        public boolean successful () { return playedTiles.size() == attempt.length; }
+
+        public AttemptState (AttemptedTile[] attempt, GameTileState[][] tiles) {
             this.attempt = attempt;
-            this.counters = new int[attempt.length];
-            this.playedTiles = new PlayedTile[attempt.length];
-        }
-
-        public void tryMatch(GameTileState tile, int x, int y, GameTileState[][] tiles) {
             for (int i=0; i<attempt.length; i++) {
                 final AttemptedTile a = attempt[i];
-
-                boolean ok = true;
-                for (PlayedTile p : playedTiles) {
-                    if (p == null) continue;
-                    if (p.getX() == x && p.getY() == y) {
-                        // already played
-                        ok = false;
-                        break;
-                    }
-                }
-                if (!ok) continue;
-
-                if (a.getSymbol().equalsIgnoreCase(tile.getSymbol())) {
-                    if (a.getIndex() == counters[i]+1) {
-                        tile.setOwner(a.getOwner());
-                        if (canPlay(tile, x, y, tiles, a.getOwner())) {
-                            tile.addFeature(F_PREVIEW_PLAY, Boolean.TRUE.toString());
-                        } else {
-                            tile.addFeature(F_PREVIEW_PLAY_BLOCKED, Boolean.TRUE.toString());
-                        }
-                        playedTiles[i] = new PlayedTile(x, y, a.getSymbol());
-                    } else {
-                        counters[i]++;
-                    }
+                boolean played = tryPlay(a, tiles, true);
+                if (!played) {
+                    // try to find a match that doesn't care about which index it uses
+                    played = tryPlay(a, tiles, false);
                 }
             }
+        }
+
+        protected boolean tryPlay(AttemptedTile a, GameTileState[][] tiles, boolean requireIndexMatch) {
+            for (int x=0; x<tiles.length; x++) {
+                for (int y=0; y<tiles[x].length; y++) {
+                    if (!a.getSymbol().equalsIgnoreCase(tiles[x][y].getSymbol())) continue;
+
+                    final PlayedTile playedTile = new PlayedTile(x, y, a.getSymbol());
+                    if (playedTiles.contains(playedTile)) {
+                        // already played, try another
+                        continue;
+                    }
+
+                    // is it the index they want?
+                    if (requireIndexMatch && a.getIndex() != countOf(a.getSymbol())) continue;
+
+                    // OK, pick the letter
+                    playedTiles.add(playedTile);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private Map<String, Integer> letterCounters = new HashMap<>();
+        private int countOf(String symbol) {
+            return letterCounters.computeIfAbsent(symbol.toLowerCase(), k -> 0);
         }
 
         private boolean canPlay(GameTileState tile, int x, int y, GameTileState[][] tiles, String owner) {
