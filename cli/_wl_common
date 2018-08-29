@@ -18,39 +18,39 @@ function wl_auth {
     json=$(echo "$response" | sed '$d')
 
     if [ -z "${status_code}" ] ; then
-      die "error checking session: ${json}"
+      die "$(translate_message err.api.checkingSession): ${json}"
     fi
     if [ ${status_code} -eq 200 ] ; then
       echo "${json}" > ${SESSION_JSON}
       return
     elif [[ ${status_code} -eq 404 || -z "${USERNAME}" ]] ; then
-      echo -n "Username${OPTIONAL}: "
+      echo -n "$(translate_message label.username)${OPTIONAL}: "
       read USERNAME
     else
-      die "error checking status: ${status_code} / ${json}"
+      die "$(translate_message err.api.checkingSession): ${status_code} / ${json}"
     fi
   fi
   if [[ -z "${USERNAME}" && ( -z "${ASK_TO_SIGNUP}" || ${ASK_TO_SIGNUP} == "N" || ${ASK_TO_SIGNUP} == "n" ) ]] ; then
-    die "username is required"
+    die "$(translate_message err.username.required)"
   fi
 
-  echo -n "Email${OPTIONAL}: "
+  echo -n "$(translate_message label.email)${OPTIONAL}: "
   read EMAIL
 
   if [[ -z "${EMAIL}" && ( -z "${ASK_TO_SIGNUP}" || ${ASK_TO_SIGNUP} == "N" || ${ASK_TO_SIGNUP} == "n" ) ]] ; then
-    die "email is required"
+    die "$(translate_message err.email.required)"
   fi
 
   if [[ ! -z "${EMAIL}" ]] ; then
-    if [[ -z "${ASK_TO_SIGNUP}" || ${ASK_TO_SIGNUP} == "Y" ]] ; then
-      echo -n "Sign up for an account? [Y/N] (enter Y if you already have an account, you'll be signed in) "
+    if [[ -z "${ASK_TO_SIGNUP}" || ${ASK_TO_SIGNUP} == "$(translate_message Y)" ]] ; then
+      echo -n "$(translate_message msg.wantToSignUp) "
       read SIGN_UP
     else
-      SIGN_UP="Y"
+      SIGN_UP="$(translate_message Y)"
     fi
-    if [[ ! -z "${SIGN_UP}" && ( "${SIGN_UP}" == "Y" || "${SIGN_UP}" == "y" ) ]] ; then
+    if [[ ! -z "${SIGN_UP}" && ( "${SIGN_UP}" == "$(translate_message Y | tr '[:lower:]' '[:upper:]')" || "${SIGN_UP}" == "$(translate_message Y | tr '[:upper:]' '[:lower:]')" ) ]] ; then
       # Yes, sign up for an account with email
-      echo -n "Password: "
+      echo -n "$(translate_message label.password): "
       read -s PASSWORD
       SECRETS=""
       if [ ! -z ${SKIP_CAPTCHA_SECRET} ] ; then
@@ -70,7 +70,7 @@ function wl_auth {
       status_code=$(echo "${response}" | sed -n '$p')
       json=$(echo "${response}" | sed '$d')
       if [[ ${status_code} -ne 200 ]] ; then
-        die "Error logging in: ${status_code} / ${json}"
+        die "$(translate_message err.api.login): ${status_code} / ${json}"
       fi
       echo "${json}" > ${SESSION_JSON}
     fi
@@ -80,7 +80,7 @@ function wl_auth {
     status_code=$(echo "${response}" | sed -n '$p')
     json=$(echo "${response}" | sed '$d')
     if [[ ${status_code} -ne 200 ]] ; then
-      die "Error logging in: ${status_code} / ${json}"
+      die "$(translate_message err.api.login): ${status_code} / ${json}"
     fi
     echo "${json}" > ${SESSION_JSON}
   fi
@@ -96,7 +96,7 @@ fi
 if [[ -f "${SESSION_JSON}" ]] ; then
   SESSION_ID="$(session_apiToken)"
   if [[ -z ${SESSION_ID} ]] ; then
-    die "no apiToken found in session: ${SESSION_JSON}"
+    die "$(translate_message err.api.noSessionId): ${SESSION_JSON}"
   fi
   SESSION_TOKEN="${WL_API_KEY}: ${SESSION_ID}"
 fi

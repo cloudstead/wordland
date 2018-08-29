@@ -21,7 +21,13 @@ function die {
 function error {
   RED='\033[38;5;9m'
   NC='\033[0m' # No Color
-  echo 1>&2 -e "\n${RED}${@}${NC}"
+  echo 1>&2 -e -n "\n${RED}${@}${NC}"
+}
+
+function error_stdout {
+  RED='\033[38;5;9m'
+  NC='\033[0m' # No Color
+  echo -e -n "\n${RED}${@}${NC}"
 }
 
 function env_val {
@@ -51,6 +57,80 @@ function session_name {
 }
 function session_email {
   session_val email
+}
+
+function lang {
+  echo "${LANG}" | awk -F '_' '{print $1}'| tr '[:upper:]' '[:lower:]'
+}
+
+function translate_message {
+  LANG_PACK="${WL_DIR}/messages.$(lang).txt"
+  if [[ -f ${LANG_PACK} ]] ; then
+    message="$(cat ${LANG_PACK} | grep -m 1 ${1} | awk -F '=' '{print $2}')"
+    if [[ ! -z "${message}" ]] ; then
+      echo "${message}"
+      return
+    fi
+  fi
+  case ${1} in
+    'err.game.notYourTurn')
+      echo "it's not your turn"
+    ;;
+    'err.game.invalidPlay')
+      echo "word cannot be played"
+    ;;
+    'err.api.boardPreview')
+      echo "error previewing board"
+    ;;
+    'err.api.unavailable')
+      echo "wordland server unavailable"
+    ;;
+    'err.api.checkingSession')
+      echo "error checking session"
+    ;;
+    'err.api.login')
+      echo "error signing on"
+    ;;
+    'err.api.noSessionId')
+      echo "session ID is missing, try signing off and signing back on"
+    ;;
+    'err.username.required')
+      echo "username is required"
+    ;;
+    'err.email.required')
+      echo "email is required"
+    ;;
+    'err.word.invalid')
+      echo "not a word"
+    ;;
+    'msg.wantToSignUp')
+      echo "Sign up for an account? [Y/N] (enter Y if you already have an account, you'll be signed in)"
+    ;;
+    'label.username')
+      echo "Username"
+    ;;
+    'label.email')
+      echo "Email"
+    ;;
+    'label.password')
+      echo "Password"
+    ;;
+    'Y')
+      echo "Y"
+    ;;
+    'N')
+      echo "N"
+    ;;
+    *)
+      echo "${1}"
+    ;;
+  esac
+}
+
+function translate_messages {
+  for err in ${@} ; do
+    translate_message "${err}"
+  done
 }
 
 function wl_get {
@@ -87,6 +167,8 @@ function wl_post {
   fi
   if [[ ${status_code} -eq 200 && ! -z "${json}" ]] ; then
     echo "${json}"
+  elif [[ ${status_code} -eq 422 ]] ; then
+    error_stdout "$(translate_messages $(echo "${json}" | jq .[].messageTemplate | tr -d '"'))"
   else
     die "${ERR_MESSAGE}: ${status_code} / ${json}"
   fi
@@ -106,5 +188,5 @@ fi
 response=$(curl --silent --write-out "\n%{http_code}\n" ${WL_API}/auth/ping)
 status_code=$(echo "${response}" | sed -n '$p')
 if [[ -z "${status_code}" || ${status_code} -ne 200 ]] ; then
-  die "wordland server unavailable: ${WL_API}"
+  die "$(translate_message err.api.unavailable): ${WL_API}"
 fi

@@ -119,7 +119,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
     @POST @Path("/{name}"+EP_PLAY)
     public Response play (@Context HttpContext ctx,
                           @PathParam("name") String room,
-                          @Valid GameRuntimeEvent request) {
+                              @Valid GameRuntimeEvent request) {
 
         final AccountSession account = userPrincipal(ctx);
         if (!request.getId().equals(account.getId())) return forbidden();

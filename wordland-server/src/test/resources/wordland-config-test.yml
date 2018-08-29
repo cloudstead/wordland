@@ -51,6 +51,7 @@ http:
 jersey:
   resourcePackages:
    - wordland.resources
+   - wordland.exceptionmappers
    - org.cobbzilla.wizard.server
    - org.cobbzilla.wizard.filters
    - org.cobbzilla.wizard.exceptionmappers

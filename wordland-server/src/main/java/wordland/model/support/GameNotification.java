@@ -12,6 +12,9 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 @NoArgsConstructor @Accessors(chain=true)
 public class GameNotification {
 
+    public static final String PARAM_WORD = "word";
+    public static final String PARAM_TILE = "tile";
+
     @Getter @Setter private GameNotificationType notification;
     @Getter @Setter private String messageKey;
     @Getter @Setter private String message;
@@ -33,15 +36,17 @@ public class GameNotification {
         return this;
     }
 
+    public String param(String name) { return NameAndValue.find(params, name); }
+
     public static GameNotification invalidWord(String word) {
         return new GameNotification(GameNotificationType.invalid_word, "err.word.invalid", "sorry, that's not a valid word")
-                .addParam("word", word);
+                .addParam(PARAM_WORD, word);
     }
 
     public static GameNotification sparseWord(String word, int max, PlayedTile farTile) {
         return new GameNotification(GameNotificationType.sparse_word, "err.word.sparse", "letters must be no farther than "+max+"letters apart in all directions")
-                .addParam("word", word)
-                .addParam("tile", json(farTile));
+                .addParam(PARAM_WORD, word)
+                .addParam(PARAM_TILE, json(farTile));
     }
 
 }
