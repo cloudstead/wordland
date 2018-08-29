@@ -342,7 +342,7 @@ public class GameState {
 
         final BufferedImage bufferedImage = new BufferedImage(TILE_PIXEL_SIZE*block.getWidth(), TILE_PIXEL_SIZE*block.getHeight(), BufferedImage.TYPE_INT_ARGB);
         final Graphics2D g2 = bufferedImage.createGraphics();
-        final GameTileState[][] tiles = block.getTiles();
+        final GameTileStateExtended[][] tiles = block.getTilesExtended();
         for (int x=0; x<tiles.length; x++) {
             for (int y=0; y<tiles[x].length; y++) {
                 g2.setColor(new Color(palette.rgbFor(tiles[x][y])));

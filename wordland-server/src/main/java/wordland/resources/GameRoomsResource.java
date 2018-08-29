@@ -10,9 +10,7 @@ import wordland.dao.*;
 import wordland.model.GameRoom;
 import wordland.model.game.*;
 import wordland.model.json.GameRoomSettings;
-import wordland.model.support.AccountSession;
-import wordland.model.support.GameRoomJoinRequest;
-import wordland.model.support.GameRuntimeEvent;
+import wordland.model.support.*;
 import wordland.service.GamesMaster;
 
 import javax.validation.Valid;
@@ -225,6 +223,25 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
 
         final GameBoardState board = getGameBoardState(room, x1, x2, y1, y2);
         return ok(board.grid(palette));
+    }
+
+    @POST @Path("/{name}"+EP_BOARD+EP_PREVIEW_TXT)
+    public Response boardTextPreview (@Context HttpContext ctx,
+                                      @PathParam("name") String room,
+                                      @QueryParam("x1") Integer x1,
+                                      @QueryParam("x2") Integer x2,
+                                      @QueryParam("y1") Integer y1,
+                                      @QueryParam("y2") Integer y2,
+                                      TextPreviewRequest request) {
+
+        final AccountSession account = userPrincipal(ctx);
+        if (request == null) request = new TextPreviewRequest();
+        if (!request.hasPalette()) request.setPalette(GameBoardPalette.defaultPalette(account.getId()));
+        if (request.hasTiles() && !request.isValid()) return invalid("err.attempt.invalid");
+
+        final GameBoardState board = getGameBoardState(room, x1, x2, y1, y2);
+        final TextGridResponse text = board.grid(request.getPalette(), request.getTiles());
+        return ok(text);
     }
 
     @GET @Path("/{name}"+EP_SETTINGS)

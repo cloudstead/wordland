@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import wordland.model.support.AttemptedTile;
+import wordland.model.support.TextGridResponse;
 
 @NoArgsConstructor @AllArgsConstructor @Accessors(chain=true)
 public class GameBoardState {
@@ -22,6 +24,7 @@ public class GameBoardState {
 
     public String grid () { return GameTileState.grid(tiles); }
     public String grid (GameBoardPalette palette) { return GameTileState.grid(tiles, palette); }
+    public TextGridResponse grid (GameBoardPalette palette, AttemptedTile[] attempt) { return GameTileState.grid(tiles, palette, attempt); }
 
     @SuppressWarnings("unused") // used in JSON tests. see models/infinity/tests/play_infinity.json
     public boolean claimedWord(String word) {

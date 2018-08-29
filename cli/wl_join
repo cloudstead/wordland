@@ -25,11 +25,16 @@ ROOM_NAME="$(cat ${TEMP_SESSION} | grep -m 1 '"room"' | awk -F '"' '{print $4}')
 ROOM_DIR="${WL_DIR}/rooms/${ROOM_NAME}"
 mkdir -p ${ROOM_DIR}
 
-echo "${ROOM_NAME}" > ${WL_DIR}/current_room
-cat ${TEMP_SESSION} > ${WL_DIR}/current_room.json
+if [[ -z "${CURRENT_ROOM}" ]] ; then
+  die "No CURRENT_ROOM defined, should have been defined by _wl_base"
+fi
+
+echo "${ROOM_NAME}" > ${CURRENT_ROOM}
+cp ${TEMP_SESSION} ${CURRENT_ROOM}.json
+cp ${TEMP_SESSION} ${ROOM_DIR}/room.json
 echo "0" > ${ROOM_DIR}/x1
 echo "0" > ${ROOM_DIR}/y1
 echo "10" > ${ROOM_DIR}/view_size
 
 # show board
-${SCRIPT_DIR}/wl_board
+${SCRIPT_DIR}/wl_board ${ROOM_NAME}

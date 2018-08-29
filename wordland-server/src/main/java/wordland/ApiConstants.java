@@ -37,6 +37,7 @@ public class ApiConstants {
     public static final String EP_BOARD = "/board";
     public static final String EP_VIEW_PNG = "/view.png";
     public static final String EP_VIEW_TXT = "/view.txt";
+    public static final String EP_PREVIEW_TXT = "/preview.txt";
     public static final String EP_SETTINGS = "/settings";
 
     public static final String INFO_ENDPOINT = "/info";

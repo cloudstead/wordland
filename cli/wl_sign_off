@@ -14,5 +14,5 @@ if [[ -z "${name}" ]] ; then
 fi
 
 wl_get "${SESSION_TOKEN}" ${WL_API}/auth/logout
-rm -f ${SESSION_JSON}
+rm -f ${SESSION_JSON} ${CURRENT_ROOM} ${CURRENT_ROOM}.json
 echo "signed out as ${name}"

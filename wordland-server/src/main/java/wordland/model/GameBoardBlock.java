@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import wordland.model.game.GameTileState;
+import wordland.model.game.GameTileStateExtended;
 
 import java.util.*;
 
@@ -118,4 +119,15 @@ public class GameBoardBlock {
 
     public String grid () { return GameTileState.grid(getTiles()); }
 
+    @JsonIgnore @Getter(lazy=true) private final GameTileStateExtended[][] tilesExtended = initTilesExtended();
+    public GameTileStateExtended[][] initTilesExtended () {
+        final GameTileStateExtended[][] ext = new GameTileStateExtended[getTiles().length][];
+        for (int i=0; i<getTiles().length; i++) {
+            ext[i] = new GameTileStateExtended[getTiles()[i].length];
+            for (int j=0; j<getTiles()[i].length; j++) {
+                ext[i][j] = new GameTileStateExtended(getTiles()[i][j], getX1()+i, getY1()+j);
+            }
+        }
+        return ext;
+    }
 }

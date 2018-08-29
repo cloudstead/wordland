@@ -4,6 +4,7 @@ ENV_FILE="${HOME}/.wordland.env"
 
 WL_DIR="${HOME}/.wordland"
 SESSION_JSON="${WL_DIR}/session.json"
+CURRENT_ROOM=${WL_DIR}/current_room
 
 DEFAULT_API="http://127.0.0.1:9091/api"
 WL_API_KEY="x-wordland-api-key"
@@ -15,6 +16,12 @@ function die {
     echo 1>&2 "${SCRIPT}: ${1}"
   fi
   exit 1
+}
+
+function error {
+  RED='\033[38;5;9m'
+  NC='\033[0m' # No Color
+  echo ; echo -e "${RED}${@}${NC}"
 }
 
 function env_val {
@@ -36,7 +43,7 @@ fi
 response=$(curl --silent --write-out "\n%{http_code}\n" ${WL_API}/auth/ping)
 status_code=$(echo "${response}" | sed -n '$p')
 if [[ -z "${status_code}" || ${status_code} -ne 200 ]] ; then
-  die "API server unavailable: ${WL_API}"
+  die "wordland server unavailable: ${WL_API}"
 fi
 
 function wl_get {
