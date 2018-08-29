@@ -88,14 +88,14 @@ public class GameState {
 
         if (settings.hasWidth()) {
             if (x1 < 0) x1 = 0;
-            if (x2 > settings.getWidth()) x2 = settings.getWidth();
+            if (x2 > settings.getWidth()) x2 = settings.getWidth()-1;
         }
         if (x2 - x1 >= MAX_BOARD_DETAIL_VIEW) {
             x2 = x1 + MAX_BOARD_DETAIL_VIEW - 1;
         }
         if (settings.hasLength()) {
             if (y1 < 0) y1 = 0;
-            if (y2 > settings.getLength()) y2 = settings.getLength();
+            if (y2 > settings.getLength()) y2 = settings.getLength()-1;
         }
         if (y2 - y1 >= MAX_BOARD_DETAIL_VIEW) {
             y2 = y1 + MAX_BOARD_DETAIL_VIEW - 1;
@@ -231,14 +231,14 @@ public class GameState {
 
         if (settings.hasWidth()) {
             if (x1 < 0) x1 = 0;
-            if (x2 > settings.getWidth()) x2 = settings.getWidth();
+            if (x2 > settings.getWidth()) x2 = settings.getWidth()-1;
         }
         if (x2 - x1 >= MAX_BOARD_VIEW) {
             x2 = x1 + MAX_BOARD_VIEW - 1;
         }
         if (settings.hasLength()) {
             if (y1 < 0) y1 = 0;
-            if (y2 > settings.getLength()) y2 = settings.getLength();
+            if (y2 > settings.getLength()) y2 = settings.getLength()-1;
         }
         if (y2 - y1 >= MAX_BOARD_VIEW) {
             y2 = y1 + MAX_BOARD_VIEW - 1;

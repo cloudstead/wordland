@@ -84,8 +84,8 @@ public class GameBoardPalette {
 
     private int parseColor(String colorString, int defaultRgb) {
         if (empty(colorString)) return defaultRgb;
-        if (colorString.startsWith("0x")) return Integer.parseInt(this.blankColor.substring(2), 16);
-        if (colorString.startsWith("#")) return Integer.parseInt(this.blankColor.substring(1), 16);
+        if (colorString.startsWith("0x")) return Integer.parseInt(colorString.substring(2), 16);
+        if (colorString.startsWith("#")) return Integer.parseInt(colorString.substring(1), 16);
         return defaultRgb;
     }
 }

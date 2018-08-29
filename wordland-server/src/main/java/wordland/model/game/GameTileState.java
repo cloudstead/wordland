@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.security.ShaUtil.sha256;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class GameTileState {
@@ -55,6 +56,14 @@ public class GameTileState {
     }
 
     public static TextGridResponse grid (GameTileState[][] tiles, GameBoardPalette palette, AttemptedTile[] attempt) {
+
+        final TextGridResponse text = new TextGridResponse();
+        if (!empty(attempt)) {
+            final AttemptState attemptState = new AttemptState(attempt, tiles);
+            text.setPlayedTiles(attemptState.getPlayedTilesArray());
+            text.setSuccess(attemptState.successful());
+        }
+
         final StringBuilder b = new StringBuilder();
         for (int i=0; i<tiles.length; i++) {
             final GameTileState[] row = tiles[i];
@@ -95,22 +104,20 @@ public class GameTileState {
             b.append("\\033[0m");
         }
 
-        final TextGridResponse text = new TextGridResponse().setGrid(b.toString());
-        if (!empty(attempt)) {
-            final AttemptState attemptState = new AttemptState(attempt, tiles);
-            text.setPlayedTiles(attemptState.getPlayedTilesArray());
-            text.setSuccess(attemptState.successful());
-        }
-
-        return text;
+        return text.setGrid(b.toString());
     }
 
     protected static String setFgColor(Color color) {
-        StringBuilder b = new StringBuilder();
-        b.append("\\033[38;2;")
-                .append(color.getRed()).append(";")
-                .append(color.getGreen()).append(";")
-                .append(color.getBlue()).append("m");
+        final StringBuilder b = new StringBuilder();
+//        b.append("\\033[38;2;")
+        final byte[] bytes = sha256("" + color.getRGB());
+        final int validRange = 231 - 17;
+        b.append("\\033[38;5;")
+                .append((Math.abs((int) bytes[0]) % (validRange))+17)
+                .append("m");
+//                .append(color.getRed()).append(";")
+//                .append(color.getGreen()).append(";")
+//                .append(color.getBlue()).append("m");
         return b.toString();
     }
 
@@ -136,20 +143,24 @@ public class GameTileState {
         }
 
         protected boolean tryPlay(AttemptedTile a, GameTileState[][] tiles, boolean requireIndexMatch) {
+            letterCounters.clear();
             for (int x=0; x<tiles.length; x++) {
                 for (int y=0; y<tiles[x].length; y++) {
-                    if (!a.getSymbol().equalsIgnoreCase(tiles[x][y].getSymbol())) continue;
+                    final String symbol = tiles[x][y].getSymbol();
+                    final int foundCount = getCountAndIncrement(symbol);
+                    if (!a.getSymbol().equalsIgnoreCase(symbol)) continue;
 
-                    final PlayedTile playedTile = new PlayedTile(x, y, a.getSymbol());
+                    final PlayedTile playedTile = new PlayedTile(x, y, symbol);
                     if (playedTiles.contains(playedTile)) {
                         // already played, try another
                         continue;
                     }
 
                     // is it the index they want?
-                    if (requireIndexMatch && a.getIndex() != countOf(a.getSymbol())) continue;
+                    if (requireIndexMatch && a.getIndex() != foundCount) continue;
 
                     // OK, pick the letter
+                    tiles[x][y].setOwner(a.getOwner());
                     playedTiles.add(playedTile);
                     return true;
                 }
@@ -158,8 +169,10 @@ public class GameTileState {
         }
 
         private Map<String, Integer> letterCounters = new HashMap<>();
-        private int countOf(String symbol) {
-            return letterCounters.computeIfAbsent(symbol.toLowerCase(), k -> 0);
+        private int getCountAndIncrement(String symbol) {
+            final int val = letterCounters.computeIfAbsent(symbol.toLowerCase(), k -> 0);
+            letterCounters.put(symbol.toLowerCase(), val+1);
+            return val;
         }
 
         private boolean canPlay(GameTileState tile, int x, int y, GameTileState[][] tiles, String owner) {

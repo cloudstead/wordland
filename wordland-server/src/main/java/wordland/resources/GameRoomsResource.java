@@ -237,7 +237,10 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         final AccountSession account = userPrincipal(ctx);
         if (request == null) request = new TextPreviewRequest();
         if (!request.hasPalette()) request.setPalette(GameBoardPalette.defaultPalette(account.getId()));
-        if (request.hasTiles() && !request.isValid()) return invalid("err.attempt.invalid");
+        if (request.hasTiles()) {
+            if (!request.isValid()) return invalid("err.attempt.invalid");
+            for (AttemptedTile a : request.getTiles()) a.setOwner(account.getUuid());
+        }
 
         final GameBoardState board = getGameBoardState(room, x1, x2, y1, y2);
         final TextGridResponse text = board.grid(request.getPalette(), request.getTiles());

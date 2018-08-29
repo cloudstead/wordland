@@ -41,7 +41,7 @@ function reset_play {
 
 function current_word {
   for c in "${LETTERS[@]}" ; do
-    echo -n "${c}"
+    echo -n "${c}" | tr '[:lower:]' '[:upper:]'
   done
 }
 
@@ -106,7 +106,7 @@ board="$(echo "{}" | wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/bo
   || die "$(translate_message err_api_boardView)"
 
 printf "$(printf "$(json_node "${board}" grid | tr -d '"')")"
-echo ; echo ; echo -n "$(wl_prompt)"
+echo ; echo ; echo "   [  (empty)  ]" ; echo ; echo -n "$(wl_prompt)"
 
 while IFS= read -s -r -n1 char ; do
   reset=0
@@ -211,6 +211,7 @@ while IFS= read -s -r -n1 char ; do
   fi
 
   # Show the tray
+  echo
   if [[ ${#TILES[*]} -gt 0 ]] ; then
     SUCCESS="$(json_val "${board}" success)"
     if [[ -z "${SUCCESS}" || "${SUCCESS}" != "true" ]] ; then
@@ -223,6 +224,7 @@ while IFS= read -s -r -n1 char ; do
   echo
   if [[ -z "$(current_word)" ]] ; then
     echo "   [  (empty)  ]"
+    echo
   else
     echo "   [  $(current_word)  ]"
     echo -n "     "
@@ -234,6 +236,6 @@ while IFS= read -s -r -n1 char ; do
     echo "^"
   fi
 
-  echo ; echo -n "$(wl_prompt)"
+  echo -n "$(wl_prompt)"
 
 done
