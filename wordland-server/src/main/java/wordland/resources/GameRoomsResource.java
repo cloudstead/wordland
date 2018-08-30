@@ -88,9 +88,6 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         final GameRoom gameRoom = dao.findByName(room);
         if (gameRoom == null) return notFound(room);
 
-        final GamePlayer found = gamesMaster.findPlayer(room, player);
-        if (found != null) return ok(new GameRoomJoinResponse(room, found));
-
         return ok(gamesMaster.addPlayer(gameRoom, player));
     }
 

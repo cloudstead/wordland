@@ -1,5 +1,5 @@
 #!/bin/bash
-
+echo "~~~~~~ running $0 ${@}"
 SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/_wl_common
@@ -12,10 +12,6 @@ if [[ -z "${ROOM_NAME}" ]] ; then
     exec ${SCRIPT_DIR}/wl_rooms
   fi
 fi
-if [[ ! -f "${WL_DIR}/rooms/${ROOM_NAME}/room.json" ]] ; then
-    error "$(translate_message err_room_noCurrentRoom)"
-    exec ${SCRIPT_DIR}/wl_rooms
-fi
 
 NO_JOIN="${2}"
 if [[ -z ${NO_JOIN} || "${NO_JOIN}" != "-n" ]] ; then
@@ -25,8 +21,9 @@ fi
 WL_PLAY_PID="$$"
 WEBSOCKET_PID="${3}"
 if [[ -z ${WEBSOCKET_PID} ]] ; then
+echo "starting websocket, no PID in call"
   set -e
-  ${SCRIPT_DIR}/_wl_websocket ${WL_PLAY_PID} < /dev/null &
+  ${SCRIPT_DIR}/_wl_websocket ${WL_PLAY_PID} &
   WEBSOCKET_PID=$!
   disown %1
   exec ${0} ${ROOM_NAME} -n ${WEBSOCKET_PID}
@@ -39,19 +36,11 @@ function shutdown_websocket {
     kill -TERM ${WEBSOCKET_PID} 2> /dev/null || error "$(translate_message err_websocket_shutdown)"
     kill -9 ${WEBSOCKET_PID} 2> /dev/null
   fi
-  stty sane
+  stty sane ; echo
+  bash -i ${0} ${ROOM_NAME} &
   exit 0
 }
-
-function relay_USR1 {
-  if [[ ! -z "${_WL_PLAY_PID}" ]] ; then
-    echo "relay_USR1: relaying to: ${_WL_PLAY_PID}"
-    kill -USR1 ${_WL_PLAY_PID}
-  fi
-}
-
 trap 'shutdown_websocket' INT TERM EXIT
-trap 'relay_USR1' USR1
 
-${SCRIPT_DIR}/_wl_play ${ROOM_NAME}
-exit 0
+echo "running _wl_play ${ROOM_NAME} ${WEBSOCKET_PID} ..."
+exec ${SCRIPT_DIR}/_wl_play ${ROOM_NAME} ${WEBSOCKET_PID}

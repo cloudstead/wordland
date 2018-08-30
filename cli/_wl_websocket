@@ -6,28 +6,27 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 
 WL_PLAY_PID=${1:?$(translate_message err_websocket_no_wl_play_pid)}
 WL_SOCKET_PID=$$
+echo ">>> $0 started with pid ${WL_SOCKET_PID}"
 WEBSOCKET_PAYLOAD=${WL_DIR}/_websocket
-echo "Starting websocket, PID=${WL_SOCKET_PID}"
 
-while [ 1 ] ; do
-wscat -c ws://127.0.0.1:9099/events/$(session_player) | {
+function join_obj {
+  cat | tr -d '\n' <<EOF
+{
+ "id": "$(session_player)",
+ "clientId": "$(session_player)",
+ "apiToken":"$(session_apiToken)",
+ "room":"$(current_room)",
+ "stateChange":"player_joined"
+}
+EOF
+}
 
+echo "$(join_obj)" | websocat -n ${DEFAULT_WS_API}/$(session_player) | {
   cat /dev/null > ${WEBSOCKET_PAYLOAD}
   while read line ; do
-    echo "${line}" >> ${WEBSOCKET_PAYLOAD}
+  echo "${line}" >> ${WEBSOCKET_PAYLOAD}
+    if [[ ! -z "${line}" && "$(echo "${line}" | tr -d ' \n')" != "X" ]] ; then
+      mkdir -p ${WS_MARKER_FILE_DIR} && touch ${WS_MARKER_FILE_DIR}/${WL_PLAY_PID}
+    fi
   done
-
-  run_count="$(ps uxw | grep ${WL_PLAY_PID} | grep -v grep | wc -l | tr -d ' ')"
-  if [[ -z "${run_count}" || "${run_count}" -eq 0 ]] ; then
-    die "$(translate_message msg_websocket_no_wl_play_exiting)"
-    exit 1
-  fi
-  done=0
-  kill -USR1 ${WL_PLAY_PID} 2> /dev/null || done=1
-  if [[ ${done} -eq 1 ]] ; then
-    echo "$(translate_message msg_websocket_no_wl_play_exiting): $(kill -9 ${WL_SOCKET_PID})"
-    exit 1
-  fi
 }
-sleep 5;
-done

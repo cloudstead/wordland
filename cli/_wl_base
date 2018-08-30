@@ -9,7 +9,9 @@ REQUEST_URL=${WL_DIR}/_request.txt
 RESPONSE_JSON=${WL_DIR}/_response.json
 
 DEFAULT_API="http://127.0.0.1:9091/api"
+DEFAULT_WS_API="ws://127.0.0.1:9099/events"
 WL_API_KEY="x-wordland-api-key"
+WS_MARKER_FILE_DIR="${WL_DIR}/_ws"
 
 function die {
   if [[ -z "${SCRIPT}" ]] ; then
@@ -41,7 +43,12 @@ function error_stdout {
 
 function env_val {
   param="${1}"
-  cat ${ENV_FILE} | grep "export ${param}=" | awk -F '=' '{print $2}'
+  val=$(cat ${ENV_FILE} | grep "export ${param}=" | awk -F '=' '{print $2}')
+  if [[ -z "${val}" ]] ; then
+    echo "${2}"
+  else
+    echo "${val}"
+  fi
 }
 
 function json_node {
@@ -205,9 +212,10 @@ if [ -f ${ENV_FILE} ] ; then
 fi
 
 if [ -z "${WL_API}" ] ; then
-  #die "no WL_API defined"
-  #echo "No WL_API defined, using default ${DEFAULT_API}"
-  WL_API="${DEFAULT_API}"
+  WL_API="$(env_val WL_API ${DEFAULT_API})"
+fi
+if [ -z "${WL_WS_API}" ] ; then
+  WL_WS_API="$(env_val WL_WS_API ${DEFAULT_WS_API})"
 fi
 
 # check API availability

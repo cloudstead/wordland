@@ -5,12 +5,14 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/_wl_common
 
 ROOM_NAME="${1:?$(translate_message err_room_required)}"
+WEBSOCKET_PID="${2:?$(translate_message err_websocket_wl_play_pid_required)}"
 
 ACTIVE_CHAR=""
 ACTIVE_CHAR_INDEX=1
 TILES=()
 LETTERS=()
 INDEXES=()
+WS_MARKER_FILE="${WS_MARKER_FILE_DIR}/$$"
 
 function reset_play {
   unset TILES
@@ -153,11 +155,10 @@ function async_fresh_board_view {
   echo ; echo ; echo "<?~~~ !! async update !! ~~~~?>"; fresh_board_view
 }
 
-trap 'async_fresh_board_view' USR1
-
 fresh_board_view
 
-while IFS= read -s -r -n1 char ; do
+while [ 1 ] ; do
+ while IFS= read -s -r -t 2 -n1 char < /dev/stdin 2> /dev/null ; do
   reset=0
   case ${char} in
     # Add a letter to the tray
@@ -260,4 +261,10 @@ while IFS= read -s -r -n1 char ; do
 
   echo -n "$(wl_prompt)"
 
+ done
+
+ if [[ -f ${WS_MARKER_FILE} ]] ; then
+   rm ${WS_MARKER_FILE}
+   async_fresh_board_view
+ fi
 done

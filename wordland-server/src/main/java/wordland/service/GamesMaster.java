@@ -163,10 +163,7 @@ public class GamesMaster {
     private GameRoomJoinResponse addPlayerToRoom(GameDaemon daemon, GamePlayer player) {
 
         final String roomName = daemon.getRoom().getName();
-
-        final GamePlayer currentPlayer = daemon.findPlayer(player);
-        if (currentPlayer == null) {
-            daemon.addPlayer(player);
+        if (daemon.addPlayer(player)) {
             final String apiKey = player.getApiToken();
             getSessions().set(apiKey, json(player));
             getSessions().sadd(getRoomSessionKey(roomName, player.getId()), apiKey);

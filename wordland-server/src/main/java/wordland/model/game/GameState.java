@@ -34,6 +34,7 @@ import static wordland.ApiConstants.MAX_BOARD_DETAIL_VIEW;
 import static wordland.ApiConstants.MAX_BOARD_VIEW;
 import static wordland.model.GameBoardBlock.SORT_POSITION;
 import static wordland.model.GameBoardBlock.getBlockKeyForTile;
+import static wordland.model.game.GameStateChange.playerJoined;
 import static wordland.model.support.GameNotification.invalidWord;
 import static wordland.model.support.GameNotification.sparseWord;
 import static wordland.model.support.PlayedTile.letterFarFromOthers;
@@ -64,6 +65,11 @@ public class GameState {
         synchronized (stateStorage) {
             final RoomState roomState = stateStorage.getRoomState();
             if (roomState == RoomState.game_ended) throw new GameEndedException(room);
+
+            if (getPlayer(player.getId()) != null) {
+                // player already in room, start new room session
+                return playerJoined(stateStorage.getVersion(), player);
+            }
 
             int playerCount = stateStorage.getPlayerCount();
             if (roomSettings().hasMaxPlayers() && playerCount >= roomSettings().getMaxPlayers()) throw new RoomFullException(room);

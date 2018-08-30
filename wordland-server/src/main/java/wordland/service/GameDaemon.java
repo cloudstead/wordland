@@ -54,7 +54,7 @@ public class GameDaemon extends SimpleDaemon {
     }
 
     protected Future<Object> broadcast(GameStateChange stateChange) {
-        return eventService == null ? null : eventService.broadcast(stateChange);
+        return eventService == null ? null : eventService.broadcast(stateChange.setRoom(getRoom().getName()));
     }
 
     public GameDaemon initGame() {
@@ -70,16 +70,15 @@ public class GameDaemon extends SimpleDaemon {
         return this;
     }
 
-    public void addPlayer(GamePlayer player) {
-        if (findPlayer(player.getId()) != null) {
-            log.info("addPlayer: not adding existing player: "+player.getId());
-            return;
-        }
+    public boolean addPlayer(GamePlayer player) {
         final GameStateChange stateChange;
+        final boolean wasAdded;
         synchronized (gameState) {
+            wasAdded = gameState.get().getPlayer(player.getId()) == null;
             stateChange = gameState.get().addPlayer(player).setRoom(room.getName());
         }
         broadcast(stateChange);
+        return wasAdded;
     }
 
     public GamePlayer findPlayer(GamePlayer player) {

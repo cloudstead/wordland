@@ -7,7 +7,7 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 ROOM_NAME="${1:?$(translate_message err_room_required)}"
 PLAYER_NAME="${2-$(session_name)}"
 
-function join_obj () {
+function join_obj {
   cat <<EOF
   {
     "clientId": "$(session_player)",
@@ -23,6 +23,10 @@ if [[ ! -f ${TEMP_SESSION} || ! -s ${TEMP_SESSION} ]] ; then
 fi
 
 ROOM_NAME="$(json_val "$(cat ${TEMP_SESSION})" room)"
+if [[ -z "${ROOM_NAME}" ]] ; then
+  die "$(translate_message err_api_join): $(cat ${TEMP_SESSION})"
+fi
+
 ROOM_DIR="${WL_DIR}/rooms/${ROOM_NAME}"
 mkdir -p ${ROOM_DIR}
 
