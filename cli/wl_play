@@ -21,10 +21,6 @@ if [[ ! -f "${WL_DIR}/rooms/${ROOM_NAME}/room.json" ]] ; then
     exec ${SCRIPT_DIR}/wl_rooms
 fi
 
-TILES_JSON_PREFIX="{ \"tiles\": [ "
-TILES_JSON_SEP=", "
-TILES_JSON_SUFFIX=" ] }"
-
 ACTIVE_CHAR=""
 ACTIVE_CHAR_INDEX=1
 TILES=()
@@ -85,12 +81,30 @@ EOF
   fi
 }
 
+X1=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)
+Y1=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/y1)
+VIEW_SIZE=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/view_size)
+ROOM_PALETTE=${WL_DIR}/rooms/${ROOM_NAME}/palette.json
+BOARD_JSON=${WL_DIR}/rooms/${ROOM_NAME}/board.json
+PLAY_JSON=${WL_DIR}/rooms/${ROOM_NAME}/play.json
+
+BOARD_REQUEST_PREFIX="{ \"palette\": "
+BOARD_REQUEST_TILES_JSON_PREFIX=", \"tiles\": [ "
+BOARD_REQUEST_TILES_JSON_SEP=", "
+BOARD_REQUEST_JSON_SUFFIX=" ] }"
+
 function board_preview_obj {
-  echo -n "${TILES_JSON_PREFIX}"
+  echo -n "${BOARD_REQUEST_PREFIX}"
+  if [[ -f ${ROOM_PALETTE} ]] ; then
+    echo -n "$(cat ${ROOM_PALETTE})"
+  else
+    echo -n "null"
+  fi
+  echo -n "${BOARD_REQUEST_TILES_JSON_PREFIX}"
   first=1
   for tile in "${TILES[@]}" ; do
     if [ $first -ne 1 ] ; then
-      echo -n "${TILES_JSON_SEP}"
+      echo -n "${BOARD_REQUEST_TILES_JSON_SEP}"
     fi
     if [[ "${tile}" =~ /null/ ]] ; then
       break
@@ -98,17 +112,14 @@ function board_preview_obj {
     echo -n " { ${tile} }"
     first=0
   done
-  echo -n "${TILES_JSON_SUFFIX}"
+  echo -n "${BOARD_REQUEST_JSON_SUFFIX}"
 }
-
-X1=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)
-Y1=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/y1)
-VIEW_SIZE=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/view_size)
-BOARD_JSON=${WL_DIR}/rooms/${ROOM_NAME}/board.json
-PLAY_JSON=${WL_DIR}/rooms/${ROOM_NAME}/play.json
 
 board_status="$(wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "{}" "${BOARD_JSON}")" \
   || die "$(translate_message err_api_boardView)"
+
+# save palette
+echo "$(json_node "$(cat ${BOARD_JSON})" palette)" > ${ROOM_PALETTE}
 
 printf "$(printf "$(json_node "$(cat ${BOARD_JSON})" grid | tr -d '"')")"
 echo ; echo ; echo "   [  (empty)  ]" ; echo ; echo -n "$(wl_prompt)"
@@ -200,13 +211,13 @@ while IFS= read -s -r -n1 char ; do
 
   # Get the board preview
   if [[ ${reset} -eq 1 ]] ; then
-    POST_ENTITY="{}"
     reset=0
-  else
-    POST_ENTITY="$(board_preview_obj)"
   fi
-  board_status="$(wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "${POST_ENTITY}" "${BOARD_JSON}")" \
+  board_status="$(wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "$(board_preview_obj)" "${BOARD_JSON}")" \
     || die "$(translate_message err_api_boardView)"
+
+  # save palette
+  echo "$(json_node "$(cat ${BOARD_JSON})" palette)" > ${ROOM_PALETTE}
 
   # Show the board preview
   echo
