@@ -80,7 +80,7 @@ public class GameDictionary extends NamedIdentityBase {
     }
 
     @JsonIgnore @Transient public boolean isWord(String word) {
-        return words().contains(word);
+        return words().contains(word.toLowerCase());
     }
 
     @JsonIgnore @Transient @Getter(lazy=true) private final List<String> shortestFirst = initShortestFirst();
