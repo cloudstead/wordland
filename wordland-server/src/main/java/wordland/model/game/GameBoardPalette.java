@@ -10,9 +10,7 @@ import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.NameAndValue;
 
 import java.awt.*;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
@@ -28,11 +26,11 @@ public class GameBoardPalette {
 
     public static final int DEFAULT_BLANK_RGB = 0xffffff;
     public static final int DEFAULT_BLANK_ANSI = 15;
-    public int getDefaultBlankColor () { return isRgb() ? DEFAULT_BLANK_RGB : DEFAULT_BLANK_ANSI; }
+    @JsonIgnore public int getDefaultBlankColor () { return isRgb() ? DEFAULT_BLANK_RGB : DEFAULT_BLANK_ANSI; }
 
     public static final int DEFAULT_CURRENT_PLAYER_RGB = 0xff0000;
     public static final int DEFAULT_CURRENT_PLAYER_ANSI = 9;
-    public int getDefaultCurrentPlayerColor () { return isRgb() ? DEFAULT_CURRENT_PLAYER_RGB : DEFAULT_CURRENT_PLAYER_ANSI; }
+    @JsonIgnore public int getDefaultCurrentPlayerColor () { return isRgb() ? DEFAULT_CURRENT_PLAYER_RGB : DEFAULT_CURRENT_PLAYER_ANSI; }
 
     @Getter @Setter private GameBoardPaletteMode mode = GameBoardPaletteMode.rgb;
     @JsonIgnore public boolean isRgb () { return mode == GameBoardPaletteMode.rgb; }
@@ -54,17 +52,6 @@ public class GameBoardPalette {
     @JsonIgnore public int getCurrentPlayerColor() { return parseRgb(currentPlayerColor, getDefaultCurrentPlayerColor()); }
     @JsonIgnore public int getBlankColor () { return parseRgb(blankColor, getDefaultBlankColor()); }
 
-    private final Map<String, Integer> colorsByPlayer = initColorsByPlayer();
-    private Map<String, Integer> initColorsByPlayer() {
-        final Map<String, Integer> map = new HashMap<>();
-        if (!empty(playerColors)) {
-            for (NameAndValue color : playerColors) {
-                if (!color.getName().equals(ANY_UNASSIGNED)) map.put(color.getName(), isRgb() ? parseRgb(color.getValue(), -1) : parseAnsi(color.getValue(), -1));
-            }
-        }
-        return map;
-    }
-
     public GameBoardPalette(GameBoardPalette other) { copy(this, other); }
 
     public static GameBoardPalette defaultPalette(String currentPlayerId) {
@@ -81,7 +68,6 @@ public class GameBoardPalette {
         int color = _colorFor(tile);
         usedColors.add(color);
         if (tile.hasOwner()) {
-            colorsByPlayer.put(tile.getOwner(), color);
             if (NameAndValue.find(playerColors, tile.getOwner()) == null) {
                 addPlayerColor(tile.getOwner(), formatColor(color));
             }
@@ -105,8 +91,11 @@ public class GameBoardPalette {
         if (tile.getOwner().equals(currentPlayerId)) {
             return currentPlayerColor == null ? getDefaultCurrentPlayerColor() : parseColor(currentPlayerColor, getDefaultCurrentPlayerColor());
         }
-        final Integer color = colorsByPlayer.get(tile.getOwner());
-        return color != null ? color : randomColor();
+        final String colorString = NameAndValue.find(playerColors, tile.getOwner());
+        if (colorString != null) {
+            return parseColor(colorString, randomColor());
+        }
+        return randomColor();
     }
 
     public int randomColor() {  return isRgb() ? randomRgbColor() : randomAnsiColor(); }

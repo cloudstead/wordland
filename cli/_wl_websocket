@@ -1,0 +1,23 @@
+#!/bin/bash
+
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/_wl_base
+
+WL_PLAY_PID=${1:?$(translate_message err_websocket_no_wl_play_pid)}
+
+while [ 1 ] ; do
+wscat -c ws://127.0.0.1:9099/events/$(session_player) | {
+  while read line ; do
+    echo "${line}"
+  done
+
+  run_count="$(ps uxw | grep ${WL_PLAY_PID} | grep -v grep | wc -l | tr -d ' ')"
+  if [[ -z "${run_count}" || "${run_count}" -eq 0 ]] ; then
+    die "$(translate_message msg_websocket_no_wl_play_exiting)"
+    exit 1
+  fi
+  kill -USR1 ${WL_PLAY_PID}
+}
+sleep 5;
+done

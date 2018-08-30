@@ -54,7 +54,7 @@ public class GameDaemon extends SimpleDaemon {
     }
 
     protected Future<Object> broadcast(GameStateChange stateChange) {
-        return eventService == null ? null : eventService.getBroadcaster().broadcast(stateChange);
+        return eventService == null ? null : eventService.broadcast(stateChange);
     }
 
     public GameDaemon initGame() {

@@ -20,8 +20,12 @@ import wordland.server.WordlandServer;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -47,6 +51,7 @@ public class AtmosphereEventsService {
     public Broadcaster getBroadcaster () { return broadcasterFactory.get(); }
 
     private final Map<String, AtmosphereResourceEntry> clients = new ConcurrentHashMap<>(1000);
+    private final Map<String, Collection<AtmosphereResourceEntry>> clientByRoom = new ConcurrentHashMap<>(1000);
 
     @Get
     public void onOpen(final AtmosphereResource r) {
@@ -78,7 +83,22 @@ public class AtmosphereEventsService {
                 } else if (event.isClosedByClient()) {
                     log.info("User {} closed the connection", clientId);
                 }
-                clients.remove(clientId);
+                final AtmosphereResourceEntry removed = clients.remove(clientId);
+                if (removed != null && removed.hasRoom()) {
+                    synchronized (clientByRoom) {
+                        final Collection<AtmosphereResourceEntry> clients = clientByRoom.get(removed.getRoom());
+                        if (clients != null) {
+                            final Iterator<AtmosphereResourceEntry> iter = clients.iterator();
+                            while (iter.hasNext()) {
+                                if (iter.next().getPlayer().equals(removed.getPlayer())) {
+                                    iter.remove();
+                                    break;
+                                }
+                            }
+                            if (clients.isEmpty()) clientByRoom.remove(removed.getRoom());
+                        }
+                    }
+                }
             }
         });
     }
@@ -126,7 +146,13 @@ public class AtmosphereEventsService {
 
         switch (request.getStateChange()) {
             case player_joined:
-                if (!entry.hasPlayer()) entry.setPlayer(player);
+                if (!entry.hasPlayer()) {
+                    entry.setPlayer(player);
+                    entry.setRoom(request.getRoom());
+                    synchronized (clientByRoom) {
+                        clientByRoom.computeIfAbsent(request.getRoom(), k -> new ArrayList<>()).add(entry);
+                    }
+                }
                 break;
 
             case word_played:
@@ -156,11 +182,29 @@ public class AtmosphereEventsService {
         entry.getResource().getResponse().write(json(thing));
     }
 
+    public Future<Object> broadcast(GameStateChange stateChange) {
+        final Collection<AtmosphereResourceEntry> entries;
+        synchronized (clientByRoom) {
+            entries = new ArrayList<>(clientByRoom.get(stateChange.getRoom()));
+        }
+        for (AtmosphereResourceEntry entry : entries) {
+            try {
+                send(entry, stateChange);
+            } catch (IOException e) {
+                log.warn("broadcast: error sending to entry for player: "+ (entry.hasPlayer() ? entry.getPlayer().getId() : "(no player): "+e.getClass().getSimpleName()+": "+e.getMessage()), e);
+            }
+        }
+        return null;
+//         return getBroadcaster().broadcast(stateChange);
+    }
+
     private class AtmosphereResourceEntry {
         public AtmosphereResourceEntry(AtmosphereResource resource) { this.resource = resource; }
         @Getter @Setter private AtmosphereResource resource;
         @Getter @Setter private GamePlayer player;
+        @Getter @Setter private String room;
         @Getter private final long ctime = now();
         public boolean hasPlayer() { return player != null; }
+        public boolean hasRoom() { return room != null; }
     }
 }

@@ -10,6 +10,7 @@ PLAYER_NAME="${2-$(session_name)}"
 function join_obj () {
   cat <<EOF
   {
+    "clientId": "$(session_player)",
     "name":"${PLAYER_NAME}"
   }
 EOF
@@ -37,4 +38,4 @@ echo "0" > ${ROOM_DIR}/y1
 echo "10" > ${ROOM_DIR}/view_size
 
 # show board, play game
-${SCRIPT_DIR}/wl_play ${ROOM_NAME}
+exec ${SCRIPT_DIR}/wl_play "${ROOM_NAME}" -n

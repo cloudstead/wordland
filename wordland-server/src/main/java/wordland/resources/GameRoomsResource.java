@@ -89,7 +89,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (gameRoom == null) return notFound(room);
 
         final GamePlayer found = gamesMaster.findPlayer(room, player);
-        if (found != null) return ok(found);
+        if (found != null) return ok(new GameRoomJoinResponse(room, found));
 
         return ok(gamesMaster.addPlayer(gameRoom, player));
     }
