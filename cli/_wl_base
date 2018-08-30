@@ -178,12 +178,11 @@ function wl_post {
   if [ -z "${status_code}" ] ; then
     die "${ERR_MESSAGE}: ${json}"
   fi
-  if [[ ${status_code} -eq 200 && ! -z "${json}" ]] ; then
-    echo "${json}"
-  elif [[ ${status_code} -eq 422 ]] ; then
+
+  if [[ ${status_code} -eq 422 ]] ; then
     error_stdout "$(translate_messages $(echo "${json}" | jq .[].messageTemplate | tr -d '"' | tr '.' '_'))"
   else
-    die "${ERR_MESSAGE}: ${status_code} / ${json}"
+    echo "${status_code}"
   fi
 }
 
