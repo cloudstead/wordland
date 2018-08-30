@@ -10,14 +10,12 @@ import wordland.model.support.AttemptedTile;
 import wordland.model.support.PlayedTile;
 import wordland.model.support.TextGridResponse;
 
-import java.awt.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
-import static org.cobbzilla.util.security.ShaUtil.sha256;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class GameTileState {
@@ -25,8 +23,12 @@ public class GameTileState {
     public static final String F_PREVIEW_PLAY = "preview_play";
     public static final String F_PREVIEW_PLAY_BLOCKED = "preview_play_blocked";
 
+    public static final int F_PREVIEW_PLAY_BG = 253;
+    public static final int F_PREVIEW_PLAY_BLOCKED_BG = 245;
+
     public static final String TXT_SPACER = "   ";
     public static final String TXT_SHORT_SPACER = "  ";
+    public static final String ANSI_RESET = "\\033[0m";
 
     @Getter @Setter private String symbol;
     @Getter @Setter private String owner;
@@ -52,7 +54,7 @@ public class GameTileState {
     }
 
     public static String grid (GameTileState[][] tiles, GameBoardPalette palette) {
-     return grid(tiles, null, null).getGrid();
+     return grid(tiles, palette, null).getGrid();
     }
 
     public static TextGridResponse grid (GameTileState[][] tiles, GameBoardPalette palette, AttemptedTile[] attempt) {
@@ -70,38 +72,40 @@ public class GameTileState {
             final StringBuilder rowVal = new StringBuilder();
             for (int j=0; j<row.length; j++) {
                 final GameTileState tile = row[j];
-                if (rowVal.length() > 0) {
-                    rowVal.append(TXT_SPACER);
-                }
-                if (palette != null) {
-                    final Color color;
-                    color = new Color(palette.rgbFor(tile));
-                    rowVal.append(setFgColor(color));
-                }
-                rowVal.append(tile.getSymbol().toUpperCase());
+                if (rowVal.length() > 0) rowVal.append(TXT_SPACER);               // add spacer if after first element
+                if (palette != null) rowVal.append(setAnsiColors(tile, palette)); // set colors if we have a palette
+                rowVal.append(tile.getSymbol().toUpperCase());                    // write tile symbol
+                if (palette != null) rowVal.append(ANSI_RESET);                   // reset colors
             }
             if (b.length() > 0) b.append("\n");
             b.append(rowVal);
         }
 
-        if (palette != null) {
-            b.append("\\033[0m");
-        }
-
         return text.setGrid(b.toString());
     }
 
-    protected static String setFgColor(Color color) {
+    protected static String setAnsiColors(GameTileState tile, GameBoardPalette palette) {
         final StringBuilder b = new StringBuilder();
-//        b.append("\\033[38;2;")
-        final byte[] bytes = sha256("" + color.getRGB());
-        final int validRange = 231 - 17;
+        int fg;
+        if (!tile.hasOwner()) {
+            fg = palette.getBlankColorAnsi();
+        } else {
+            if (tile.getOwner().equals(palette.getCurrentPlayerId())) {
+                fg = palette.getCurrentPlayerColorAnsi();
+            } else {
+                fg = palette.ansiColorFor(tile);
+            }
+        }
+        Integer bg = null;
+        if (tile.hasFeature(F_PREVIEW_PLAY)) {
+            bg = F_PREVIEW_PLAY_BG;
+        } else if (tile.hasFeature(F_PREVIEW_PLAY_BLOCKED)) {
+            bg = F_PREVIEW_PLAY_BLOCKED_BG;
+        }
         b.append("\\033[38;5;")
-                .append((Math.abs((int) bytes[0]) % (validRange))+17)
+                .append(fg)
+                .append(bg == null ? "" : ";48;5;"+bg)
                 .append("m");
-//                .append(color.getRed()).append(";")
-//                .append(color.getGreen()).append(";")
-//                .append(color.getBlue()).append("m");
         return b.toString();
     }
 
@@ -145,6 +149,11 @@ public class GameTileState {
 
                     // OK, pick the letter
                     tiles[x][y].setOwner(a.getOwner());
+                    if (canPlay(tiles[x][y], x, y, tiles, a.getOwner())) {
+                        tiles[x][y].addFeature(F_PREVIEW_PLAY, Boolean.TRUE.toString());
+                    } else {
+                        tiles[x][y].addFeature(F_PREVIEW_PLAY_BLOCKED, Boolean.TRUE.toString());
+                    }
                     playedTiles.add(playedTile);
                     return true;
                 }

@@ -1,0 +1,23 @@
+{
+  "blankColor": "15",
+  "currentPlayerColor": "9",
+  "playerColors": [
+    {"name": "*", "value": "21"},
+    {"name": "*", "value": "46"},
+    {"name": "*", "value": "5"},
+    {"name": "*", "value": "11"},
+    {"name": "*", "value": "202"},
+    {"name": "*", "value": "95"},
+    {"name": "*", "value": "105"},
+    {"name": "*", "value": "123"},
+    {"name": "*", "value": "213"},
+    {"name": "*", "value": "8"},
+    {"name": "*", "value": "14"},
+    {"name": "*", "value": "1"},
+    {"name": "*", "value": "32"},
+    {"name": "*", "value": "185"},
+    {"name": "*", "value": "217"},
+    {"name": "*", "value": "55"},
+    {"name": "*", "value": "220"}
+  ]
+}

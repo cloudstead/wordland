@@ -219,7 +219,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                                    GameBoardPalette palette) {
 
         final AccountSession account = userPrincipal(ctx);
-        if (palette == null) palette = GameBoardPalette.defaultPalette(account.getId());
+        if (palette == null) palette = GameBoardPalette.defaultAnsiPalette(account.getId());
 
         final GameBoardState board = getGameBoardState(room, x1, x2, y1, y2);
         return ok(board.grid(palette));
@@ -236,7 +236,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
 
         final AccountSession account = userPrincipal(ctx);
         if (request == null) request = new TextPreviewRequest();
-        if (!request.hasPalette()) request.setPalette(GameBoardPalette.defaultPalette(account.getId()));
+        if (!request.hasPalette()) request.setPalette(GameBoardPalette.defaultAnsiPalette(account.getId()));
         if (request.hasTiles()) {
             if (!request.isValid()) return invalid("err.attempt.invalid");
             for (AttemptedTile a : request.getTiles()) a.setOwner(account.getUuid());
