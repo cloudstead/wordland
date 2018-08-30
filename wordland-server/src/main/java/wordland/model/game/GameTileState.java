@@ -23,8 +23,8 @@ public class GameTileState {
     public static final String F_PREVIEW_PLAY = "preview_play";
     public static final String F_PREVIEW_PLAY_BLOCKED = "preview_play_blocked";
 
-    public static final int F_PREVIEW_PLAY_BG = 253;
-    public static final int F_PREVIEW_PLAY_BLOCKED_BG = 245;
+    public static final int F_PREVIEW_PLAY_BG = 240;
+    public static final int F_PREVIEW_PLAY_BLOCKED_BG = 249;
 
     public static final String TXT_SPACER = "   ";
     public static final String TXT_SHORT_SPACER = "  ";
@@ -86,16 +86,7 @@ public class GameTileState {
 
     protected static String setAnsiColors(GameTileState tile, GameBoardPalette palette) {
         final StringBuilder b = new StringBuilder();
-        int fg;
-        if (!tile.hasOwner()) {
-            fg = palette.getBlankColorAnsi();
-        } else {
-            if (tile.getOwner().equals(palette.getCurrentPlayerId())) {
-                fg = palette.getCurrentPlayerColorAnsi();
-            } else {
-                fg = palette.ansiColorFor(tile);
-            }
-        }
+        int fg = palette.colorFor(tile);
         Integer bg = null;
         if (tile.hasFeature(F_PREVIEW_PLAY)) {
             bg = F_PREVIEW_PLAY_BG;

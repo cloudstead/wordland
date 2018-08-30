@@ -117,6 +117,10 @@ function translate_messages {
   done
 }
 
+function validation_errors {
+  translate_messages "$(echo "${1}" | jq '.[].messageTemplate' | tr '.' '_' | tr -d '"')"
+}
+
 function wl_prompt {
   name="$(session_name)"
   if [[ -z "${name}" ]] ; then
@@ -182,7 +186,7 @@ function wl_post {
   fi
 
   if [[ ${status_code} -eq 422 ]] ; then
-    error_stdout "$(translate_messages $(echo "${json}" | jq .[].messageTemplate | tr -d '"' | tr '.' '_'))"
+    error_stdout "$(validation_errors "${json}")"
   else
     echo "${status_code}"
   fi

@@ -1,4 +1,4 @@
-err_room_noCurrentRoom="please join a room first. view rooms with wl_rooms, join with wl_join"
+err_room_noCurrentRoom="please join a room"
 err_room_notFound="room not found"
 err_game_notYourTurn="it's not your turn"
 err_game_invalidPlay="word cannot be played"

@@ -68,7 +68,7 @@ function subtract_letter {
 }
 
 function play_obj {
-  if [[ ! -z ${CURRENT_PLAY} ]] ; then
+  if [[ ! -z ${CURRENT_PLAY} && ${#LETTERS[@]} -gt 0 ]] ; then
     cat <<EOF
   {
     "room": "${ROOM_NAME}",
@@ -165,12 +165,12 @@ while IFS= read -s -r -n1 char ; do
         error "$(translate_message err_game_noCurrentPlay)"
       else
         play_status="$(wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/play" "$(play_obj)" "${PLAY_JSON}")" || die "$(translate_error err_api_play)"
-        if [[ ! -z "${play_status}" && "${play_status}" -eq 200 ]] ; then
+        if [[ ! -z "${play_status}" && ! "${play_status}" =~ [A-Za-z] && "${play_status}" -eq 200 ]] ; then
           reset_play
           reset=1
           play_output=""
         else
-          play_output="$(cat ${PLAY_JSON})"
+          play_output="$(validation_errors "$(cat "${PLAY_JSON}")")"
         fi
       fi
     ;;
@@ -214,7 +214,7 @@ while IFS= read -s -r -n1 char ; do
 
   # If the play resulted in a message to the user, show that here
   if [[ ! -z "${play_output}" ]] ; then
-    echo -n "${play_output}"
+    error -n "${play_output}"
     play_output=""
   fi
 

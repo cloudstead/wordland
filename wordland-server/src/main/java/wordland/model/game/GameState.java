@@ -345,10 +345,10 @@ public class GameState {
         final GameTileStateExtended[][] tiles = block.getTilesExtended();
         for (int x=0; x<tiles.length; x++) {
             for (int y=0; y<tiles[x].length; y++) {
-                g2.setColor(new Color(palette.rgbFor(tiles[x][y])));
+                g2.setColor(new Color(palette.colorFor(tiles[x][y])));
                 try {
                     g2.fillRect(x*TILE_PIXEL_SIZE, y*TILE_PIXEL_SIZE, TILE_PIXEL_SIZE, TILE_PIXEL_SIZE);
-                    // bufferedImage.setRGB(x, y, palette.rgbFor(tiles[x][y]));
+                    // bufferedImage.setRGB(x, y, palette.rgbColorFor(tiles[x][y]));
                 } catch (ArrayIndexOutOfBoundsException e) {
                     log.warn("wtf: "+e);
                 }
