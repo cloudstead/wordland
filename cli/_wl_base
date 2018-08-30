@@ -18,6 +18,8 @@ function die {
   exit 1
 }
 
+mkdir -p ${WL_DIR} || die "Cannot create directory: ${WL_DIR}"
+
 function error {
   NO_NEWLINE=""
   if [[ ${1} == "-n" ]] ; then
