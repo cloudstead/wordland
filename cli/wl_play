@@ -29,277 +29,29 @@ if [[ -z ${WEBSOCKET_PID} ]] ; then
   ${SCRIPT_DIR}/_wl_websocket ${WL_PLAY_PID} < /dev/null &
   WEBSOCKET_PID=$!
   disown %1
-  echo "Restarting without websocket"
   exec ${0} ${ROOM_NAME} -n ${WEBSOCKET_PID}
 else
   echo "wl_play running without starting websocket, it is running on ${WEBSOCKET_PID}"
 fi
 
-function shutdown_wl_play {
-  echo "checking if websocket is running"
-  if [[ $(ps uxw | grep ${WEBSOCKET_PID} | grep -v grep | wc -l | tr -d ' ') -gt 0 ]] ; then
-    echo "it is: $(ps uxw | grep ${WEBSOCKET_PID} | grep -v grep)"
-    kill -TERM ${WEBSOCKET_PID} || error "$(translate_message err_websocket_shutdown)"
+function shutdown_websocket {
+  if [[ $(ps uxw | grep ${WEBSOCKET_PID} | grep _wl_websocket | grep -v grep | wc -l | tr -d ' ') -gt 0 ]] ; then
+    kill -TERM ${WEBSOCKET_PID} 2> /dev/null || error "$(translate_message err_websocket_shutdown)"
     kill -9 ${WEBSOCKET_PID} 2> /dev/null
   fi
-  echo "kill -9 to wl_play ${WL_PLAY_PID}"
-  kill -9 ${WL_PLAY_PID}
-  exit 1
+  stty sane
+  exit 0
 }
 
-trap 'shutdown_wl_play' INT TERM EXIT
-trap 'async_fresh_board_view' USR1
-
-ACTIVE_CHAR=""
-ACTIVE_CHAR_INDEX=1
-TILES=()
-LETTERS=()
-INDEXES=()
-
-function reset_play {
-  unset TILES
-  TILES=()
-  unset LETTERS
-  LETTERS=()
-  unset INDEXES
-  INDEXES=()
-  ACTIVE_CHAR=""
-  ACTIVE_CHAR_INDEX=1
-}
-
-function current_word {
-  for c in "${LETTERS[@]}" ; do
-    echo -n "${c}" | tr '[:lower:]' '[:upper:]'
-  done
-}
-
-function subtract_letter {
-  if [[ -z "$(current_word)" ]] ; then
-    return
-  fi
-  unset 'TILES[${#TILES[@]}-1]'
-  unset 'LETTERS[${#LETTERS[@]}-1]'
-  unset 'INDEXES[${#INDEXES[@]}-1]'
-  if [[ ${#LETTERS[@]} -gt 0 ]] ; then
-    ACTIVE_CHAR="${LETTERS[${#LETTERS[@]}-1]}"
-  else
-    ACTIVE_CHAR=""
-  fi
-  if [[ ${#INDEXES[@]} -gt 0 ]] ; then
-    ACTIVE_CHAR_INDEX="${INDEXES[${#INDEXES[@]}-1]}"
-  else
-    ACTIVE_CHAR_INDEX=1
+function relay_USR1 {
+  if [[ ! -z "${_WL_PLAY_PID}" ]] ; then
+    echo "relay_USR1: relaying to: ${_WL_PLAY_PID}"
+    kill -USR1 ${_WL_PLAY_PID}
   fi
 }
 
-function play_obj {
-  if [[ ! -z ${CURRENT_PLAY} && ${#LETTERS[@]} -gt 0 ]] ; then
-    cat <<EOF
-  {
-    "room": "${ROOM_NAME}",
-    "stateChange": "word_played",
-    "id": "$(session_player)",
-    "clientId": "$(session_player)",
-    "apiToken": "$(session_apiToken)",
-    "word": "$(current_word)",
-    "tiles": ${CURRENT_PLAY}
-  }
-EOF
-  else
-    error "no valid word to play"
-  fi
-}
+trap 'shutdown_websocket' INT TERM EXIT
+trap 'relay_USR1' USR1
 
-X1=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)
-Y1=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/y1)
-VIEW_SIZE=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/view_size)
-ROOM_PALETTE=${WL_DIR}/rooms/${ROOM_NAME}/palette.json
-BOARD_JSON=${WL_DIR}/rooms/${ROOM_NAME}/board.json
-PLAY_JSON=${WL_DIR}/rooms/${ROOM_NAME}/play.json
-
-BOARD_REQUEST_PREFIX="{ \"palette\": "
-BOARD_REQUEST_TILES_JSON_PREFIX=", \"tiles\": [ "
-BOARD_REQUEST_TILES_JSON_SEP=", "
-BOARD_REQUEST_JSON_SUFFIX=" ] }"
-
-function board_preview_obj {
-  echo -n "${BOARD_REQUEST_PREFIX}"
-  if [[ -f ${ROOM_PALETTE} && $(cat ${ROOM_PALETTE} | tr -d ' \n' | wc -c | tr -d ' ') -gt 0 ]] ; then
-    cat ${ROOM_PALETTE}
-  else
-    echo -n "null"
-  fi
-  echo -n "${BOARD_REQUEST_TILES_JSON_PREFIX}"
-  first=1
-  for tile in "${TILES[@]}" ; do
-    if [ ${first} -ne 1 ] ; then
-      echo -n "${BOARD_REQUEST_TILES_JSON_SEP}"
-    fi
-    if [[ "${tile}" =~ /null/ ]] ; then
-      break
-    fi
-    echo -n " { ${tile} }"
-    first=0
-  done
-  echo -n "${BOARD_REQUEST_JSON_SUFFIX}"
-}
-
-function save_palette {
-  PALETTE="$(json_node "$(cat ${BOARD_JSON})" palette)"
-  if [[ ! -z "${PALETTE}" ]] ; then
-    echo "${PALETTE}" > ${ROOM_PALETTE}
-  fi
-}
-
-function show_tray {
-  if [[ ${#TILES[*]} -gt 0 ]] ; then
-    SUCCESS="$(json_val "$(cat ${BOARD_JSON})" success)"
-    if [[ -z "${SUCCESS}" || "${SUCCESS}" != "true" ]] ; then
-      error -n "$(translate_message 'err_game_invalidPlay')"
-      CURRENT_PLAY=""
-    else
-      CURRENT_PLAY="$(json_node "$(cat ${BOARD_JSON})" playedTiles)"
-    fi
-  fi
-  echo
-  if [[ -z "$(current_word)" ]] ; then
-    echo "   [  (empty)  ]"
-    echo
-  else
-    echo "   [  $(current_word)  ]"
-    echo -n "     "
-    i=0
-    while [[ ${i} -lt $(echo -n "$(current_word)" | wc -c | tr -d ' ') ]] ; do
-      echo -n " "
-      i=$(expr ${i} + 1)
-    done
-    echo "^"
-  fi
-}
-
-function show_board {
-  board_status="$(wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "$(board_preview_obj)" "${BOARD_JSON}")" \
-    || die "$(translate_message err_api_boardView)"
-
-  save_palette
-
-  # Show the board preview
-  echo
-  printf "$(printf "$(json_node "$(cat ${BOARD_JSON})" grid | tr -d '"')")"
-}
-
-function fresh_board_view {
-  show_board ; echo ; show_tray
-  echo -n "$(wl_prompt)"
-}
-
-function async_fresh_board_view {
-  echo ; echo ; echo "<?~~~ !! async update !! ~~~~?>"; fresh_board_view
-}
-
-fresh_board_view
-
-while IFS= read -s -r -n1 char ; do
-  reset=0
-  case ${char} in
-    # Add a letter to the tray
-    [a-zA-z])
-      ACTIVE_CHAR="${char}"
-      ACTIVE_CHAR_INDEX=1
-      for c in "${LETTERS[@]}" ; do
-        if [[ ${c} == ${char} ]] ; then
-          ACTIVE_CHAR_INDEX=$(expr ${ACTIVE_CHAR_INDEX} + 1)
-        fi
-      done
-      TILES+=("\"symbol\": \"${char}\", \"index\": ${ACTIVE_CHAR_INDEX}")
-      LETTERS+=("${char}")
-      INDEXES+=(${ACTIVE_CHAR_INDEX})
-    ;;
-
-    # Increment current active char index
-    '>')
-      if [[ ${#TILES[@]} -gt 0 ]] ; then
-        ACTIVE_CHAR_INDEX=$(expr ${ACTIVE_CHAR_INDEX} + 1)
-        unset 'TILES[${#TILES[@]}-1]'
-        unset 'INDEXES[${#INDEXES[@]}-1]'
-        TILES+=("\"symbol\": \"${LETTERS[-1]}\", \"index\": ${ACTIVE_CHAR_INDEX}")
-        INDEXES+=(${ACTIVE_CHAR_INDEX})
-      else
-        continue
-      fi
-    ;;
-
-    # Decrement current active char index, if possible
-    '<')
-      if [[ ${#TILES[@]} -gt 0 ]] ; then
-        ACTIVE_CHAR_INDEX=$(expr ${ACTIVE_CHAR_INDEX} - 1)
-        if [ ${ACTIVE_CHAR_INDEX} -lt 1 ] ; then
-          ACTIVE_CHAR_INDEX=1
-        fi
-        unset 'TILES[${#TILES[@]}-1]'
-        unset 'INDEXES[${#INDEXES[@]}-1]'
-        TILES+=("\"symbol\": \"${LETTERS[-1]}\", \"index\": ${ACTIVE_CHAR_INDEX}")
-        INDEXES+=(${ACTIVE_CHAR_INDEX})
-      else
-        continue
-      fi
-    ;;
-
-    # Submit the letters in the tray as our play, if there are any
-    '')
-      if [[ -z "${CURRENT_PLAY}" ]] ; then
-        error "$(translate_message err_game_noCurrentPlay)"
-      else
-        play_status="$(wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/play" "$(play_obj)" "${PLAY_JSON}")" || die "$(translate_error err_api_play)"
-        if [[ ! -z "${play_status}" && ! "${play_status}" =~ [A-Za-z] && "${play_status}" -eq 200 ]] ; then
-          reset_play
-          reset=1
-          play_output=""
-        else
-          play_output="$(validation_errors "$(cat "${PLAY_JSON}")")"
-        fi
-      fi
-    ;;
-
-    # Remove the most recently added letter from the tray
-    '-')
-      subtract_letter
-    ;;
-
-    # Clear the tray
-    ' ')
-      echo ; echo "$(translate_message msg_word_reset)"
-      reset_play
-      reset=1
-    ;;
-    '?')
-      echo ; echo "reset"
-      reset_play
-      reset=1
-    ;;
-
-    # Didn't understand that, skip it
-    *)
-      continue
-    ;;
-  esac
-
-  # Get the board preview
-  if [[ ${reset} -eq 1 ]] ; then
-    reset=0
-  fi
-  show_board
-
-  # If the play resulted in a message to the user, show that here
-  if [[ ! -z "${play_output}" ]] ; then
-    error -n "${play_output}"
-    play_output=""
-  fi
-
-  # Show the tray
-  echo
-  show_tray
-
-  echo -n "$(wl_prompt)"
-
-done
+${SCRIPT_DIR}/_wl_play ${ROOM_NAME}
+exit 0

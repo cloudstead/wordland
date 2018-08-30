@@ -5,11 +5,16 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/_wl_base
 
 WL_PLAY_PID=${1:?$(translate_message err_websocket_no_wl_play_pid)}
+WL_SOCKET_PID=$$
+WEBSOCKET_PAYLOAD=${WL_DIR}/_websocket
+echo "Starting websocket, PID=${WL_SOCKET_PID}"
 
 while [ 1 ] ; do
 wscat -c ws://127.0.0.1:9099/events/$(session_player) | {
+
+  cat /dev/null > ${WEBSOCKET_PAYLOAD}
   while read line ; do
-    echo "${line}"
+    echo "${line}" >> ${WEBSOCKET_PAYLOAD}
   done
 
   run_count="$(ps uxw | grep ${WL_PLAY_PID} | grep -v grep | wc -l | tr -d ' ')"
@@ -17,7 +22,12 @@ wscat -c ws://127.0.0.1:9099/events/$(session_player) | {
     die "$(translate_message msg_websocket_no_wl_play_exiting)"
     exit 1
   fi
-  kill -USR1 ${WL_PLAY_PID}
+  done=0
+  kill -USR1 ${WL_PLAY_PID} 2> /dev/null || done=1
+  if [[ ${done} -eq 1 ]] ; then
+    echo "$(translate_message msg_websocket_no_wl_play_exiting): $(kill -9 ${WL_SOCKET_PID})"
+    exit 1
+  fi
 }
 sleep 5;
 done
