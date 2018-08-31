@@ -43,7 +43,11 @@ function error_stdout {
 
 function env_val {
   param="${1}"
-  val=$(cat ${ENV_FILE} | grep "export ${param}=" | awk -F '=' '{print $2}')
+  if [[ -f ${ENV_FILE} ]] ; then
+    val=$(cat ${ENV_FILE} | grep "export ${param}=" | awk -F '=' '{print $2}')
+  else
+    val=""
+  fi
   if [[ -z "${val}" ]] ; then
     echo "${2}"
   else
