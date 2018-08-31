@@ -224,7 +224,6 @@ while [ 1 ] ; do
         error "$(translate_message err_game_noCurrentPlay)"
       else
         play_status="$(wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/play" "$(play_obj)" "${PLAY_JSON}")"
-        echo "PS=${play_status}" > /tmp/p.json
         case $(http_code ${play_status}) in
           200)
             reset_play
