@@ -14,6 +14,18 @@ LETTERS=()
 INDEXES=()
 WS_MARKER_FILE="${WS_MARKER_FILE_DIR}/$$"
 
+function show_help {
+  HELP_FILE="${SCRIPT_DIR}/lang/help.$(lang).md"
+  if [[ ! -f ${HELP_FILE} ]] ; then
+    HELP_FILE="${SCRIPT_DIR}/lang/help.en.md"
+  fi
+  if [[ ! -f ${HELP_FILE} ]] ; then
+    error "$(translate_message err_help_notFound): ${HELP_FILE}"
+  else
+    cat ${HELP_FILE}
+  fi
+}
+
 function reset_play {
   unset TILES
   TILES=()
@@ -264,9 +276,7 @@ while [ 1 ] ; do
     ;;
 
     '?')
-      echo ; echo "reset"
-      reset_play
-      reset=1
+      show_help
     ;;
 
     # Didn't understand that, skip it
