@@ -24,6 +24,7 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static wordland.ApiConstants.*;
 import static wordland.model.GameBoardBlock.BLOCK_SIZE;
+import static wordland.model.game.GameBoardPalette.defaultPalette;
 
 @Path(GAME_ROOMS_ENDPOINT)
 @Service @Slf4j
@@ -182,7 +183,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (height == null) height = 300;
         if (width == null) width = 400;
 
-        if (palette == null) palette = GameBoardPalette.defaultPalette(account.getId());
+        if (palette == null) palette = defaultPalette(account.getId());
 
         try {
             return ok(state.getBoardView(x1, x2, y1, y2, width, height, palette));
@@ -217,7 +218,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                                    GameBoardPalette palette) {
 
         final AccountSession account = userPrincipal(ctx);
-        if (palette == null) palette = GameBoardPalette.defaultAnsiPalette(account.getId());
+        if (palette == null) palette = defaultPalette(account.getId());
         palette.setAnsi();
 
         final GameBoardState board = getGameBoardState(room, x1, x2, y1, y2);
@@ -237,7 +238,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
 
         // prep request, palette and tiles
         if (request == null) request = new TextPreviewRequest();
-        if (!request.hasPalette()) request.setPalette(GameBoardPalette.defaultAnsiPalette(account.getId()));
+        if (!request.hasPalette()) request.setPalette(defaultPalette(account.getId()));
         request.getPalette().setAnsi();
 
         if (request.hasTiles()) {

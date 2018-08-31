@@ -6,6 +6,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.NameAndValue;
+import org.cobbzilla.util.graphics.ColorUtil;
 import wordland.model.support.AttemptedTile;
 import wordland.model.support.PlayedTile;
 import wordland.model.support.TextGridResponse;
@@ -27,8 +28,6 @@ public class GameTileState {
     public static final int F_PREVIEW_PLAY_BLOCKED_BG = 249;
 
     public static final String TXT_SPACER = "   ";
-    public static final String TXT_SHORT_SPACER = "  ";
-    public static final String ANSI_RESET = "\\033[0m";
 
     @Getter @Setter private String symbol;
     @Getter @Setter private String owner;
@@ -75,7 +74,7 @@ public class GameTileState {
                 if (rowVal.length() > 0) rowVal.append(TXT_SPACER);               // add spacer if after first element
                 if (palette != null) rowVal.append(setAnsiColors(tile, palette)); // set colors if we have a palette
                 rowVal.append(tile.getSymbol().toUpperCase());                    // write tile symbol
-                if (palette != null) rowVal.append(ANSI_RESET);                   // reset colors
+                if (palette != null) rowVal.append(ColorUtil.ANSI_RESET);                   // reset colors
             }
             if (b.length() > 0) b.append("\n");
             b.append(rowVal);

@@ -5,19 +5,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.apache.commons.lang3.RandomUtils;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.NameAndValue;
 
-import java.awt.*;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.Set;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.graphics.ColorUtil.*;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
-import static org.cobbzilla.util.string.StringUtil.getHexValue;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class GameBoardPalette {
@@ -47,7 +44,13 @@ public class GameBoardPalette {
         playerColors = ArrayUtil.append(playerColors, new NameAndValue(player, color));
     }
 
-    private Set<Integer> usedColors = new HashSet<>();
+    @Getter(lazy=true) private final Collection<Integer> usedColors = initUsedColors();
+    private HashSet<Integer> initUsedColors() {
+        final HashSet<Integer> colors = new HashSet<>();
+        colors.add(getBlankColor());
+        colors.add(getCurrentPlayerColor());
+        return colors;
+    }
 
     @JsonIgnore public int getCurrentPlayerColor() { return parseRgb(currentPlayerColor, getDefaultCurrentPlayerColor()); }
     @JsonIgnore public int getBlankColor () { return parseRgb(blankColor, getDefaultBlankColor()); }
@@ -59,14 +62,9 @@ public class GameBoardPalette {
                 .setCurrentPlayerId(currentPlayerId);
     }
 
-    public static GameBoardPalette defaultAnsiPalette(String currentPlayerId) {
-        return json(stream2string("palette/default_ansi_palette.json"), GameBoardPalette.class)
-                .setCurrentPlayerId(currentPlayerId);
-    }
-
     public int colorFor(GameTileState tile) {
         int color = _colorFor(tile);
-        usedColors.add(color);
+        getUsedColors().add(color);
         if (tile.hasOwner()) {
             if (NameAndValue.find(playerColors, tile.getOwner()) == null) {
                 addPlayerColor(tile.getOwner(), formatColor(color));
@@ -75,16 +73,7 @@ public class GameBoardPalette {
         return color;
     }
 
-    private String formatColor(int color) {
-        if (isRgb()) {
-            final Color c = new Color(color);
-            return "0x"
-                    +getHexValue((byte) c.getRed())
-                    +getHexValue((byte) c.getGreen())
-                    +getHexValue((byte) c.getBlue());
-        }
-        return ""+color;
-    }
+    private String formatColor(int color) { return isRgb() ? rgb_hex(color) : "" + color; }
 
     public int _colorFor(GameTileState tile) {
         if (tile == null || !tile.hasOwner()) return getBlankColor();
@@ -98,41 +87,10 @@ public class GameBoardPalette {
         return randomColor();
     }
 
-    public int randomColor() {  return isRgb() ? randomRgbColor() : randomAnsiColor(); }
-
-    public int randomRgbColor() {
-        int val;
-        do {
-            val = RandomUtils.nextInt(0x000000, 0xffffff);
-        } while (val == getBlankColor() || val == getCurrentPlayerColor() || usedColors.contains(val));
-        return val;
-    }
-
-    public int randomAnsiColor() {
-        int val;
-        do {
-            val = RandomUtils.nextInt(1, 254);
-        }
-        while (val == getBlankColor() || val == getCurrentPlayerColor() || usedColors.contains(val));
-        return val;
-    }
+    public int randomColor() {  return isRgb() ? randomRgbColor(getUsedColors()) : randomAnsiColor(getUsedColors()); }
 
     private int parseColor(String color, int defaultColor) {
         return isRgb() ? parseRgb(color, defaultColor) : parseAnsi(color, defaultColor);
     }
 
-    private int parseAnsi(String color, int defaultColor) {
-        try {
-            return Integer.parseInt(color);
-        } catch (Exception e) {
-            return defaultColor;
-        }
-    }
-
-    private int parseRgb(String colorString, int defaultRgb) {
-        if (empty(colorString)) return defaultRgb;
-        if (colorString.startsWith("0x")) return Integer.parseInt(colorString.substring(2), 16);
-        if (colorString.startsWith("#")) return Integer.parseInt(colorString.substring(1), 16);
-        return defaultRgb;
-    }
 }
