@@ -153,12 +153,21 @@ function wl_prompt {
   fi
 }
 
+function http_code {
+ code="${1}"
+ if [[ ! -z "${code}" && ! "${code}" =~ [A-Za-z] ]] ; then
+   echo "${code}"
+ else
+   echo "0"
+ fi
+}
+
 function wl_exists {
   SESSION_TOKEN="${1}"
   URL="${2}"
   response=$(curl --silent --write-out "\n%{http_code}\n" --header "${SESSION_TOKEN}" ${URL})
   status_code=$(echo "${response}" | sed -n '$p')
-  if [[ -z "${status_code}" || ${status_code} -ne 200 ]] ; then
+  if [[ $(http_code ${status_code}) -ne 200 ]] ; then
     echo "false"
   else
     echo "true"
@@ -175,10 +184,7 @@ function wl_get {
   response=$(curl --silent --write-out "\n%{http_code}\n" --header "${SESSION_TOKEN}" ${URL})
   status_code=$(echo "${response}" | sed -n '$p')
   json=$(echo "${response}" | sed '$d' | tee ${RESPONSE_JSON})
-  if [ -z "${status_code}" ] ; then
-    die "${ERR_MESSAGE}: ${json}"
-  fi
-  if [[ ${status_code} -eq 200 && ( ! -z "${json}" || ${FAIL_ON_EMPTY_RESPONSE} != "Y"  ) ]] ; then
+  if [[ $(http_code ${status_code}) -eq 200 && ( ! -z "${json}" || ${FAIL_ON_EMPTY_RESPONSE} != "Y"  ) ]] ; then
     echo "${json}"
   else
     die "${ERR_MESSAGE}: ${status_code} / ${json}"
@@ -190,21 +196,26 @@ function wl_post {
   URL="${2}"
   DATA="${3}"
   OUTFILE="${4:-/dev/null}"
-  ERR_MESSAGE="${5:-error}"
+  ALLOWED_CODES="${5:"200 302 304 404 422"}"
 
   echo "${URL}" > ${REQUEST_URL}
   response=$(echo "${DATA}" | curl --silent --write-out "\n%{http_code}\n" --header "Content-Type: application/json" --header "${SESSION_TOKEN}" -X POST -d @- ${URL})
   status_code=$(echo "${response}" | sed -n '$p')
   json=$(echo "${response}" | sed '$d' | tee ${RESPONSE_JSON} | tee ${OUTFILE})
-  if [ -z "${status_code}" ] ; then
-    die "${ERR_MESSAGE}: ${json}"
-  fi
 
-  if [[ ${status_code} -eq 422 ]] ; then
-    error_stdout "$(validation_errors "${json}")"
-  else
-    echo "${status_code}"
-  fi
+  http_code=$(http_code ${status_code})
+  case ${http_code} in
+    # First arg is all digits, it must be X1, use default/current room
+    422) error "$(validation_errors "${json}")" ;;
+    200) ;;
+    *)
+      if [[ $(echo ${ALLOWED_CODES} | grep ${http_code} | wc -l | tr -d ' ') -eq 0 ]] ; then
+        die "${ERR_MESSAGE}: ${status_code} / ${json}"
+      fi
+    ;;
+  esac
+  echo "${status_code}"
+
 }
 
 if [ -f ${ENV_FILE} ] ; then
