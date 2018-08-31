@@ -196,7 +196,7 @@ function wl_post {
   URL="${2}"
   DATA="${3}"
   OUTFILE="${4:-/dev/null}"
-  ALLOWED_CODES="${5:"200 302 304 404 422"}"
+  ALLOWED_CODES="${5:-"200 302 304 404 422"}"
 
   echo "${URL}" > ${REQUEST_URL}
   response=$(echo "${DATA}" | curl --silent --write-out "\n%{http_code}\n" --header "Content-Type: application/json" --header "${SESSION_TOKEN}" -X POST -d @- ${URL})
@@ -204,18 +204,13 @@ function wl_post {
   json=$(echo "${response}" | sed '$d' | tee ${RESPONSE_JSON} | tee ${OUTFILE})
 
   http_code=$(http_code ${status_code})
-  case ${http_code} in
-    # First arg is all digits, it must be X1, use default/current room
-    422) error "$(validation_errors "${json}")" ;;
-    200) ;;
-    *)
-      if [[ $(echo ${ALLOWED_CODES} | grep ${http_code} | wc -l | tr -d ' ') -eq 0 ]] ; then
-        die "${ERR_MESSAGE}: ${status_code} / ${json}"
-      fi
-    ;;
-  esac
-  echo "${status_code}"
-
+  for code in ${ALLOWED_CODES} ; do
+    if [[ "${code}" == "${http_code}" ]] ; then
+      echo "${http_code}"
+      return
+    fi
+  done
+  die "wl_post(${URL}): ${status_code} / ${json}"
 }
 
 if [ -f ${ENV_FILE} ] ; then

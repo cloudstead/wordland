@@ -8,8 +8,8 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.NameAndValue;
 
-import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 import static org.cobbzilla.util.graphics.ColorUtil.*;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
@@ -44,12 +44,14 @@ public class GameBoardPalette {
         playerColors = ArrayUtil.append(playerColors, new NameAndValue(player, color));
     }
 
-    @Getter(lazy=true) private final Collection<Integer> usedColors = initUsedColors();
-    private HashSet<Integer> initUsedColors() {
-        final HashSet<Integer> colors = new HashSet<>();
-        colors.add(getBlankColor());
-        colors.add(getCurrentPlayerColor());
-        return colors;
+    @JsonIgnore private Set<Integer> usedColors = null;
+    private Set<Integer> getUsedColors () {
+        if (usedColors == null) {
+            usedColors = new HashSet<>();
+            usedColors.add(getBlankColor());
+            usedColors.add(getCurrentPlayerColor());
+        }
+        return usedColors;
     }
 
     @JsonIgnore public int getCurrentPlayerColor() { return parseRgb(currentPlayerColor, getDefaultCurrentPlayerColor()); }
