@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.graphics.ColorUtil.rgb2ansi;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class GameTileState {
@@ -24,8 +25,8 @@ public class GameTileState {
     public static final String F_PREVIEW_PLAY = "preview_play";
     public static final String F_PREVIEW_PLAY_BLOCKED = "preview_play_blocked";
 
-    public static final int F_PREVIEW_PLAY_BG = 240;
-    public static final int F_PREVIEW_PLAY_BLOCKED_BG = 249;
+    public static final int F_PREVIEW_PLAY_BG = 0xeeeeee;
+    public static final int F_PREVIEW_PLAY_BLOCKED_BG = 0xbbbbbb;
 
     public static final String TXT_SPACER = "   ";
 
@@ -57,6 +58,8 @@ public class GameTileState {
     }
 
     public static TextGridResponse grid (GameTileState[][] tiles, GameBoardPalette palette, AttemptedTile[] attempt) {
+
+        if (palette != null) palette.init();
 
         final TextGridResponse text = new TextGridResponse();
         if (!empty(attempt)) {
@@ -93,8 +96,8 @@ public class GameTileState {
             bg = F_PREVIEW_PLAY_BLOCKED_BG;
         }
         b.append("\\033[38;5;")
-                .append(fg)
-                .append(bg == null ? "" : ";48;5;"+bg)
+                .append(rgb2ansi(fg))
+                .append(bg == null ? "" : ";48;5;"+rgb2ansi(bg))
                 .append("m");
         return b.toString();
     }

@@ -200,7 +200,7 @@ function wl_post {
   URL="${2}"
   DATA="${3}"
   OUTFILE="${4:-/dev/null}"
-  ALLOWED_CODES="${5:-"200 302 304 404 422"}"
+  ALLOWED_CODES="${5:-"200 302 304 422"}"
 
   echo "${URL}" > ${REQUEST_URL}
   response=$(echo "${DATA}" | curl --silent --write-out "\n%{http_code}\n" --header "Content-Type: application/json" --header "${SESSION_TOKEN}" -X POST -d @- ${URL})
@@ -214,7 +214,7 @@ function wl_post {
       return
     fi
   done
-  die "wl_post(${URL}): ${status_code} / ${json}"
+  die "wl_post(${URL}): ${status_code}$(if [[ ! -z "${json}" ]] ; then echo " / ${json}" ; fi)"
 }
 
 if [ -f ${ENV_FILE} ] ; then

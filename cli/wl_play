@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "~~~~~~ running $0 ${@}"
+
 SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/_wl_common
@@ -21,14 +21,11 @@ fi
 WL_PLAY_PID="$$"
 WEBSOCKET_PID="${3}"
 if [[ -z ${WEBSOCKET_PID} ]] ; then
-echo "starting websocket, no PID in call"
   set -e
   ${SCRIPT_DIR}/_wl_websocket ${WL_PLAY_PID} &
   WEBSOCKET_PID=$!
   disown %1
   exec ${0} ${ROOM_NAME} -n ${WEBSOCKET_PID}
-else
-  echo "wl_play running without starting websocket, it is running on ${WEBSOCKET_PID}"
 fi
 
 function shutdown_websocket {
@@ -42,5 +39,4 @@ function shutdown_websocket {
 }
 trap 'shutdown_websocket' INT TERM EXIT
 
-echo "running _wl_play ${ROOM_NAME} ${WEBSOCKET_PID} ..."
 exec ${SCRIPT_DIR}/_wl_play ${ROOM_NAME} ${WEBSOCKET_PID}

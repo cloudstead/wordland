@@ -17,7 +17,14 @@ EOF
 }
 
 TEMP_SESSION=$(mktemp /tmp/wl_room_session.XXXXXXXX.json)
-wl_post "${SESSION_TOKEN}" ${WL_API}/rooms/${ROOM_NAME}/join "$(join_obj)" ${TEMP_SESSION} > /dev/null || die "$(translate_message err_api_join)"
+join_status=$(wl_post "${SESSION_TOKEN}" ${WL_API}/rooms/${ROOM_NAME}/join "$(join_obj)" ${TEMP_SESSION})
+case $(http_code ${join_status}) in
+  200)
+  ;;
+  *)
+    die "$(translate_message err_api_join)"
+  ;;
+esac
 if [[ ! -f ${TEMP_SESSION} || ! -s ${TEMP_SESSION} ]] ; then
   die "$(translate_message err_api_join)"
 fi
