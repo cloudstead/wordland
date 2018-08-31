@@ -8,10 +8,13 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.NameAndValue;
 import org.cobbzilla.util.graphics.ColorMode;
+import wordland.model.support.ScoreboardEntry;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.graphics.ColorUtil.*;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -39,6 +42,16 @@ public class GameBoardPalette {
         playerColors = ArrayUtil.append(playerColors, new NameAndValue(player, color));
     }
 
+    @JsonIgnore @Getter @Setter private List<ScoreboardEntry> scoreboard;
+    public boolean hasScoreboard () { return !empty(scoreboard); }
+    public ScoreboardEntry scoreboard(int i) {
+        if (empty(scoreboard) || i < 0 || i >= scoreboard.size()) {
+            return null;
+        }
+        return scoreboard.get(i);
+    }
+    @JsonIgnore @Getter public int longestScoreboardName = -1;
+
     @JsonIgnore private Set<Integer> usedColors = null;
 
     public void init () {
@@ -50,6 +63,11 @@ public class GameBoardPalette {
         }
         blankColor = rgb2hex(parseRgb(blankColor, DEFAULT_BLANK_COLOR));
         currentPlayerColor = rgb2hex(parseRgb(currentPlayerColor, DEFAULT_CURRENT_PLAYER_COLOR));
+        if (hasScoreboard()) {
+            for (ScoreboardEntry e : scoreboard) {
+                if (e.getName().length() > longestScoreboardName) longestScoreboardName = e.getName().length();
+            }
+        }
     }
 
     @JsonIgnore public int getCurrentPlayerRgb() { return parseRgb(currentPlayerColor); }
@@ -60,11 +78,13 @@ public class GameBoardPalette {
                 .setCurrentPlayerId(currentPlayerId);
     }
 
+    public String colorForPlayer(String playerId) { return NameAndValue.find(playerColors, playerId); }
+
     public int colorFor(GameTileState tile) {
         int color = _colorFor(tile);
         usedColors.add(color);
         if (tile.hasOwner()) {
-            if (NameAndValue.find(playerColors, tile.getOwner()) == null) {
+            if (colorForPlayer(tile.getOwner()) == null) {
                 addPlayerColor(tile.getOwner(), rgb2hex(color));
             }
         }

@@ -150,6 +150,10 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
     public Response getScoreboard(@Context HttpContext ctx,
                                   @PathParam("name") String room) {
         final AccountSession account = userPrincipal(ctx);
+        return ok(getScoreboard(room));
+    }
+
+    protected List<ScoreboardEntry> getScoreboard(@PathParam("name") String room) {
         final GameState state = gamesMaster.getGameState(room);
         final Collection<GamePlayer> players = state.getPlayers();
         final Map<String, String> scoreboard = state.getScoreboard();
@@ -158,12 +162,19 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
             final Optional<GamePlayer> player = players.stream().filter(p -> p.getId().equals(entry.getKey())).findFirst();
             if (player.isPresent()) {
                 final GamePlayer p = player.get();
-                scoreboardList.add(new ScoreboardEntry(p.getId(), p.getName(), Integer.parseInt(entry.getValue())));
+                scoreboardList.add(new ScoreboardEntry()
+                        .setId(p.getId())
+                        .setName(p.getName())
+                        .setScore(Integer.parseInt(entry.getValue())));
             } else {
-                scoreboardList.add(new ScoreboardEntry(entry.getKey(), entry.getKey(), Integer.parseInt(entry.getValue())));
+                scoreboardList.add(new ScoreboardEntry()
+                        .setId(entry.getKey())
+                        .setName(entry.getKey())
+                        .setScore(Integer.parseInt(entry.getValue())));
             }
         }
-        return ok(scoreboardList);
+        Collections.sort(scoreboardList);
+        return scoreboardList;
     }
 
     @GET @Path("/{name}"+EP_BOARD+EP_VIEW_PNG)
@@ -221,11 +232,12 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                                    @QueryParam("x2") Integer x2,
                                    @QueryParam("y1") Integer y1,
                                    @QueryParam("y2") Integer y2,
+                                   @QueryParam("sb") Boolean includeScoreboard,
                                    @QueryParam("palette") String paletteJson) {
         final GameBoardPalette palette = paletteJson != null
                 ? json(paletteJson, GameBoardPalette.class)
                 : null;
-        return boardTextView(ctx, room, x1, x2, y1, y2, palette);
+        return boardTextView(ctx, room, x1, x2, y1, y2, includeScoreboard, palette);
     }
 
     @POST @Path("/{name}"+EP_BOARD+EP_VIEW_TXT)
@@ -236,11 +248,13 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                                    @QueryParam("x2") Integer x2,
                                    @QueryParam("y1") Integer y1,
                                    @QueryParam("y2") Integer y2,
+                                   @QueryParam("sb") Boolean includeScoreboard,
                                    GameBoardPalette palette) {
 
         final AccountSession account = userPrincipal(ctx);
         if (palette == null) palette = defaultPalette(account.getId());
         palette.setAnsi();
+        if (includeScoreboard == null || !includeScoreboard) palette.setScoreboard(getScoreboard(room));
 
         final GameBoardState board = getGameBoardState(room, x1, x2, y1, y2);
         return ok(board.grid(palette));
@@ -253,6 +267,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                                       @QueryParam("x2") Integer x2,
                                       @QueryParam("y1") Integer y1,
                                       @QueryParam("y2") Integer y2,
+                                      @QueryParam("sb") Boolean includeScoreboard,
                                       TextPreviewRequest request) {
 
         final AccountSession account = userPrincipal(ctx);
@@ -261,6 +276,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (request == null) request = new TextPreviewRequest();
         if (!request.hasPalette()) request.setPalette(defaultPalette(account.getId()));
         request.getPalette().setAnsi();
+        if (includeScoreboard == null || !includeScoreboard) request.getPalette().setScoreboard(getScoreboard(room));
 
         if (request.hasTiles()) {
             if (!request.isValid()) return invalid("err.attempt.invalid");

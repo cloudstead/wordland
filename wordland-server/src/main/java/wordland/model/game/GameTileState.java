@@ -6,9 +6,10 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.ArrayUtil;
 import org.cobbzilla.util.collection.NameAndValue;
-import org.cobbzilla.util.graphics.ColorUtil;
+import org.cobbzilla.util.string.StringUtil;
 import wordland.model.support.AttemptedTile;
 import wordland.model.support.PlayedTile;
+import wordland.model.support.ScoreboardEntry;
 import wordland.model.support.TextGridResponse;
 
 import java.util.HashMap;
@@ -17,7 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
-import static org.cobbzilla.util.graphics.ColorUtil.rgb2ansi;
+import static org.cobbzilla.util.graphics.ColorUtil.*;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class GameTileState {
@@ -68,26 +69,50 @@ public class GameTileState {
             text.setSuccess(attemptState.successful());
         }
 
-        final StringBuilder b = new StringBuilder();
+        StringBuilder b = new StringBuilder();
         for (int i=0; i<tiles.length; i++) {
             final GameTileState[] row = tiles[i];
             final StringBuilder rowVal = new StringBuilder();
             for (int j=0; j<row.length; j++) {
                 final GameTileState tile = row[j];
-                if (rowVal.length() > 0) rowVal.append(TXT_SPACER);               // add spacer if after first element
-                if (palette != null) rowVal.append(setAnsiColors(tile, palette)); // set colors if we have a palette
-                rowVal.append(tile.getSymbol().toUpperCase());                    // write tile symbol
-                if (palette != null) rowVal.append(ColorUtil.ANSI_RESET);                   // reset colors
+                if (rowVal.length() > 0) rowVal.append(TXT_SPACER);              // add spacer if after first element
+                if (palette != null) rowVal.append(tileColors(tile, palette));   // set colors if we have a palette
+                rowVal.append(tile.getSymbol().toUpperCase());                   // write tile symbol
+                rowVal.append(ANSI_RESET);                                       // reset colors
             }
             if (b.length() > 0) b.append("\n");
             b.append(rowVal);
         }
 
+        if (palette != null) {
+            if (palette.hasScoreboard()) {
+                final String[] lines = b.toString().split("\n");
+                final StringBuilder withScores = new StringBuilder();
+                for (int i=0; i<lines.length; i++) {
+                    final ScoreboardEntry scoreboardEntry = palette.scoreboard(i);
+                    if (scoreboardEntry != null) {
+                        final String color = palette.colorForPlayer(scoreboardEntry.getId());
+                        final int spaceCount = palette.getLongestScoreboardName() - scoreboardEntry.getName().length();
+                        withScores.append(lines[i])                              // start with existing line
+                                .append("     ")                                 // move a bit to the right of the board
+                                .append(ansiColor(parseRgb(color)))              // enable color for this player
+                                .append(scoreboardEntry.getName()).append(" : ") // write player name and colon
+                                .append(StringUtil.repeat(" ", spaceCount))   // correct spacing
+                                .append(scoreboardEntry.getScore())              // write score
+                                .append(ANSI_RESET)                              // reset colors
+                                .append("\n");
+                    } else {
+                        withScores.append(lines[i]).append("\n");
+                    }
+                }
+                b = withScores;
+            }
+        }
+
         return text.setGrid(b.toString());
     }
 
-    protected static String setAnsiColors(GameTileState tile, GameBoardPalette palette) {
-        final StringBuilder b = new StringBuilder();
+    protected static String tileColors(GameTileState tile, GameBoardPalette palette) {
         int fg = palette.colorFor(tile);
         Integer bg = null;
         if (tile.hasFeature(F_PREVIEW_PLAY)) {
@@ -95,11 +120,7 @@ public class GameTileState {
         } else if (tile.hasFeature(F_PREVIEW_PLAY_BLOCKED)) {
             bg = F_PREVIEW_PLAY_BLOCKED_BG;
         }
-        b.append("\\033[38;5;")
-                .append(rgb2ansi(fg))
-                .append(bg == null ? "" : ";48;5;"+rgb2ansi(bg))
-                .append("m");
-        return b.toString();
+        return ansiColor(fg, bg);
     }
 
     private static class AttemptState {

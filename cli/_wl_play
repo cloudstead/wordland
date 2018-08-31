@@ -126,7 +126,14 @@ function show_tray {
   fi
 }
 
+function show_scoreboard {
+  scoreboard=$(wl_get "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/scoreboard")
+
+}
+
 function show_board {
+  show_scoreboard
+
   if [[ -f ${BOARD_JSON} ]] ; then
     cp ${BOARD_JSON} ${BOARD_JSON}.bak
   fi
