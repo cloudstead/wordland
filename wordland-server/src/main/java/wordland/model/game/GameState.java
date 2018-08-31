@@ -8,6 +8,8 @@ import org.cobbzilla.util.time.TimeUtil;
 import wordland.model.GameBoard;
 import wordland.model.GameBoardBlock;
 import wordland.model.GameRoom;
+import wordland.model.PointSystem;
+import wordland.model.game.score.PlayScore;
 import wordland.model.json.GameBoardSettings;
 import wordland.model.json.GameRoomSettings;
 import wordland.model.support.PlayedTile;
@@ -59,6 +61,9 @@ public class GameState {
     private GameRoomSettings roomSettings() { return room.getSettings(); }
 
     public GamePlayer getPlayer(String id) { return stateStorage.getPlayer(id); }
+
+    public Collection<GamePlayer> getPlayers() { return stateStorage.getPlayers(); }
+    public Map<String, String> getScoreboard() { return stateStorage.getScorebord(); }
 
     public GameStateChange addPlayer(GamePlayer player) {
         // todo check maxPlayers. if maxPlayers reached, see if any can be evicted? maybe not, let GameDaemon handle that...
@@ -165,6 +170,8 @@ public class GameState {
             }
         }
 
+        final PointSystem pointSystem = roomSettings().getPointSystem();
+        final PlayScore playScore = new PlayScore();
         final Map<String, GameBoardBlock> alteredBlocks = new HashMap<>();
         synchronized (stateStorage) {
 
@@ -188,9 +195,12 @@ public class GameState {
                 if (isClaimableByPlayer(player, boardTile, tile.getX(), tile.getY())) {
                     boardTile.setOwner(player.getId());
                     alteredBlocks.put(block.getBlockKey(), block);
+                    playScore.addScore(pointSystem.scoreLetter(tile));
                 }
             }
-            return stateStorage.playWord(player, alteredBlocks.values(), tiles);
+            playScore.addScore(pointSystem.scoreWord(word));
+            playScore.addScores(pointSystem.scoreBoard(stateStorage, player, word, tiles));
+            return stateStorage.playWord(player, alteredBlocks.values(), tiles, playScore);
         }
     }
 
@@ -298,6 +308,8 @@ public class GameState {
 
         final int imHeight = imageHeight;
         final int imWidth = imageWidth;
+
+        palette.init();
 
         final Collection<Future<?>> futures = new ArrayList<>();
         @Cleanup("shutdownNow") final ExecutorService pool = fixedPool(100);

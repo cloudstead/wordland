@@ -7,6 +7,7 @@ import lombok.experimental.Accessors;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.validation.HasValue;
 import wordland.model.game.GameStateChangeType;
+import wordland.model.game.score.PlayScore;
 
 import javax.validation.constraints.Size;
 
@@ -54,4 +55,7 @@ public class GameRuntimeEvent {
         }
         return b.toString();
     }
+
+    @Getter @Setter private PlayScore score;
+    public boolean hasScore () { return score != null && score.getTotal() > 0; }
 }

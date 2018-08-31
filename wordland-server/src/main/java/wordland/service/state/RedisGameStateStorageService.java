@@ -4,11 +4,17 @@ import org.cobbzilla.wizard.cache.redis.RedisService;
 import wordland.model.GameBoardBlock;
 import wordland.model.GameRoom;
 import wordland.model.SymbolDistribution;
-import wordland.model.game.*;
+import wordland.model.game.GamePlayer;
+import wordland.model.game.GameStateChange;
+import wordland.model.game.GameStateStorageService;
+import wordland.model.game.RoomState;
+import wordland.model.game.score.PlayScore;
 import wordland.model.json.GameRoomSettings;
 import wordland.model.support.PlayedTile;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -23,6 +29,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     public static final String K_BLOCKS      = "blocks";
     public static final String K_JOIN_ORDER  = "joinOrder";
     public static final String K_NEXT_PLAYER = "nextPlayer";
+    public static final String K_SCOREBOARD  = "scoreboard";
 
     private GameRoom room;
     private RedisService redis;
@@ -60,6 +67,15 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     @Override public synchronized GamePlayer getPlayer(String id) {
         final String json = redis.hget(K_PLAYERS, id);
         return json == null ? null : json(json, GamePlayer.class);
+    }
+
+    @Override public synchronized Collection<GamePlayer> getPlayers() {
+        final Map<String, String> map = redis.hgetall(K_PLAYERS);
+        final Collection<GamePlayer> players = new ArrayList<>();
+        for (String json : map.values()) {
+            players.add(json(json, GamePlayer.class));
+        }
+        return players;
     }
 
     @Override public synchronized int getPlayerCount() {
@@ -135,9 +151,13 @@ public class RedisGameStateStorageService implements GameStateStorageService {
 
     @Override public synchronized GameStateChange playWord(GamePlayer player,
                                                            Collection<GameBoardBlock> blocks,
-                                                           PlayedTile[] tiles) {
+                                                           PlayedTile[] tiles,
+                                                           PlayScore score) {
         for (GameBoardBlock block : blocks) setBlock(block);
-        final GameStateChange stateChange = nextState(wordPlayed(nextVersion(), player, tiles));
+
+        incrementPlayerScore(player, score);
+
+        final GameStateChange stateChange = nextState(wordPlayed(nextVersion(), player, tiles, score));
 
         if (roomSettings().hasRoundRobinPolicy()) {
             // advance to next player ID
@@ -164,6 +184,14 @@ public class RedisGameStateStorageService implements GameStateStorageService {
 
         return stateChange;
     }
+
+    private void incrementPlayerScore(GamePlayer player, PlayScore playScore) {
+        final String playerScore = redis.hget(K_SCOREBOARD, player.getId());
+        final int score = playerScore == null ? 0 : Integer.parseInt(playerScore);
+        redis.hset(K_SCOREBOARD, player.getId(), ""+(score + playScore.getTotal()));
+    }
+
+    @Override public Map<String, String> getScorebord () { return redis.hgetall(K_SCOREBOARD); }
 
     @Override public synchronized GameBoardBlock getBlock(String blockKey) {
         final String json = redis.get(K_BLOCKS + "/" + blockKey);

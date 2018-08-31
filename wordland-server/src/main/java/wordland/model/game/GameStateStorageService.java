@@ -2,9 +2,11 @@ package wordland.model.game;
 
 import wordland.model.GameBoardBlock;
 import wordland.model.SymbolDistribution;
+import wordland.model.game.score.PlayScore;
 import wordland.model.support.PlayedTile;
 
 import java.util.Collection;
+import java.util.Map;
 
 public interface GameStateStorageService {
 
@@ -15,6 +17,7 @@ public interface GameStateStorageService {
     void endGame();
 
     GamePlayer getPlayer(String id);
+    Collection<GamePlayer> getPlayers();
     int getPlayerCount();
 
     GameStateChange addPlayer(GamePlayer player);
@@ -28,7 +31,11 @@ public interface GameStateStorageService {
 
     GameStateChange playWord(GamePlayer player,
                              Collection<GameBoardBlock> blocks,
-                             PlayedTile[] tiles);
+                             PlayedTile[] tiles,
+                             PlayScore score);
 
     String getCurrentPlayerId();
+
+    Map<String, String> getScorebord ();
+
 }

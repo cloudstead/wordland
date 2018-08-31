@@ -10,12 +10,17 @@ import org.cobbzilla.wizard.model.entityconfig.annotations.ECType;
 import org.cobbzilla.wizard.model.entityconfig.annotations.ECTypeURIs;
 import org.cobbzilla.wizard.validation.HasValue;
 import org.hibernate.annotations.Type;
+import wordland.model.game.GamePlayer;
+import wordland.model.game.GameStateStorageService;
+import wordland.model.game.score.PlayScoreComponent;
 import wordland.model.json.PointSystemSettings;
+import wordland.model.support.PlayedTile;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import java.util.Collection;
 
 import static wordland.ApiConstants.EP_POINT_SYSTEMS;
 
@@ -42,4 +47,10 @@ public class PointSystem extends NamedIdentityBase {
     @Type(type=PointSystemSettings.JSONB_TYPE) @Column(nullable=false, updatable=false)
     @Getter @Setter private PointSystemSettings settings;
 
+    public PlayScoreComponent scoreLetter(PlayedTile symbol) { return settings.scoreLetter(symbol); }
+    public PlayScoreComponent scoreWord(String word) { return settings.scoreWord(word); }
+
+    public Collection<PlayScoreComponent> scoreBoard(GameStateStorageService stateStorage, GamePlayer player, String word, PlayedTile[] tiles) {
+        return settings.scoreBoard(stateStorage, player, word, tiles);
+    }
 }

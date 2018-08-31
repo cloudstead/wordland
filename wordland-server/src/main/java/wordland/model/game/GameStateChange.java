@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.json.JsonUtil;
+import wordland.model.game.score.PlayScore;
 import wordland.model.support.GameRuntimeEvent;
 import wordland.model.support.PlayedTile;
 
@@ -39,8 +40,12 @@ public class GameStateChange {
         return new GameStateChange(version, GameStateChangeType.player_left_game_ended, id);
     }
 
-    public static GameStateChange wordPlayed(long version, GamePlayer player, PlayedTile[] tiles) {
-        return new GameStateChange(version, GameStateChangeType.word_played, new GameRuntimeEvent().setId(player.getId()).setTiles(tiles));
+    public static GameStateChange wordPlayed(long version, GamePlayer player, PlayedTile[] tiles, PlayScore score) {
+        final GameRuntimeEvent event = new GameRuntimeEvent()
+                .setId(player.getId())
+                .setTiles(tiles)
+                .setScore(score);
+        return new GameStateChange(version, GameStateChangeType.word_played, event);
     }
 
 }

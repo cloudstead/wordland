@@ -18,6 +18,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.*;
 
 import static org.cobbzilla.util.http.HttpContentTypes.TEXT_PLAIN;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -143,6 +144,26 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
 
         gamesMaster.removePlayer(room, request.getApiToken(), found.getId());
         return ok();
+    }
+
+    @GET @Path("/{name}"+EP_SCOREBOARD)
+    public Response getScoreboard(@Context HttpContext ctx,
+                                  @PathParam("name") String room) {
+        final AccountSession account = userPrincipal(ctx);
+        final GameState state = gamesMaster.getGameState(room);
+        final Collection<GamePlayer> players = state.getPlayers();
+        final Map<String, String> scoreboard = state.getScoreboard();
+        final List<ScoreboardEntry> scoreboardList = new ArrayList<>();
+        for (Map.Entry<String, String> entry : scoreboard.entrySet()) {
+            final Optional<GamePlayer> player = players.stream().filter(p -> p.getId().equals(entry.getKey())).findFirst();
+            if (player.isPresent()) {
+                final GamePlayer p = player.get();
+                scoreboardList.add(new ScoreboardEntry(p.getId(), p.getName(), Integer.parseInt(entry.getValue())));
+            } else {
+                scoreboardList.add(new ScoreboardEntry(entry.getKey(), entry.getKey(), Integer.parseInt(entry.getValue())));
+            }
+        }
+        return ok(scoreboardList);
     }
 
     @GET @Path("/{name}"+EP_BOARD+EP_VIEW_PNG)
