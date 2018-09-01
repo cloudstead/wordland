@@ -29,7 +29,7 @@ if [[ -z "${ROOM}" ]] ; then
   done
   echo
   echo "$(translate_message msg_chooseRoom)"
-  echo ; echo -n "$(wl_prompt)"
+  echo ; echo -n "$(translate_message msg_choose_room_prompt) "
 
   while read line ; do
     if [[ -z "${line}" ]] ; then
@@ -53,7 +53,7 @@ if [[ -z "${ROOM}" ]] ; then
         exec ${0} "${line}"
       fi
     fi
-    echo ; echo -n "$(wl_prompt)"
+    echo ; echo -n "$(translate_message msg_choose_room_prompt) "
   done
 
 else
@@ -62,7 +62,7 @@ else
     exit $?
   fi
 
-  if [[ "$(wl_exists ${WL_API}/rooms/${ROOM})" != "true" ]] ; then
+  if [[ "$(wl_exists "${WL_API}/rooms/${ROOM}")" != "true" ]] ; then
     error "$(translate_message err_room_notFound): ${ROOM}"
     exec ${SCRIPT_DIR}/wl_rooms
   fi
@@ -91,7 +91,7 @@ else
   fi
 
   echo "$(translate_message msg_roomOptions)"
-  echo ; echo -n "$(wl_prompt)"
+  echo ; echo -n "$(room_prompt)"
   while read line ; do
     case ${line} in
       N|n)

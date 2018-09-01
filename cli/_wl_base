@@ -148,6 +148,10 @@ function validation_errors {
   translate_messages "$(echo "${1}" | jq '.[].messageTemplate' | tr '.' '_' | tr -d '"')"
 }
 
+function wl_api_host {
+  echo "${WL_API}" | awk -F[/:] '{print $4}'
+}
+
 function wl_prompt {
   name="$(session_name)"
   if [[ -z "${name}" ]] ; then
@@ -158,7 +162,7 @@ function wl_prompt {
     if [[ ! -z "${room}" ]] ; then
       room="/${room}"
     fi
-    echo "${name}@$(echo "${WL_API}" | awk -F[/:] '{print $4}')${room}>>> "
+    echo "${name}@$(wl_api_host)${room}>>> "
   else
     if [[ ! -z "${room}" ]] ; then
     room="@${room}"
@@ -167,6 +171,17 @@ function wl_prompt {
   fi
 }
 
+function room_prompt {
+  name="$(session_name)"
+  if [[ -z "${name}" ]] ; then
+    name="not-signed-on"
+  fi
+  if [[ ! -z "${WL_VERBOSE_PROMPT}" && "${WL_VERBOSE_PROMPT}" == "Y" ]] ; then
+    echo "$(session_name)@$(wl_api_host)/$(translate_message msg_room_prompt_rooms)>>> "
+  else
+    echo "$(session_name)/$(translate_message msg_room_prompt_rooms)>>> "
+  fi
+}
 function http_code {
  code="${1}"
  if [[ ! -z "${code}" && ! "${code}" =~ [A-Za-z] ]] ; then

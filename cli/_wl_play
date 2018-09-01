@@ -122,7 +122,7 @@ function save_palette {
 }
 
 function show_rooms {
-  rooms_json=$(wl_get "${WL_API}/me/rooms")
+  rooms_json=$(wl_get ${WL_API}/me/rooms)
   i=1
   #echo "${rooms_json}" >> /tmp/rooms.json
   for room in $(echo "${rooms_json}" | jq '.[] | .name' | tr -d '"') ; do
@@ -130,8 +130,53 @@ function show_rooms {
     echo "${i} - ${room} - $(translate_message msg_room_state_${roomState})"
     i=$(expr ${i} + 1)
   done
-  echo "N - New Game"
-  echo
+  roomCount=$(expr ${i} - 1)
+  echo "n - New Game"
+  echo "q - Back to Current Game"
+  echo ; echo -n "$(room_prompt)"
+  roomNumber=""
+  while IFS= read -r -s -n1 char 2> /dev/null ; do
+    case ${char} in
+      [1-9])
+        if [[ -z "${roomNumber}" ]] ; then
+          roomNumber="${char}"
+          if [[ ${roomCount} -le 9 ]] ; then
+            roomName=$(echo "${rooms_json}" | jq '.['$(expr ${roomNumber} - 1)']')
+            echo "roomName is ${roomName}, would join now"
+            roomNumber=""
+          else
+            echo -n ${char}
+          fi
+        else
+          roomNumber="${roomNumber}${char}"
+        fi
+        continue
+      ;;
+      [0-9])
+        if [[ $(expr ${roomNumber} \* 10 + ${char}) -le ${roomCount} ]] ; then
+          roomNumber="${roomNumber}${char}"
+        fi
+        continue
+      ;;
+      '')
+        roomName=$(echo "${rooms_json}" | jq '.['$(expr ${roomNumber} - 1)']')
+        roomName=$(echo "${rooms_json}" | jq '.['$(expr ${roomNumber} - 1)']')
+        echo "roomName is ${roomName}, would join now"
+        roomNumber=""
+        break
+      ;;
+      q|Q)
+        break
+      ;;
+      n|N)
+        echo ; echo ; exec ${SCRIPT_DIR}/wl_rooms
+      ;;
+      *)
+        continue
+      ;;
+    esac
+    echo -n "$(room_prompt)"
+  done
 }
 
 function show_tray {
