@@ -207,7 +207,7 @@ function show_board {
     cp ${BOARD_JSON} ${BOARD_JSON}.bak
   fi
   echo "$(board_preview_obj)" | grep tiles >> /tmp/plog
-  board_status="$(wl_post "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "$(board_preview_obj)" "${BOARD_JSON}")" \
+  board_status="$(wl_post "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "$(board_preview_obj)" "${BOARD_JSON}" "200 422")" \
     || die "$(translate_message err_api_boardView)"
   case $(http_code ${board_status}) in
     200)
@@ -234,7 +234,6 @@ function show_board {
     if [[ -z "${SUCCESS}" || "${SUCCESS}" != "true" ]] ; then
       error -n "$(translate_message 'err_game_invalidPlay'): $(current_word)"
       CURRENT_PLAY=""
-      subtract_letter
     else
       CURRENT_PLAY="$(json_node "$(cat ${BOARD_JSON})" playedTiles)"
     fi
@@ -273,11 +272,11 @@ while [ 1 ] ; do
 
     # Increment current active char index
     '>')
-      echo "> start: AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}" >> /tmp/plog
+      echo "> start: ATI=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}" >> /tmp/plog
       if [[ ${#TILES[@]} -gt 0 ]] ; then
         ACTIVE_CHAR_INDEX=$(expr ${ACTIVE_CHAR_INDEX} + 1)
-        TILES[${ACTIVE_TRAY_INDEX}]="\"symbol\": \"${LETTERS[${ACTIVE_TRAY_INDEX}-1]}\", \"index\": ${ACTIVE_CHAR_INDEX}"
-        INDEXES[${ACTIVE_TRAY_INDEX}]=${ACTIVE_CHAR_INDEX}
+        TILES[${ACTIVE_TRAY_INDEX}-1]="\"symbol\": \"${LETTERS[${ACTIVE_TRAY_INDEX}-1]}\", \"index\": ${ACTIVE_CHAR_INDEX}"
+        INDEXES[${ACTIVE_TRAY_INDEX}-1]=${ACTIVE_CHAR_INDEX}
         echo "> end: BPO: $(board_preview_obj)" | grep tiles >> /tmp/plog
       else
         continue
@@ -286,14 +285,15 @@ while [ 1 ] ; do
 
     # Decrement current active char index, if possible
     '<')
-      echo "< start: AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}" >> /tmp/plog
+      echo "< start: ATI=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}" >> /tmp/plog
       if [[ ${#TILES[@]} -gt 0 ]] ; then
         ACTIVE_CHAR_INDEX=$(expr ${ACTIVE_CHAR_INDEX} - 1)
         if [ ${ACTIVE_CHAR_INDEX} -lt 1 ] ; then
           ACTIVE_CHAR_INDEX=1
+        else
+          TILES[${ACTIVE_TRAY_INDEX}-1]="\"symbol\": \"${LETTERS[${ACTIVE_TRAY_INDEX}-1]}\", \"index\": ${ACTIVE_CHAR_INDEX}"
+          INDEXES[${ACTIVE_TRAY_INDEX}-1]=${ACTIVE_CHAR_INDEX}
         fi
-        TILES[${ACTIVE_TRAY_INDEX}]="\"symbol\": \"${LETTERS[${ACTIVE_TRAY_INDEX}]}\", \"index\": ${ACTIVE_CHAR_INDEX}"
-        INDEXES[${ACTIVE_TRAY_INDEX}]=${ACTIVE_CHAR_INDEX}
         echo "< end: BPO: $(board_preview_obj)" | grep tiles >> /tmp/plog
       else
         continue
@@ -348,6 +348,7 @@ while [ 1 ] ; do
         ACTIVE_TRAY_INDEX=${next}
         ACTIVE_CHAR="${LETTERS[${ATR_INDEX}]}"
         ACTIVE_CHAR_INDEX="${INDEXES[${ATR_INDEX}]}"
+        echo "} end: ATI=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}" >> /tmp/plog
       else
         continue
       fi
@@ -361,6 +362,7 @@ while [ 1 ] ; do
         ACTIVE_TRAY_INDEX=${ATR_INDEX}
         ACTIVE_CHAR="${LETTERS[${prev}]}"
         ACTIVE_CHAR_INDEX="${INDEXES[${prev}]}"
+        echo "{ end: ATI=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}" >> /tmp/plog
       else
         continue
       fi
