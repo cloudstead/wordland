@@ -36,7 +36,7 @@ function reset_play {
   INDEXES=()
   ACTIVE_CHAR=""
   ACTIVE_CHAR_INDEX=1
-  ACTIVE_TRAY_INDEX=0
+  ACTIVE_TRAY_INDEX=1
 }
 
 function current_word {
@@ -52,19 +52,30 @@ function subtract_letter {
   if [[ -z "$(current_word)" ]] ; then
     return
   fi
-  unset 'TILES[${#TILES[@]}-1]'
-  unset 'LETTERS[${#LETTERS[@]}-1]'
-  unset 'INDEXES[${#INDEXES[@]}-1]'
-  if [[ ${#LETTERS[@]} -gt 0 ]] ; then
-    ACTIVE_CHAR="${LETTERS[${#LETTERS[@]}-1]}"
-  else
-    ACTIVE_CHAR=""
+
+  LETTER_INDEX=$(expr ${ACTIVE_TRAY_INDEX} - 1)
+  if [[ ${LETTER_INDEX} -lt 0 ]] ; then
+    # should never happen
+    return
   fi
-  if [[ ${#INDEXES[@]} -gt 0 ]] ; then
-    ACTIVE_CHAR_INDEX="${INDEXES[${#INDEXES[@]}-1]}"
-  else
-    ACTIVE_CHAR_INDEX=1
+  ACTIVE_TRAY_INDEX=${LETTER_INDEX}
+  if [[ ${ACTIVE_TRAY_INDEX} -le 0 ]] ; then
+    ACTIVE_TRAY_INDEX=1
   fi
+
+  echo "start subtract_letter: letters=${LETTERS[@]} / LETTER_INDEX=${LETTER_INDEX}, ACTIVE_TRAY_INDEX=${ACTIVE_TRAY_INDEX}" >> /tmp/plog
+
+  unset 'TILES[${LETTER_INDEX}]'
+  unset 'LETTERS[${LETTER_INDEX}]'
+  unset 'INDEXES[${LETTER_INDEX}]'
+  TILES=( "${TILES[@]:0:${LETTER_INDEX}}" "${TILES[@]:${ACTIVE_TRAY_INDEX}}" )
+  LETTERS=( "${LETTERS[@]:0:${LETTER_INDEX}}" "${LETTERS[@]:${ACTIVE_TRAY_INDEX}}" )
+  INDEXES=( "${INDEXES[@]:0:${LETTER_INDEX}}" "${INDEXES[@]:${ACTIVE_TRAY_INDEX}}" )
+
+#  ACTIVE_CHAR="$(echo $(current_word) | head -c $(expr ${ACTIVE_CHAR_INDEX} + 1) | tail -c 1)"
+  ACTIVE_CHAR="${LETTERS[${LETTER_INDEX}]}"
+  ACTIVE_CHAR_INDEX="${INDEXES[${LETTER_INDEX}]}"
+  echo "end subtract_letter: letters=${LETTERS[@]} / LETTER_INDEX=${LETTER_INDEX}, ACTIVE_TRAY_INDEX=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, should be ${LETTERS[${LETTER_INDEX}]}, L0=${LETTERS[0]}, L1=${LETTERS[1]}, L2=${LETTERS[2]}" >> /tmp/plog
 }
 
 function play_obj {
@@ -195,6 +206,7 @@ function show_board {
   if [[ -f ${BOARD_JSON} ]] ; then
     cp ${BOARD_JSON} ${BOARD_JSON}.bak
   fi
+  echo "$(board_preview_obj)" | grep tiles >> /tmp/plog
   board_status="$(wl_post "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "$(board_preview_obj)" "${BOARD_JSON}")" \
     || die "$(translate_message err_api_boardView)"
   case $(http_code ${board_status}) in
@@ -261,12 +273,12 @@ while [ 1 ] ; do
 
     # Increment current active char index
     '>')
+      echo "> start: AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}" >> /tmp/plog
       if [[ ${#TILES[@]} -gt 0 ]] ; then
         ACTIVE_CHAR_INDEX=$(expr ${ACTIVE_CHAR_INDEX} + 1)
-        unset 'TILES[${#TILES[@]}-1]'
-        unset 'INDEXES[${#INDEXES[@]}-1]'
-        TILES+=("\"symbol\": \"${LETTERS[-1]}\", \"index\": ${ACTIVE_CHAR_INDEX}")
-        INDEXES+=(${ACTIVE_CHAR_INDEX})
+        TILES[${ACTIVE_TRAY_INDEX}]="\"symbol\": \"${LETTERS[${ACTIVE_TRAY_INDEX}-1]}\", \"index\": ${ACTIVE_CHAR_INDEX}"
+        INDEXES[${ACTIVE_TRAY_INDEX}]=${ACTIVE_CHAR_INDEX}
+        echo "> end: BPO: $(board_preview_obj)" | grep tiles >> /tmp/plog
       else
         continue
       fi
@@ -274,15 +286,15 @@ while [ 1 ] ; do
 
     # Decrement current active char index, if possible
     '<')
+      echo "< start: AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}" >> /tmp/plog
       if [[ ${#TILES[@]} -gt 0 ]] ; then
         ACTIVE_CHAR_INDEX=$(expr ${ACTIVE_CHAR_INDEX} - 1)
         if [ ${ACTIVE_CHAR_INDEX} -lt 1 ] ; then
           ACTIVE_CHAR_INDEX=1
         fi
-        unset 'TILES[${#TILES[@]}-1]'
-        unset 'INDEXES[${#INDEXES[@]}-1]'
-        TILES+=("\"symbol\": \"${LETTERS[-1]}\", \"index\": ${ACTIVE_CHAR_INDEX}")
-        INDEXES+=(${ACTIVE_CHAR_INDEX})
+        TILES[${ACTIVE_TRAY_INDEX}]="\"symbol\": \"${LETTERS[${ACTIVE_TRAY_INDEX}]}\", \"index\": ${ACTIVE_CHAR_INDEX}"
+        INDEXES[${ACTIVE_TRAY_INDEX}]=${ACTIVE_CHAR_INDEX}
+        echo "< end: BPO: $(board_preview_obj)" | grep tiles >> /tmp/plog
       else
         continue
       fi
@@ -323,6 +335,32 @@ while [ 1 ] ; do
         LETTERS[${ATR_INDEX}]="${SAVED_LETTER}"
         INDEXES[${ATR_INDEX}]="${SAVED_INDEX}"
         ACTIVE_TRAY_INDEX=$(expr ${ACTIVE_TRAY_INDEX} - 1)
+      else
+        continue
+      fi
+    ;;
+
+    # Change currently active letter in the tray to the right, if possible
+    '}')
+      if [[ ${#TILES[@]} -gt 1 && ${ACTIVE_TRAY_INDEX} -lt $(current_word_length) ]] ; then
+        ATR_INDEX=$(expr ${ACTIVE_TRAY_INDEX})
+        next=$(expr ${ATR_INDEX} + 1)
+        ACTIVE_TRAY_INDEX=${next}
+        ACTIVE_CHAR="${LETTERS[${ATR_INDEX}]}"
+        ACTIVE_CHAR_INDEX="${INDEXES[${ATR_INDEX}]}"
+      else
+        continue
+      fi
+    ;;
+
+    # Change currently active letter in the tray to the left, if possible
+    '{')
+      if [[ ${#TILES[@]} -gt 1 && ${ACTIVE_TRAY_INDEX} -gt 1 ]] ; then
+        ATR_INDEX=$(expr ${ACTIVE_TRAY_INDEX} - 1)
+        prev=$(expr ${ATR_INDEX} - 1)
+        ACTIVE_TRAY_INDEX=${ATR_INDEX}
+        ACTIVE_CHAR="${LETTERS[${prev}]}"
+        ACTIVE_CHAR_INDEX="${INDEXES[${prev}]}"
       else
         continue
       fi
