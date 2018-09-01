@@ -45,8 +45,8 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     @Override public synchronized RoomState getRoomState() {
         final String state = redis.get(K_STATE);
         if (state != null) return RoomState.fromString(state);
-        redis.set(K_STATE, RoomState.awaiting.name());
-        return RoomState.awaiting;
+        redis.set(K_STATE, RoomState.waiting.name());
+        return RoomState.waiting;
     }
 
     @Override public synchronized void startGame() {

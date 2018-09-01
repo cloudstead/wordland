@@ -15,14 +15,14 @@ ROOM="$(echo ${1} | tr -d '"')"
 
 if [[ -z "${ROOM}" ]] ; then
   if [[ ${VERBOSE} -eq 1 ]] ; then
-    wl_get "${SESSION_TOKEN}" ${WL_API}/rooms
+    wl_get ${WL_API}/rooms
     exit $?
   fi
 
   echo "$(translate_message msg_availableRooms)"
   IFS=$'\n'
   i=1
-  rooms="$(wl_get "${SESSION_TOKEN}" ${WL_API}/rooms | jq .[].name)"
+  rooms="$(wl_get ${WL_API}/rooms | jq .[].name)"
   for room in ${rooms} ; do
     echo "  ${i}  : $(echo ${room} | tr -d '"')"
     i=$(expr ${i} + 1)
@@ -46,7 +46,7 @@ if [[ -z "${ROOM}" ]] ; then
       done
       error "1 $(translate_message err_room_notFound): ${line}"
     else
-      if [[ "$(wl_exists "${SESSION_TOKEN}" ${WL_API}/rooms/${ROOM})" != "true" ]] ; then
+      if [[ "$(wl_exists ${WL_API}/rooms/${ROOM})" != "true" ]] ; then
         error "2 $(translate_message err_room_notFound): ${line}"
       else
         # Re-run this command with room name
@@ -58,16 +58,16 @@ if [[ -z "${ROOM}" ]] ; then
 
 else
   if [[ ${VERBOSE} -eq 1 ]] ; then
-    wl_get "${SESSION_TOKEN}" ${WL_API}/rooms/${ROOM}
+    wl_get ${WL_API}/rooms/${ROOM}
     exit $?
   fi
 
-  if [[ "$(wl_exists "${SESSION_TOKEN}" ${WL_API}/rooms/${ROOM})" != "true" ]] ; then
+  if [[ "$(wl_exists ${WL_API}/rooms/${ROOM})" != "true" ]] ; then
     error "$(translate_message err_room_notFound): ${ROOM}"
     exec ${SCRIPT_DIR}/wl_rooms
   fi
 
-  room=$(wl_get "${SESSION_TOKEN}" ${WL_API}/rooms/${ROOM})
+  room=$(wl_get ${WL_API}/rooms/${ROOM})
 
   echo ; echo "$(translate_message msg_roomDetails) ${ROOM}"
   board=$(json_val "${room}" settings.board.name)

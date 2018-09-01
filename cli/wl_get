@@ -11,4 +11,4 @@ OUTFILE="${3:-/dev/null}"
 
 TMP_FILE=$(mktemp /tmp/$(basename $0).XXXXXXX)
 echo "GET ${URI}"
-wl_get "${SESSION_TOKEN}" "${WL_API}/${URI}"
+wl_get "${WL_API}/${URI}"

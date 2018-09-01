@@ -4,4 +4,4 @@ SCRIPT="${0}"
 SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/_wl_common
 
-wl_get "${SESSION_TOKEN}" ${WL_API}/boards
+wl_get ${WL_API}/boards

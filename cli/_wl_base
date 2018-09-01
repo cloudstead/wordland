@@ -168,10 +168,16 @@ function http_code {
  fi
 }
 
+function session_header {
+  if [[ -z "${SESSION_TOKEN}" ]] ; then
+    error "$(translate_message err_api_noSessionId)"
+  fi
+  echo "${SESSION_TOKEN}"
+}
+
 function wl_exists {
-  SESSION_TOKEN="${1}"
-  URL="${2}"
-  response=$(curl --silent --write-out "\n%{http_code}\n" --header "${SESSION_TOKEN}" ${URL})
+  URL="${1}"
+  response=$(curl --silent --write-out "\n%{http_code}\n" --header "$(session_header)" ${URL})
   status_code=$(echo "${response}" | sed -n '$p')
   if [[ $(http_code ${status_code}) -ne 200 ]] ; then
     echo "false"
@@ -181,13 +187,12 @@ function wl_exists {
 }
 
 function wl_get {
-  SESSION_TOKEN="${1}"
-  URL="${2}"
-  OUTFILE="${3}"
-  ALLOWED_CODES="${4:-"200"}"
+  URL="${1}"
+  OUTFILE="${2}"
+  ALLOWED_CODES="${3:-"200"}"
 
   echo "${URL}" > ${REQUEST_URL}
-  response=$(curl --silent --write-out "\n%{http_code}\n" --header "${SESSION_TOKEN}" ${URL})
+  response=$(curl --silent --write-out "\n%{http_code}\n" --header "$(session_header)" ${URL})
   status_code=$(echo "${response}" | sed -n '$p')
   if [[ ! -z "${OUTFILE}" ]] ; then
     json=$(echo "${response}" | sed '$d' | tee ${OUTFILE} | ${RESPONSE_JSON})
@@ -210,14 +215,13 @@ function wl_get {
 }
 
 function wl_post {
-  SESSION_TOKEN="${1}"
-  URL="${2}"
-  DATA="${3}"
-  OUTFILE="${4:-/dev/null}"
-  ALLOWED_CODES="${5:-"200"}"
+  URL="${1}"
+  DATA="${2}"
+  OUTFILE="${3:-/dev/null}"
+  ALLOWED_CODES="${4:-"200"}"
 
   echo "${URL}" > ${REQUEST_URL}
-  response=$(echo "${DATA}" | curl --silent --write-out "\n%{http_code}\n" --header "Content-Type: application/json" --header "${SESSION_TOKEN}" -X POST -d @- ${URL})
+  response=$(echo "${DATA}" | curl --silent --write-out "\n%{http_code}\n" --header "Content-Type: application/json" --header "$(session_header)" -X POST -d @- ${URL})
   status_code=$(echo "${response}" | sed -n '$p')
   json=$(echo "${response}" | sed '$d' | tee ${RESPONSE_JSON} | tee ${OUTFILE})
 

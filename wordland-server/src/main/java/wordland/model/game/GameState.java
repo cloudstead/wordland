@@ -78,7 +78,7 @@ public class GameState {
 
             int playerCount = stateStorage.getPlayerCount();
             if (roomSettings().hasMaxPlayers() && playerCount >= roomSettings().getMaxPlayers()) throw new RoomFullException(room);
-            if (roomState == RoomState.awaiting
+            if (roomState == RoomState.waiting
                     && (!roomSettings().hasMinPlayersToStart() || playerCount+1 >= roomSettings().getMinPlayersToStart())) {
                 return stateStorage.addPlayerStartGame(player);
 

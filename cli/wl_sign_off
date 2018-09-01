@@ -13,6 +13,6 @@ if [[ -z "${name}" ]] ; then
   name="$(session_name) $(translate_message msg_user_anonymousFlag)"
 fi
 
-wl_get "${SESSION_TOKEN}" ${WL_API}/auth/logout
+wl_get ${WL_API}/auth/logout
 rm -f ${SESSION_JSON} ${CURRENT_ROOM} ${CURRENT_ROOM}.json
 echo "$(translate_message msg_signoff_success) ${name}"

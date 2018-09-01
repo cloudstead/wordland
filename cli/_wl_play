@@ -121,11 +121,16 @@ function save_palette {
   fi
 }
 
-function show_games {
-  rooms_json=$(wl_get "${SESSION_TOKEN}" "${WL_API}/me/rooms")
-  for room in $(echo "${rooms_json}" | jq .[]) ; do
-    echo "room is ${room}"
+function show_rooms {
+  rooms_json=$(wl_get "${WL_API}/me/rooms")
+  i=1
+  for room in $(echo "${rooms_json}" | jq '.[] | .name' | tr -d '"') ; do
+    roomState=$(echo "${rooms_json}" | jq '.[] | select(.name == "${room}") | .roomState' | tr -d '"')
+    echo "${i} - ${room} - $(translate_message msg_room_state_${roomState})"
+    i=$(expr ${i} + 1)
   done
+  echo "N - New Game"
+  echo
 }
 
 function show_tray {
@@ -149,7 +154,7 @@ function show_board {
   if [[ -f ${BOARD_JSON} ]] ; then
     cp ${BOARD_JSON} ${BOARD_JSON}.bak
   fi
-  board_status="$(wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "$(board_preview_obj)" "${BOARD_JSON}")" \
+  board_status="$(wl_post "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "$(board_preview_obj)" "${BOARD_JSON}")" \
     || die "$(translate_message err_api_boardView)"
   case $(http_code ${board_status}) in
     200)
@@ -246,7 +251,7 @@ while [ 1 ] ; do
       if [[ -z "${CURRENT_PLAY}" ]] ; then
         error "$(translate_message err_game_noCurrentPlay)"
       else
-        play_status="$(wl_post "${SESSION_TOKEN}" "${WL_API}/rooms/${ROOM_NAME}/play" "$(play_obj)" "${PLAY_JSON}")"
+        play_status="$(wl_post "${WL_API}/rooms/${ROOM_NAME}/play" "$(play_obj)" "${PLAY_JSON}")"
         case $(http_code ${play_status}) in
           200)
             reset_play
@@ -280,7 +285,8 @@ while [ 1 ] ; do
     ;;
 
     '/')
-      show_games
+      echo ; echo
+      show_rooms
     ;;
 
     # Didn't understand that, skip it
