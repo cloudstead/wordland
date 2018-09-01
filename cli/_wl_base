@@ -12,6 +12,7 @@ DEFAULT_API="http://127.0.0.1:9091/api"
 DEFAULT_WS_API="ws://127.0.0.1:9099/events"
 WL_API_KEY="x-wordland-api-key"
 WS_MARKER_FILE_DIR="${WL_DIR}/_ws"
+DEBUG_LOGFILE=/tmp/wordland-debug.log
 
 function die {
   if [[ -z "${SCRIPT}" ]] ; then
@@ -55,6 +56,10 @@ function env_val {
   else
     echo "${val}"
   fi
+}
+
+function debug {
+  echo "${@}" >> ${DEBUG_LOGFILE}
 }
 
 function json_node {

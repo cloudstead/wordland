@@ -58,24 +58,23 @@ function subtract_letter {
     # should never happen
     return
   fi
-  ACTIVE_TRAY_INDEX=${LETTER_INDEX}
   if [[ ${ACTIVE_TRAY_INDEX} -le 0 ]] ; then
     ACTIVE_TRAY_INDEX=1
   fi
 
-  echo "start subtract_letter: letters=${LETTERS[@]} / LETTER_INDEX=${LETTER_INDEX}, ACTIVE_TRAY_INDEX=${ACTIVE_TRAY_INDEX}" >> /tmp/plog
+  # debug "start subtract_letter: letters=${LETTERS[@]} / LETTER_INDEX=${LETTER_INDEX}, ACTIVE_TRAY_INDEX=${ACTIVE_TRAY_INDEX}"
 
   unset 'TILES[${LETTER_INDEX}]'
   unset 'LETTERS[${LETTER_INDEX}]'
   unset 'INDEXES[${LETTER_INDEX}]'
-  TILES=( "${TILES[@]:0:${LETTER_INDEX}}" "${TILES[@]:${ACTIVE_TRAY_INDEX}}" )
-  LETTERS=( "${LETTERS[@]:0:${LETTER_INDEX}}" "${LETTERS[@]:${ACTIVE_TRAY_INDEX}}" )
-  INDEXES=( "${INDEXES[@]:0:${LETTER_INDEX}}" "${INDEXES[@]:${ACTIVE_TRAY_INDEX}}" )
+  TILES=( "${TILES[@]:0:${LETTER_INDEX}}" "${TILES[@]:${LETTER_INDEX}}" )
+  LETTERS=( "${LETTERS[@]:0:${LETTER_INDEX}}" "${LETTERS[@]:${LETTER_INDEX}}" )
+  INDEXES=( "${INDEXES[@]:0:${LETTER_INDEX}}" "${INDEXES[@]:${LE}}" )
 
 #  ACTIVE_CHAR="$(echo $(current_word) | head -c $(expr ${ACTIVE_CHAR_INDEX} + 1) | tail -c 1)"
   ACTIVE_CHAR="${LETTERS[${LETTER_INDEX}]}"
   ACTIVE_CHAR_INDEX="${INDEXES[${LETTER_INDEX}]}"
-  echo "end subtract_letter: letters=${LETTERS[@]} / LETTER_INDEX=${LETTER_INDEX}, ACTIVE_TRAY_INDEX=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, should be ${LETTERS[${LETTER_INDEX}]}, L0=${LETTERS[0]}, L1=${LETTERS[1]}, L2=${LETTERS[2]}" >> /tmp/plog
+  # debug "end subtract_letter: letters=${LETTERS[@]} / LETTER_INDEX=${LETTER_INDEX}, ACTIVE_TRAY_INDEX=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, should be ${LETTERS[${LETTER_INDEX}]}, L0=${LETTERS[0]}, L1=${LETTERS[1]}, L2=${LETTERS[2]}"
 }
 
 function play_obj {
@@ -206,7 +205,7 @@ function show_board {
   if [[ -f ${BOARD_JSON} ]] ; then
     cp ${BOARD_JSON} ${BOARD_JSON}.bak
   fi
-  echo "$(board_preview_obj)" | grep tiles >> /tmp/plog
+  # debug $(echo "> end: BPO: $(board_preview_obj)" | grep tiles)
   board_status="$(wl_post "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "$(board_preview_obj)" "${BOARD_JSON}" "200 422")" \
     || die "$(translate_message err_api_boardView)"
   case $(http_code ${board_status}) in
@@ -259,25 +258,94 @@ while [ 1 ] ; do
     [a-zA-z])
       ACTIVE_CHAR="${char}"
       ACTIVE_CHAR_INDEX=1
-      for c in "${LETTERS[@]}" ; do
+
+      existing=()
+      i=0
+      while [[ ${i} -lt $(current_word_length) ]] ; do
+        c="${LETTERS[${i}]}"
         if [[ ${c} == ${char} ]] ; then
-          ACTIVE_CHAR_INDEX=$(expr ${ACTIVE_CHAR_INDEX} + 1)
+          existing+=( ${INDEXES[${i}]} )
         fi
+        i=$(expr ${i} + 1)
       done
-      TILES+=("\"symbol\": \"${char}\", \"index\": ${ACTIVE_CHAR_INDEX}")
-      LETTERS+=("${char}")
-      INDEXES+=(${ACTIVE_CHAR_INDEX})
-      ACTIVE_TRAY_INDEX=$(current_word_length)
+      # debug "found existing=${existing}"
+      i=1
+      correctIndex=""
+      while [[ -z "${correctIndex}" ]] ; do
+        if [[ $(printf '%s\n' "${existing[@]}" | grep ${i} | wc -l | tr -d ' ') -eq 0 ]] ; then
+          correctIndex=${i}
+        fi
+        i=$(expr ${i} + 1)
+      done
+      if [[ ! -z ${correctIndex} ]] ; then
+        ACTIVE_CHAR_INDEX=${correctIndex}
+        debug "AZ: correctIndex=${correctIndex}, CWL=$(current_word_length), ATI=${ACTIVE_TRAY_INDEX}"
+        if [[ ${#TILES[@]} -gt 0 && ${ACTIVE_TRAY_INDEX} -lt $(current_word_length) ]] ; then
+          # shift all other elements forward to make room for new one
+          i=${#TILES[@]}
+          TILES+=("${TILES[$(expr ${i}-1)]]}")
+          LETTERS+=("${LETTERS[$(expr ${i}-1)]]}")
+          INDEXES+=("${INDEXES[$(expr ${i}-1)]]}")
+          while [[ ${i} -ge ${ACTIVE_TRAY_INDEX} ]] ; do
+            TILES[${i}]="${TILES[$(expr ${i}-1)]}"
+            LETTERS[${i}]="${LETTERS[$(expr ${i}-1)]}"
+            INDEXES[${i}]="${INDEXES[$(expr ${i}-1)]}"
+            i=$(expr ${i} - 1)
+          done
+          debug "AZ: adding letter in middle: ${ACTIVE_TRAY_INDEX}"
+          TILES[${ACTIVE_TRAY_INDEX}-1]="\"symbol\": \"${char}\", \"index\": ${ACTIVE_CHAR_INDEX}"
+          LETTERS[${ACTIVE_TRAY_INDEX}-1]="${char}"
+          INDEXES[${ACTIVE_TRAY_INDEX}-1]=${ACTIVE_CHAR_INDEX}
+        else
+          # add element at the end
+          debug "AZ: adding letter at end"
+          TILES+=("\"symbol\": \"${char}\", \"index\": ${ACTIVE_CHAR_INDEX}")
+          LETTERS+=("${char}")
+          INDEXES+=(${ACTIVE_CHAR_INDEX})
+          ACTIVE_TRAY_INDEX=$(expr ${ACTIVE_TRAY_INDEX} + 1)
+        fi
+        if [[ ${ACTIVE_TRAY_INDEX} -ge $(current_word_length) ]] ; then
+          ACTIVE_TRAY_INDEX=$(current_word_length)
+        fi
+      else
+        continue
+      fi
     ;;
 
     # Increment current active char index
     '>')
-      echo "> start: ATI=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}" >> /tmp/plog
+      # debug "> start: ATI=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}"
       if [[ ${#TILES[@]} -gt 0 ]] ; then
+        existing=()
+        i=0
+        while [[ ${i} -lt $(current_word_length) ]] ; do
+          c="${LETTERS[${i}]}"
+          if [[ ${c} == ${ACTIVE_CHAR} ]] ; then
+            existing+=( ${INDEXES[${i}]} )
+          fi
+          i=$(expr ${i} + 1)
+        done
+
         ACTIVE_CHAR_INDEX=$(expr ${ACTIVE_CHAR_INDEX} + 1)
-        TILES[${ACTIVE_TRAY_INDEX}-1]="\"symbol\": \"${LETTERS[${ACTIVE_TRAY_INDEX}-1]}\", \"index\": ${ACTIVE_CHAR_INDEX}"
-        INDEXES[${ACTIVE_TRAY_INDEX}-1]=${ACTIVE_CHAR_INDEX}
-        echo "> end: BPO: $(board_preview_obj)" | grep tiles >> /tmp/plog
+        # debug "> found existing=${existing}"
+        i=${ACTIVE_CHAR_INDEX}
+        correctIndex=""
+        while [[ -z "${correctIndex}" ]] ; do
+          if [[ $(printf '%s\n' "${existing[@]}" | grep ${i} | wc -l | tr -d ' ') -eq 0 ]] ; then
+            correctIndex=${i}
+            break
+          fi
+          i=$(expr ${i} + 1)
+        done
+        # debug "> found correctIndex=${correctIndex}"
+        if [[ ! -z ${correctIndex} ]] ; then
+          ACTIVE_CHAR_INDEX=${correctIndex}
+          TILES[${ACTIVE_TRAY_INDEX}-1]="\"symbol\": \"${LETTERS[${ACTIVE_TRAY_INDEX}-1]}\", \"index\": ${ACTIVE_CHAR_INDEX}"
+          INDEXES[${ACTIVE_TRAY_INDEX}-1]=${ACTIVE_CHAR_INDEX}
+          # debug $(echo "> end: BPO: $(board_preview_obj)" | grep tiles)
+        else
+          continue
+        fi
       else
         continue
       fi
@@ -285,16 +353,45 @@ while [ 1 ] ; do
 
     # Decrement current active char index, if possible
     '<')
-      echo "< start: ATI=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}" >> /tmp/plog
+      # debug "< start: ATI=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}"
       if [[ ${#TILES[@]} -gt 0 ]] ; then
         ACTIVE_CHAR_INDEX=$(expr ${ACTIVE_CHAR_INDEX} - 1)
         if [ ${ACTIVE_CHAR_INDEX} -lt 1 ] ; then
           ACTIVE_CHAR_INDEX=1
         else
+          # what is the first available index that is less than the current index?
+          existing=()
+          i=0
+          while [[ ${i} -lt $(current_word_length) ]] ; do
+            c="${LETTERS[${i}]}"
+            # debug "< comparing letter ${c} to play ${ACTIVE_CHAR}"
+            if [[ ${c} == ${ACTIVE_CHAR} ]] ; then
+              existing+=( ${INDEXES[${i}]} )
+            fi
+            i=$(expr ${i} + 1)
+          done
+          # debug "< found existing=${existing}"
+          i=${ACTIVE_CHAR_INDEX}
+          correctIndex=""
+          while [[ ${i} -gt 0 ]] ; do
+            found=0
+            if [[ $(printf '%s\n' "${existing[@]}" | grep ${i} | wc -l | tr -d ' ') -eq 0 ]] ; then
+              correctIndex=${i}
+              break
+            fi
+            i=$(expr ${i} - 1)
+          done
+          # debug "< found correctIndex=${correctIndex}"
+          if [[ -z ${correctIndex} ]] ; then
+            return
+          fi
+          ACTIVE_CHAR_INDEX=${correctIndex}
+
           TILES[${ACTIVE_TRAY_INDEX}-1]="\"symbol\": \"${LETTERS[${ACTIVE_TRAY_INDEX}-1]}\", \"index\": ${ACTIVE_CHAR_INDEX}"
           INDEXES[${ACTIVE_TRAY_INDEX}-1]=${ACTIVE_CHAR_INDEX}
         fi
-        echo "< end: BPO: $(board_preview_obj)" | grep tiles >> /tmp/plog
+        # debug "< end : ATI=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}"
+        # debug $(echo "> end: BPO: $(board_preview_obj)" | grep tiles)
       else
         continue
       fi
@@ -348,7 +445,7 @@ while [ 1 ] ; do
         ACTIVE_TRAY_INDEX=${next}
         ACTIVE_CHAR="${LETTERS[${ATR_INDEX}]}"
         ACTIVE_CHAR_INDEX="${INDEXES[${ATR_INDEX}]}"
-        echo "} end: ATI=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}" >> /tmp/plog
+        # debug "} end: ATI=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}"
       else
         continue
       fi
@@ -362,7 +459,7 @@ while [ 1 ] ; do
         ACTIVE_TRAY_INDEX=${ATR_INDEX}
         ACTIVE_CHAR="${LETTERS[${prev}]}"
         ACTIVE_CHAR_INDEX="${INDEXES[${prev}]}"
-        echo "{ end: ATI=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}" >> /tmp/plog
+        # debug "{ end: ATI=${ACTIVE_TRAY_INDEX}, AC=${ACTIVE_CHAR}, ACI=${ACTIVE_CHAR_INDEX}, #TILES[@]=${#TILES[@]}"
       else
         continue
       fi
