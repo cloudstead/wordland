@@ -67,6 +67,14 @@ function json_node {
 function json_val {
   json_node "${1}" "${2}" | tr -d '" '
 }
+function json_find {
+  json="${1}"
+  field="${2}"
+  match="${3}"
+  value="${4}"
+  echo "${1}" | jq '.[] | select(.'${field}' == "'${match}'") | .'${value}'' | head -1 | tr -d '"'
+}
+
 function session_val {
   if [[ -f ${SESSION_JSON} ]] ; then
     json_val "$(cat ${SESSION_JSON})" "${1}"

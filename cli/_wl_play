@@ -124,8 +124,9 @@ function save_palette {
 function show_rooms {
   rooms_json=$(wl_get "${WL_API}/me/rooms")
   i=1
+  #echo "${rooms_json}" >> /tmp/rooms.json
   for room in $(echo "${rooms_json}" | jq '.[] | .name' | tr -d '"') ; do
-    roomState=$(echo "${rooms_json}" | jq '.[] | select(.name == "${room}") | .roomState' | tr -d '"')
+    roomState=$(json_find "${rooms_json}" name "${room}" roomState)
     echo "${i} - ${room} - $(translate_message msg_room_state_${roomState})"
     i=$(expr ${i} + 1)
   done
