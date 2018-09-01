@@ -1,7 +1,7 @@
 [
   {
     "comment": "login as anonymous player 1",
-    "request": { "uri": "auth/login", "method": "post" },
+    "request": { "session": "new", "uri": "auth/login", "method": "post" },
     "response": {
       "sessionName": "player1",
       "session": "apiToken"
@@ -61,11 +61,61 @@
         {"condition": "find(json, 'roomState', 'ended') == null"}
       ]
     }
-  }
+  },
 
-  // login as player2
-  // join first room
-  // list all rooms for player2, should see one that is active
-  // list all rooms for player1, should see same one active
+  {
+    "comment": "login as anonymous player 2",
+    "request": { "session": "new", "uri": "auth/login", "method": "post" },
+    "response": {
+      "sessionName": "player2",
+      "session": "apiToken"
+    }
+  },
+
+  {
+    "comment": "join 5x5 board as player2, in first player1 room {{p1room1.room}}",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/{{p1room1.room}}/join",
+      "entity": {}
+    },
+    "response": {
+      "store": "p2room1",
+      "check": [
+        {"condition": "json.room.equals('{{p1room1.room}}')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "list all rooms for player2, should see one that is active",
+    "request": {
+      "session": "player2",
+      "uri": "me/rooms"
+    },
+    "response": {
+      "store": "rooms",
+      "check": [
+        {"condition": "json.length == 1"},
+        {"condition": "json[0].name == '{{p2room1.room}}'"},
+        {"condition": "json[0].roomState == 'active'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "list all rooms for player1, should see same one active",
+    "request": {
+      "session": "player1",
+      "uri": "me/rooms"
+    },
+    "response": {
+      "store": "rooms",
+      "check": [
+        {"condition": "json.length == 5"},
+        {"condition": "find(json, 'name', '{{p1room1.room}}').roomState == 'active'"}
+      ]
+    }
+  }
 
 ]
