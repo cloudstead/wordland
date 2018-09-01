@@ -16,7 +16,7 @@
     
     (enter)      :  play the word currently in the tray
     
-    /            :  list all games in progress
+    /            :  list all games, switch to another game
     
     (Control-C)  :  quit game
 

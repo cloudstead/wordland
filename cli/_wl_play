@@ -130,53 +130,40 @@ function show_rooms {
     echo "${i} - ${room} - $(translate_message msg_room_state_${roomState})"
     i=$(expr ${i} + 1)
   done
-  roomCount=$(expr ${i} - 1)
   echo "n - New Game"
   echo "q - Back to Current Game"
   echo ; echo -n "$(room_prompt)"
-  roomNumber=""
-  while IFS= read -r -s -n1 char 2> /dev/null ; do
-    case ${char} in
-      [1-9])
-        if [[ -z "${roomNumber}" ]] ; then
-          roomNumber="${char}"
-          if [[ ${roomCount} -le 9 ]] ; then
-            roomName=$(echo "${rooms_json}" | jq '.['$(expr ${roomNumber} - 1)']')
-            echo "roomName is ${roomName}, would join now"
-            roomNumber=""
-          else
-            echo -n ${char}
+  while IFS= read line 2> /dev/null ; do
+    if [[ ! -z "${line}" ]] ; then
+      case ${line} in
+        q|Q)
+          return
+        ;;
+        n|N)
+          echo ; echo ; exec ${SCRIPT_DIR}/wl_rooms
+        ;;
+        (*[!0-9]*)
+          echo ; echo -n "$(room_prompt)"
+          continue
+        ;;
+        *)
+          # all digits, must be room number
+          line=$(echo "${line}" | tr -d ' \n')
+          if [[ -z "${line}" ]] ; then
+            break
           fi
-        else
-          roomNumber="${roomNumber}${char}"
-        fi
-        continue
-      ;;
-      [0-9])
-        if [[ $(expr ${roomNumber} \* 10 + ${char}) -le ${roomCount} ]] ; then
-          roomNumber="${roomNumber}${char}"
-        fi
-        continue
-      ;;
-      '')
-        roomName=$(echo "${rooms_json}" | jq '.['$(expr ${roomNumber} - 1)']')
-        roomName=$(echo "${rooms_json}" | jq '.['$(expr ${roomNumber} - 1)']')
-        echo "roomName is ${roomName}, would join now"
-        roomNumber=""
-        break
-      ;;
-      q|Q)
-        break
-      ;;
-      n|N)
-        echo ; echo ; exec ${SCRIPT_DIR}/wl_rooms
-      ;;
-      *)
-        continue
-      ;;
-    esac
-    echo -n "$(room_prompt)"
+          roomName=$(echo "${rooms_json}" | jq '.['$(expr ${line} - 1)'] | .name' | tr -d '"')
+          if [[ $(wl_exists "${WL_API}/rooms/${roomName}") == "true" ]] ; then
+            exec ${SCRIPT_DIR}/wl_join "${roomName}"
+          else
+            error "$(translate_message err_room_notFound)"
+          fi
+        ;;
+      esac
+    fi
+    echo ; echo -n "$(room_prompt)"
   done
+  echo "end of script" >> /tmp/roomlog
 }
 
 function show_tray {
