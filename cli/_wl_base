@@ -175,7 +175,7 @@ function wl_prompt {
     if [[ ! -z "${room}" ]] ; then
       room="/${room}"
     fi
-    echo "${name}@$(wl_api_host)${room}>>> "
+    echo "${name}@$(wl_api_host)/${room}>>> "
   else
     if [[ ! -z "${room}" ]] ; then
     room="@${room}"
