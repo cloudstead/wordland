@@ -4,6 +4,7 @@ import com.sun.jersey.api.core.HttpContext;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.auth.AuthenticationException;
 import org.cobbzilla.wizard.auth.LoginRequest;
+import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.util.TestNames;
 import org.cobbzilla.wizard.validation.ValidationResult;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.HttpHeaders.USER_AGENT;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.http.HttpContentTypes.APPLICATION_JSON;
+import static org.cobbzilla.util.string.StringUtil.trimQuotes;
 import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static wordland.ApiConstants.*;
 
@@ -30,13 +33,33 @@ import static wordland.ApiConstants.*;
 @Service @Slf4j
 public class AuthResource {
 
+    private static final String K_MOTD = "motd";
+
     @Autowired private AccountDAO accountDAO;
     @Autowired private SessionDAO sessionDAO;
+    @Autowired private RedisService redisService;
 
     @GET @Path("/ping")
     public Response ping (@Context HttpContext ctx) {
         final AccountSession session = optionalUserPrincipal(ctx);
         return ok();
+    }
+
+    @GET @Path("/motd")
+    public Response motd(@Context HttpContext ctx) {
+        final AccountSession session = optionalUserPrincipal(ctx);
+
+        final String motd = redisService.get(K_MOTD);
+        return ok(motd);
+    }
+
+    @POST @Path("/motd")
+    public Response motd(@Context HttpContext ctx, String motd) {
+        final AccountSession session = requireAdmin(ctx);
+        if (empty(motd)) return invalid("err.motd.required");
+        motd = trimQuotes(motd).trim();
+        redisService.set(K_MOTD, motd);
+        return ok(motd);
     }
 
     @GET

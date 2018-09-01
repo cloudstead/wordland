@@ -4,6 +4,7 @@ import com.sun.jersey.api.core.HttpContext;
 import org.cobbzilla.util.collection.ArrayUtil;
 import wordland.model.support.AccountSession;
 
+import static org.cobbzilla.wizard.resources.ResourceUtil.forbiddenEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.userPrincipal;
 
 public class ApiConstants {
@@ -18,7 +19,7 @@ public class ApiConstants {
     public static final String REGISTER_URL = AUTH_ENDPOINT + EP_REGISTER;
     public static final String LOGIN_URL = AUTH_ENDPOINT + EP_LOGIN;
 
-    public static final String ACCOUNTS_ENDPOINT = "/accounts";
+    public static final String ACCOUNTS_ENDPOINT = "/me";
     public static final String EP_REMOVE = "/remove";
 
 
@@ -89,5 +90,18 @@ public class ApiConstants {
     public static AccountSession accountPrincipal(HttpContext ctx) {
         final AccountSession session = userPrincipal(ctx);
         return session.isAnonymous() ? null : session;
+    }
+
+    public static AccountSession requireAccountPrincipal(HttpContext ctx) {
+        final AccountSession session = userPrincipal(ctx);
+        if (session.isAnonymous()) throw forbiddenEx();
+        return session;
+    }
+
+    public static AccountSession requireAdmin(HttpContext ctx) {
+        final AccountSession session = userPrincipal(ctx);
+        if (session.isAnonymous()) throw forbiddenEx();
+        if (!session.getAccount().isAdmin()) throw forbiddenEx();
+        return session;
     }
 }

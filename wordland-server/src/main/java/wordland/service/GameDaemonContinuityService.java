@@ -10,6 +10,7 @@ import wordland.model.GameRoom;
 
 import javax.annotation.PostConstruct;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.daemon;
@@ -27,19 +28,23 @@ public class GameDaemonContinuityService {
     @Getter(lazy=true) private final RedisService gameDaemonCache = initGameDaemonCache();
     private RedisService initGameDaemonCache() { return redisService.prefixNamespace("gameDaemons/"); }
 
+    private final AtomicBoolean init = new AtomicBoolean(false);
+    public boolean initialized () { synchronized (init) { return init.get(); } }
+
     @PostConstruct
     public void restartIdleDaemons () {
-        daemon(() ->{
+        daemon(() -> {
             sleep(SECONDS.toMillis(5), "waiting to restart idle GameDaemons");
             final Set<String> rooms = getGameDaemonCache().smembers(K_ROOMS);
             if (rooms != null) {
                 for (String room : rooms) {
                     final GameRoom gameRoom = gameRoomDAO.findByName(room);
                     if (gameRoom != null) {
-                        gamesMaster.newRoom(gameRoom);
+                        gamesMaster.restartRoom(gameRoom);
                     }
                 }
             }
+            synchronized (init) { init.set(true); }
             log.info("restartIdleDaemons: refreshed "+rooms.size()+" room daemons");
         });
     }

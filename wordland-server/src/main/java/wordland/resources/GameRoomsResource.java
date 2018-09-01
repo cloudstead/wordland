@@ -31,13 +31,13 @@ import static wordland.model.game.GameBoardPalette.defaultPalette;
 @Service @Slf4j
 public class GameRoomsResource extends NamedSystemResource<GameRoom> {
 
-    @Getter @Autowired private GameRoomDAO dao;
-    @Getter @Autowired private GameBoardDAO gameBoardDAO;
-    @Getter @Autowired private GamesMaster gamesMaster;
-    @Getter @Autowired private SymbolSetDAO symbolSetDAO;
-    @Getter @Autowired private SymbolDistributionDAO distributionDAO;
-    @Getter @Autowired private PointSystemDAO pointSystemDAO;
-    @Getter @Autowired private GameDictionaryDAO dictionaryDAO;
+    @Autowired @Getter private GameRoomDAO dao;
+    @Autowired @Getter private GameBoardDAO gameBoardDAO;
+    @Autowired @Getter private GamesMaster gamesMaster;
+    @Autowired @Getter private SymbolSetDAO symbolSetDAO;
+    @Autowired @Getter private SymbolDistributionDAO distributionDAO;
+    @Autowired @Getter private PointSystemDAO pointSystemDAO;
+    @Autowired @Getter private GameDictionaryDAO dictionaryDAO;
 
     @Override protected boolean canCreate(HttpContext ctx) { return true; }
 

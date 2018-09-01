@@ -11,10 +11,12 @@ import org.springframework.stereotype.Service;
 import wordland.dao.AccountDAO;
 import wordland.dao.SessionDAO;
 import wordland.model.Account;
+import wordland.model.game.RoomState;
 import wordland.model.support.AccountSession;
 import wordland.model.support.AccountUpdateRequest;
 import wordland.model.support.RegistrationRequest;
 import wordland.server.WordlandConfiguration;
+import wordland.service.GamesMaster;
 
 import javax.validation.Valid;
 import javax.ws.rs.*;
@@ -36,6 +38,7 @@ public class AccountsResource extends AuthResourceBase<Account> {
     @Autowired private SessionDAO sessionDAO;
     @Autowired @Getter private AccountDAO accountDAO;
     @Autowired @Getter private TemplatedMailService templatedMailService;
+    @Autowired @Getter private GamesMaster gamesMaster;
 
     // only allow password resets via email
     @Override public Account findAccountForForgotPassword(String name) {
@@ -49,10 +52,17 @@ public class AccountsResource extends AuthResourceBase<Account> {
      */
     @GET
     public Response me (@Context HttpContext ctx) {
-        Account found = optionalUserPrincipal(ctx);
+        AccountSession found = optionalUserPrincipal(ctx);
         if (found == null) return notFound();
-        found = accountDAO.findByUuid(found.getUuid());
-        return (found == null) ? notFound() : ok(found);
+        final Account account = accountDAO.findByUuid(found.getUuid());
+        return (account == null) ? notFound() : ok(found);
+    }
+
+    @GET @Path("/rooms")
+    public Response findRooms(@Context HttpContext ctx,
+                              @QueryParam("state") RoomState state) {
+        final AccountSession session = userPrincipal(ctx);
+        return ok(gamesMaster.getRoomsForPlayer(session.getId(), state));
     }
 
     /**

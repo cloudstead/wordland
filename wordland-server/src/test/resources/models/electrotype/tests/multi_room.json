@@ -1,0 +1,63 @@
+[
+  {
+    "comment": "login as anonymous player 1",
+    "request": { "uri": "auth/login", "method": "post" },
+    "response": {
+      "sessionName": "player1",
+      "session": "apiToken"
+    }
+  },
+
+  {
+    "nested": {
+      "iterate": {
+        "room": "[1,2,3,4,5]"
+      },
+      "scripts": [
+        {
+          "comment": "join 5x5 board as player1, room #[[room]]",
+          "request": {
+            "session": "player1",
+            "uri": "rooms/5x5/join",
+            "entity": {}
+          },
+          "response": {
+            "store": "p1room[[room]]",
+            "check": [
+              {"condition": "json.room.startsWith('5x5')"},
+              {"condition": "[[room]] == 1 || p1room[[room]].room != p1room1.room"}
+            ]
+          }
+        }
+      ]
+    }
+  },
+
+  {
+    "comment": "list all current player's rooms",
+    "request": { "uri": "me/rooms" },
+    "response": {
+      "store": "rooms",
+      "check": [
+        {"condition": "json.length == 5"},
+        {"condition": "json[0].name.startsWith('5x5_')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "list all current player's rooms after restarting API",
+    "before": "restart-api",
+    "request": {
+      "uri": "me/rooms"
+    },
+    "response": {
+      "store": "rooms",
+      "check": [
+        {"condition": "json.length == 5"},
+        {"condition": "json[0].name.startsWith('5x5_')"}
+      ]
+    }
+  }
+
+]

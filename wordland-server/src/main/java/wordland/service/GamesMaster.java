@@ -13,14 +13,13 @@ import wordland.model.*;
 import wordland.model.game.GamePlayer;
 import wordland.model.game.GameState;
 import wordland.model.game.GameStateChange;
+import wordland.model.game.RoomState;
 import wordland.model.json.GameRoomSettings;
 import wordland.model.support.GameRoomJoinResponse;
 import wordland.model.support.PlayedTile;
 import wordland.server.WordlandConfiguration;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
@@ -45,12 +44,23 @@ public class GamesMaster {
     @Getter(lazy=true) private final RedisService sessions = initSessions();
     private RedisService initSessions() { return redisService.prefixNamespace("gamesMaster/sessions/"); }
 
+    @Getter(lazy=true) private final RedisService roomsByPlayer = initRoomsByPlayer();
+    private RedisService initRoomsByPlayer() { return redisService.prefixNamespace("gamesMaster/roomsByPlayer/"); }
+
     @Getter @Setter private AtmosphereEventsService eventService;
 
     public Map<String, GameDaemon> rooms = new ConcurrentHashMap<>();
 
+    public GameDaemon restartRoom(GameRoom room) {
+        final GameDaemon daemon = rooms.get(room.getName());
+        if (daemon != null) return daemon;
+        return newRoom(room);
+    }
+
     public GameDaemon newRoom(GameRoom room) {
-        if (rooms.containsKey(room.getName())) throw invalidEx("err.room.alreadyExists");
+        if (rooms.containsKey(room.getName())) {
+            throw invalidEx("err.room.alreadyExists");
+        }
 
         // fill out settings, based on names
         final GameRoomSettings roomSettings = room.getSettings();
@@ -106,6 +116,46 @@ public class GamesMaster {
     private final Map<String, Collection<GameDaemon>> templateDaemons = new ConcurrentHashMap<>();
 
     public GameRoomJoinResponse addPlayer(GameRoom room, GamePlayer player) {
+        final GameRoomJoinResponse response = _addPlayer(room, player);
+        if (response != null) getRoomsByPlayer().sadd(player.getId(), response.getRoom());
+        return response;
+    }
+
+    public List<GameRoom> getRoomsForPlayer(String uuid) { return getRoomsForPlayer(uuid, null); }
+
+    public List<GameRoom> getRoomsForPlayer(String uuid, RoomState matchState) {
+        final RedisService roomsByPlayer = getRoomsByPlayer();
+        final Set<String> roomNames = roomsByPlayer.smembers(uuid);
+        final List<GameRoom> rooms = new ArrayList<>();
+        if (!empty(roomNames)) {
+            for (String roomName : roomNames) {
+                final GameRoom room = gameRoomDAO.findByName(roomName);
+                if (room == null) {
+                    log.warn("getRoomsForPlayer: room not found, removing: " + roomName);
+                    roomsByPlayer.srem(uuid, roomName);
+                    continue;
+                }
+                if (room.isTemplate()) {
+                    log.warn("getRoomsForPlayer: skipping template room: " + roomName);
+                    continue;
+                }
+                final GameDaemon gameDaemon = getGameDaemon(roomName, false);
+                if (gameDaemon == null) {
+                    log.warn("getRoomsForPlayer: daemon not found: " + roomName);
+                    continue;
+                }
+                final RoomState roomState = gameDaemon.getGameStateStorage().getRoomState();
+                if (matchState == null || matchState == roomState) {
+                    rooms.add(room);
+                } else {
+                    log.info("getRoomsForPlayer: skipping room, expected status "+ matchState +", had "+roomState+": " + roomName);
+                }
+            }
+        }
+        return rooms;
+    }
+
+    private GameRoomJoinResponse _addPlayer(GameRoom room, GamePlayer player) {
 
         if (room.isTemplate()) {
             // find daemons for template
@@ -122,7 +172,9 @@ public class GamesMaster {
                     // todo: strategy for adding players to room. perhaps based on ELO score?
                     for (GameDaemon daemon : roomDaemons) {
                         try {
-                            joinResponse = addPlayerToRoom(daemon, player);
+                            if (daemon.getGameState().getPlayer(player.getId()) == null) {
+                                joinResponse = addPlayerToRoom(daemon, player);
+                            }
                         } catch (Exception e) {
                             log.warn("addPlayer: error adding to room: " + daemon.getRoom().getName() + ": " + e, e);
                         }
@@ -230,4 +282,5 @@ public class GamesMaster {
         final GameDaemon daemon = getGameDaemon(roomName, false);
         return daemon != null ? daemon.getRoom() : null;
     }
+
 }

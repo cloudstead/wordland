@@ -1,0 +1,14 @@
+#!/bin/bash
+
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/_wl_root
+
+URI="${1:-/auth/ping}"
+ENTITY="${2:-/dev/null}"
+ENTITY="$(cat ${ENTITY})"
+OUTFILE="${3:-/dev/null}"
+
+TMP_FILE=$(mktemp /tmp/$(basename $0).XXXXXXX)
+echo "GET ${URI}"
+wl_get "${SESSION_TOKEN}" "${WL_API}/${URI}"

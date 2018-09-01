@@ -45,23 +45,23 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     @Override public synchronized RoomState getRoomState() {
         final String state = redis.get(K_STATE);
         if (state != null) return RoomState.fromString(state);
-        redis.set(K_STATE, RoomState.awaiting_players.name());
-        return RoomState.awaiting_players;
+        redis.set(K_STATE, RoomState.awaiting.name());
+        return RoomState.awaiting;
     }
 
     @Override public synchronized void startGame() {
         final RoomState roomState = getRoomState();
         if (roomState == null) die("startGame: no room state found!");
-        if (roomState == RoomState.game_in_progress) return; // already started
-        if (roomState == RoomState.game_ended) die("startGame: game ended");
-        redis.set(K_STATE, RoomState.game_in_progress.name());
+        if (roomState == RoomState.active) return; // already started
+        if (roomState == RoomState.ended) die("startGame: game ended");
+        redis.set(K_STATE, RoomState.active.name());
     }
 
     @Override public synchronized void endGame() {
         final RoomState roomState = getRoomState();
         if (roomState == null) die("endGame: no room state found!");
-        if (roomState == RoomState.game_ended) return; // already ended
-        redis.set(K_STATE, RoomState.game_ended.name());
+        if (roomState == RoomState.ended) return; // already ended
+        redis.set(K_STATE, RoomState.ended.name());
     }
 
     @Override public synchronized GamePlayer getPlayer(String id) {

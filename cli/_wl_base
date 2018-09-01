@@ -22,7 +22,9 @@ function die {
   exit 1
 }
 
-mkdir -p ${WL_DIR} || die "Cannot create directory: ${WL_DIR}"
+function unquote {
+  echo "${@}" | sed -e 's/\\n/\n/g' | sed -e 's/\\"/\"/g' | sed -e 's/]"/]/g' | sed -e 's/"\[/\[/g'
+}
 
 function error {
   NO_NEWLINE=""
@@ -181,18 +183,30 @@ function wl_exists {
 function wl_get {
   SESSION_TOKEN="${1}"
   URL="${2}"
-  FAIL_ON_EMPTY_RESPONSE="${3:-N}"
-  ERR_MESSAGE="${4:-error}"
+  OUTFILE="${3}"
+  ALLOWED_CODES="${4:-"200"}"
 
   echo "${URL}" > ${REQUEST_URL}
   response=$(curl --silent --write-out "\n%{http_code}\n" --header "${SESSION_TOKEN}" ${URL})
   status_code=$(echo "${response}" | sed -n '$p')
-  json=$(echo "${response}" | sed '$d' | tee ${RESPONSE_JSON})
-  if [[ $(http_code ${status_code}) -eq 200 && ( ! -z "${json}" || ${FAIL_ON_EMPTY_RESPONSE} != "Y"  ) ]] ; then
-    echo "${json}"
+  if [[ ! -z "${OUTFILE}" ]] ; then
+    json=$(echo "${response}" | sed '$d' | tee ${OUTFILE} | ${RESPONSE_JSON})
   else
-    die "${ERR_MESSAGE}: ${status_code} / ${json}"
+    json=$(echo "${response}" | sed '$d' | tee ${RESPONSE_JSON})
   fi
+
+  http_code=$(http_code ${status_code})
+  for code in ${ALLOWED_CODES} ; do
+    if [[ "${code}" == "${http_code}" ]] ; then
+      if [[ ! -z "${OUTFILE}" && -f "${OUTFILE}" ]] ; then
+        echo "${http_code}"
+      else
+        echo "${json}"
+      fi
+      return
+    fi
+  done
+  die "wl_get(${URL}): ${status_code}$(if [[ ! -z "${json}" ]] ; then echo " / ${json}" ; fi)"
 }
 
 function wl_post {
@@ -200,7 +214,7 @@ function wl_post {
   URL="${2}"
   DATA="${3}"
   OUTFILE="${4:-/dev/null}"
-  ALLOWED_CODES="${5:-"200 302 304 422"}"
+  ALLOWED_CODES="${5:-"200"}"
 
   echo "${URL}" > ${REQUEST_URL}
   response=$(echo "${DATA}" | curl --silent --write-out "\n%{http_code}\n" --header "Content-Type: application/json" --header "${SESSION_TOKEN}" -X POST -d @- ${URL})
@@ -210,12 +224,18 @@ function wl_post {
   http_code=$(http_code ${status_code})
   for code in ${ALLOWED_CODES} ; do
     if [[ "${code}" == "${http_code}" ]] ; then
-      echo "${http_code}"
+      if [[ -z "${OUTFILE}" || "${OUTFILE}" == "/dev/null" ]] ; then
+        echo "$(cat ${RESPONSE_JSON})"
+      else
+        echo "${http_code}"
+      fi
       return
     fi
   done
   die "wl_post(${URL}): ${status_code}$(if [[ ! -z "${json}" ]] ; then echo " / ${json}" ; fi)"
 }
+
+mkdir -p ${WL_DIR} || die "$(translate_message err_mkdir): ${WL_DIR}"
 
 if [ -f ${ENV_FILE} ] ; then
   . ${ENV_FILE}

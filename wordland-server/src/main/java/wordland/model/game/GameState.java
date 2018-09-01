@@ -69,7 +69,7 @@ public class GameState {
         // todo check maxPlayers. if maxPlayers reached, see if any can be evicted? maybe not, let GameDaemon handle that...
         synchronized (stateStorage) {
             final RoomState roomState = stateStorage.getRoomState();
-            if (roomState == RoomState.game_ended) throw new GameEndedException(room);
+            if (roomState == RoomState.ended) throw new GameEndedException(room);
 
             if (getPlayer(player.getId()) != null) {
                 // player already in room, start new room session
@@ -78,7 +78,7 @@ public class GameState {
 
             int playerCount = stateStorage.getPlayerCount();
             if (roomSettings().hasMaxPlayers() && playerCount >= roomSettings().getMaxPlayers()) throw new RoomFullException(room);
-            if (roomState == RoomState.awaiting_players
+            if (roomState == RoomState.awaiting
                     && (!roomSettings().hasMinPlayersToStart() || playerCount+1 >= roomSettings().getMinPlayersToStart())) {
                 return stateStorage.addPlayerStartGame(player);
 

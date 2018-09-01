@@ -19,6 +19,7 @@ import wordland.model.game.GameTileState;
 import wordland.model.game.GameTileStateExtended;
 import wordland.model.support.GameRuntimeEvent;
 import wordland.server.WordlandConfiguration;
+import wordland.service.GameDaemonContinuityService;
 
 import java.io.*;
 import java.util.HashSet;
@@ -26,16 +27,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.io.FileUtil.mkdirOrDie;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.system.Sleep.sleep;
 
 @Slf4j
 public abstract class ApiModelTestBase extends ApiClientTestBase {
 
     public static final String FIND_WORD_AND_TILES = "find-word-and-tiles";
     public static final String SAVE_BOARD_VIEW = "save-board-view";
+    public static final String RESTART_API = "restart-api";
+
     public static final StandardJsEngine JS = new StandardJsEngine();
 
     public abstract String getModelPrefix();
@@ -112,8 +118,28 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                                 break;
                             }
                         }
-                    }
+                    } else if (before.equals(RESTART_API)) {
+                        final RestServer server = getServer();
+                        server.removeLifecycleListener(ApiModelTestBase.this);
+                        server.stopServer();
 
+                        // ensure tables are NOT dropped/created when server starts up
+                        ((WordlandConfiguration) server.getConfiguration()).getDatabase().getHibernate().setHbm2ddlAuto("validate");
+
+                        try {
+                            server.startServer();
+                        } catch (IOException e) {
+                            die("beforeCall: "+RESTART_API+": error starting API: "+e, e);
+                        }
+                        server.addLifecycleListener(ApiModelTestBase.this);
+
+                        final GameDaemonContinuityService continuityService = getConfiguration().getBean(GameDaemonContinuityService.class);
+                        final long start = now();
+                        while (!continuityService.initialized() && now() - start < SECONDS.toMillis(20)) {
+                            sleep(SECONDS.toMillis(1));
+                        }
+                        if (!continuityService.initialized()) die("beforeCall:"+RESTART_API+": error restarting API");
+                    }
                 }
             }
 

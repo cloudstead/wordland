@@ -1,3 +1,4 @@
+err_mkdir="error creating directory"
 err_room_noCurrentRoom="please join a room"
 err_room_notFound="room not found"
 err_game_notYourTurn="it's not your turn"
