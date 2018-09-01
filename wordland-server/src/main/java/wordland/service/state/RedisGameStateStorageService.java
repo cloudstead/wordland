@@ -191,7 +191,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         redis.hset(K_SCOREBOARD, player.getId(), ""+(score + playScore.getTotal()));
     }
 
-    @Override public Map<String, String> getScorebord () { return redis.hgetall(K_SCOREBOARD); }
+    @Override public Map<String, String> getScoreboard() { return redis.hgetall(K_SCOREBOARD); }
 
     @Override public synchronized GameBoardBlock getBlock(String blockKey) {
         final String json = redis.get(K_BLOCKS + "/" + blockKey);

@@ -117,7 +117,12 @@ public class GamesMaster {
 
     public GameRoomJoinResponse addPlayer(GameRoom room, GamePlayer player) {
         final GameRoomJoinResponse response = _addPlayer(room, player);
-        if (response != null) getRoomsByPlayer().sadd(player.getId(), response.getRoom());
+        if (response != null) {
+            final RedisService roomsByPlayer = getRoomsByPlayer();
+            if (!roomsByPlayer.sismember(player.getId(), response.getRoom())) {
+                roomsByPlayer.sadd(player.getId(), response.getRoom());
+            }
+        }
         return response;
     }
 
@@ -146,7 +151,7 @@ public class GamesMaster {
                 }
                 final RoomState roomState = gameDaemon.getGameStateStorage().getRoomState();
                 if (matchState == null || matchState == roomState) {
-                    rooms.add(room);
+                    rooms.add(room.setRoomState(roomState));
                 } else {
                     log.info("getRoomsForPlayer: skipping room, expected status "+ matchState +", had "+roomState+": " + roomName);
                 }

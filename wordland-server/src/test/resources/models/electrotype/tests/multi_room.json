@@ -55,9 +55,17 @@
       "store": "rooms",
       "check": [
         {"condition": "json.length == 5"},
-        {"condition": "json[0].name.startsWith('5x5_')"}
+        {"condition": "json[0].name.startsWith('5x5_')"},
+        {"condition": "json[0].roomState == 'awaiting'"},
+        {"condition": "find(json, 'roomState', 'active') == null"},
+        {"condition": "find(json, 'roomState', 'ended') == null"}
       ]
     }
   }
+
+  // login as player2
+  // join first room
+  // list all rooms for player2, should see one that is active
+  // list all rooms for player1, should see same one active
 
 ]

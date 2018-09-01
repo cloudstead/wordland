@@ -10,10 +10,12 @@ import org.cobbzilla.wizard.model.entityconfig.annotations.ECTypeURIs;
 import org.hibernate.annotations.Type;
 import wordland.model.game.GameState;
 import wordland.model.game.GameStateStorageService;
+import wordland.model.game.RoomState;
 import wordland.model.json.GameRoomSettings;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Transient;
 
 import static wordland.ApiConstants.GAME_ROOMS_ENDPOINT;
 
@@ -47,5 +49,7 @@ public class GameRoom extends NamedIdentityBase {
     public GameState init(GameStateStorageService stateStorage) {
         return new GameState(this, stateStorage);
     }
+
+    @Transient @Getter @Setter private RoomState roomState;
 
 }

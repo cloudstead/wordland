@@ -63,7 +63,7 @@ public class GameState {
     public GamePlayer getPlayer(String id) { return stateStorage.getPlayer(id); }
 
     public Collection<GamePlayer> getPlayers() { return stateStorage.getPlayers(); }
-    public Map<String, String> getScoreboard() { return stateStorage.getScorebord(); }
+    public Map<String, String> getScoreboard() { return stateStorage.getScoreboard(); }
 
     public GameStateChange addPlayer(GamePlayer player) {
         // todo check maxPlayers. if maxPlayers reached, see if any can be evicted? maybe not, let GameDaemon handle that...
