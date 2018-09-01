@@ -1,0 +1,29 @@
+[
+  {
+    "name": "the_expanse",
+    "template": true,
+    "settings": {
+      "board": { "name": "infinity" },
+      "maxPlayers": 2,
+      "turnPolicies": [
+        {
+          "name": "daily_turn_limit",
+          "type": "periodic_limit",
+          "params": [
+            {"name": "turn_duration", "value": "1d"},
+            {"name": "max_turns", "value": "6"}
+          ]
+        },
+        {
+          "name": "rapid_fire_limit",
+          "type": "periodic_limit",
+          "params": [
+            {"name": "turn_duration", "value": "5m"},
+            {"name": "max_turns", "value": "1"}
+          ]
+        }
+      ],
+      "missedTurnPolicy": "forfeit_game"
+    }
+  }
+]

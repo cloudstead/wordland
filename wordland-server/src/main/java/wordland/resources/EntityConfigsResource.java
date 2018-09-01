@@ -34,7 +34,7 @@ public class EntityConfigsResource extends AbstractEntityConfigsResource {
         return session.hasAccount() && !session.getAccount().isSuspended();
     }
 
-    @POST @Path("/populate/{name}")
+    @POST @Path("/populate/{name:.+}")
     public Response populateModel (@Context HttpContext ctx,
                                    @PathParam("name") String modelName) {
 
@@ -47,8 +47,8 @@ public class EntityConfigsResource extends AbstractEntityConfigsResource {
             return ok(setupModel(api, ENTITY_CONFIGS_ENDPOINT, "models/"+modelName+"/", MODEL_SETUP_LISTENER, "populateModel"));
 
         } catch (Exception e) {
-            log.error("populateModel: "+e.getClass().getSimpleName()+": "+e.getMessage());
-            return serverError();
+            log.error("populateModel: "+e.getClass().getSimpleName()+": "+e.getMessage(), e);
+            return notFound(modelName);
         }
     }
 

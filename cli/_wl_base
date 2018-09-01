@@ -58,6 +58,14 @@ function env_val {
   fi
 }
 
+function maybe_verbose {
+  if [[ ! -z "${WL_VERBOSE_ERRORS}" && "${WL_VERBOSE_ERRORS}" == "Y" ]] ; then
+    echo "${@}"
+  else
+    echo "${@}" | awk '{$1=$1;print}' | tr -d '\n'
+  fi
+}
+
 function debug {
   echo "${@}" >> ${DEBUG_LOGFILE}
 }
@@ -239,7 +247,7 @@ function wl_get {
       return
     fi
   done
-  die "wl_get(${URL}): ${status_code}$(if [[ ! -z "${json}" ]] ; then echo " / ${json}" ; fi)"
+  die "wl_get(${URL}): ${status_code}$(if [[ ! -z "${json}" ]] ; then echo ; echo "$(maybe_verbose "${json}")" ; fi)"
 }
 
 function wl_post {
@@ -264,7 +272,7 @@ function wl_post {
       return
     fi
   done
-  die "wl_post(${URL}): ${status_code}$(if [[ ! -z "${json}" ]] ; then echo " / ${json}" ; fi)"
+  die "wl_post(${URL}): ${status_code}$(if [[ ! -z "${json}" ]] ; then echo ; echo "$(maybe_verbose "${json}")" ; fi)"
 }
 
 mkdir -p ${WL_DIR} || die "$(translate_message err_mkdir): ${WL_DIR}"
