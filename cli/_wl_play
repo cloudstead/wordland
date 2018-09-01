@@ -9,6 +9,7 @@ WEBSOCKET_PID="${2:?$(translate_message err_websocket_wl_play_pid_required)}"
 
 ACTIVE_CHAR=""
 ACTIVE_CHAR_INDEX=1
+ACTIVE_TRAY_INDEX=1
 TILES=()
 LETTERS=()
 INDEXES=()
@@ -35,12 +36,16 @@ function reset_play {
   INDEXES=()
   ACTIVE_CHAR=""
   ACTIVE_CHAR_INDEX=1
+  ACTIVE_TRAY_INDEX=0
 }
 
 function current_word {
   for c in "${LETTERS[@]}" ; do
     echo -n "${c}" | tr '[:lower:]' '[:upper:]'
   done
+}
+function current_word_length {
+  echo -n $(current_word) | wc -c | tr -d ' '
 }
 
 function subtract_letter {
@@ -102,11 +107,14 @@ function board_preview_obj {
   echo -n "${BOARD_REQUEST_TILES_JSON_PREFIX}"
   first=1
   for tile in "${TILES[@]}" ; do
-    if [ ${first} -ne 1 ] ; then
-      echo -n "${BOARD_REQUEST_TILES_JSON_SEP}"
-    fi
     if [[ "${tile}" =~ /null/ ]] ; then
       break
+    fi
+    if [[ -z "$(echo -n ${tile} | tr -d ' ')" ]] ; then
+      continue
+    fi
+    if [ ${first} -ne 1 ] ; then
+      echo -n "${BOARD_REQUEST_TILES_JSON_SEP}"
     fi
     echo -n " { ${tile} }"
     first=0
@@ -175,7 +183,7 @@ function show_tray {
     echo "   [  $(current_word)  ]"
     echo -n "     "
     i=0
-    while [[ ${i} -lt $(echo -n "$(current_word)" | wc -c | tr -d ' ') ]] ; do
+    while [[ ${i} -lt ${ACTIVE_TRAY_INDEX} ]] ; do
       echo -n " "
       i=$(expr ${i} + 1)
     done
@@ -248,6 +256,7 @@ while [ 1 ] ; do
       TILES+=("\"symbol\": \"${char}\", \"index\": ${ACTIVE_CHAR_INDEX}")
       LETTERS+=("${char}")
       INDEXES+=(${ACTIVE_CHAR_INDEX})
+      ACTIVE_TRAY_INDEX=$(current_word_length)
     ;;
 
     # Increment current active char index
@@ -279,12 +288,52 @@ while [ 1 ] ; do
       fi
     ;;
 
+    # Move current letter to the right in the tray, if possible
+    ']')
+      if [[ ${#TILES[@]} -gt 1 && ${ACTIVE_TRAY_INDEX} -lt $(current_word_length) ]] ; then
+        ATR_INDEX=$(expr ${ACTIVE_TRAY_INDEX} - 1)
+        next=$(expr ${ATR_INDEX} + 1)
+        SAVED_TILE="${TILES[${next}]}"
+        SAVED_LETTER="${LETTERS[${next}]}"
+        SAVED_INDEX="${INDEXES[${next}]}"
+        TILES[${next}]="${TILES[${ATR_INDEX}]}"
+        LETTERS[${next}]="${LETTERS[${ATR_INDEX}]}"
+        INDEXES[${next}]="${INDEXES[${ATR_INDEX}]}"
+        TILES[${ATR_INDEX}]="${SAVED_TILE}"
+        LETTERS[${ATR_INDEX}]="${SAVED_LETTER}"
+        INDEXES[${ATR_INDEX}]="${SAVED_INDEX}"
+        ACTIVE_TRAY_INDEX=$(expr ${ACTIVE_TRAY_INDEX} + 1)
+      else
+        continue
+      fi
+    ;;
+
+    # Move current letter to the left in the tray, if possible
+    '[')
+      if [[ ${#TILES[@]} -gt 1 && ${ACTIVE_TRAY_INDEX} -gt 1 ]] ; then
+        ATR_INDEX=$(expr ${ACTIVE_TRAY_INDEX} - 1)
+        prev=$(expr ${ATR_INDEX} - 1)
+        SAVED_TILE="${TILES[${prev}]}"
+        SAVED_LETTER="${LETTERS[${prev}]}"
+        SAVED_INDEX="${INDEXES[${prev}]}"
+        TILES[${prev}]="${TILES[${ATR_INDEX}]}"
+        LETTERS[${prev}]="${LETTERS[${ATR_INDEX}]}"
+        INDEXES[${prev}]="${INDEXES[${ATR_INDEX}]}"
+        TILES[${ATR_INDEX}]="${SAVED_TILE}"
+        LETTERS[${ATR_INDEX}]="${SAVED_LETTER}"
+        INDEXES[${ATR_INDEX}]="${SAVED_INDEX}"
+        ACTIVE_TRAY_INDEX=$(expr ${ACTIVE_TRAY_INDEX} - 1)
+      else
+        continue
+      fi
+    ;;
+
     # Submit the letters in the tray as our play, if there are any
     '')
       if [[ -z "${CURRENT_PLAY}" ]] ; then
         error "$(translate_message err_game_noCurrentPlay)"
       else
-        play_status="$(wl_post "${WL_API}/rooms/${ROOM_NAME}/play" "$(play_obj)" "${PLAY_JSON}")"
+        play_status="$(wl_post "${WL_API}/rooms/${ROOM_NAME}/play" "$(play_obj)" "${PLAY_JSON}" "200 422")"
         case $(http_code ${play_status}) in
           200)
             reset_play

@@ -10,6 +10,10 @@
     
     < >          :  change tile location of current letter
     
+    [ ]          :  move current letter in the tray
+    
+    { }          :  change the current letter in the tray
+    
     -            :  remove current letter from the tray
     
     (space)      :  clear the tray
