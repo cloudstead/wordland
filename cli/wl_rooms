@@ -75,11 +75,11 @@ else
   length=$(json_val "${room}" settings.board.settings.length)
   maxPlayers=$(json_val "${room}" settings.maxPlayers)
 
-  if [[ -z "${width}" ]] ; then
-    width="$(translate_message label_infinite)"
+  if [[ -z "${width}" || "${width}" == "null" ]] ; then
+    width="$(translate_message label_infinity)"
   fi
-  if [[ -z "${length}" ]] ; then
-    length="$(translate_message label_infinite)"
+  if [[ -z "${length}" || "${length}" == "null" ]] ; then
+    length="$(translate_message label_infinity)"
   fi
 
   if [[ ! -z "${board}" ]] ; then

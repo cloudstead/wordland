@@ -46,6 +46,7 @@ public class GameRoomSettings {
 
     @Getter @Setter private MissedTurnPolicy missedTurnPolicy;
     @Getter @Setter private BonusPolicy[] bonusPolicies;
+    @Getter @Setter private WinCondition[] winConditions;
 
     public String symbolSetName() {
         return symbolSet != null && symbolSet.getName() != null ? symbolSet.getName() : STANDARD;

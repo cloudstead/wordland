@@ -12,7 +12,13 @@
           "params": [{"name": "max_turn_duration", "value": "5d"}]
         }
       ],
-      "missedTurnPolicy": "forfeit_game"
+      "missedTurnPolicy": "forfeit_game",
+      "winConditions": [{
+        "name": "controls_board",
+        "defaultMessage": "The winner has the most tiles after all tiles have been played",
+        "endJs": "board.blankCount() == 0",
+        "winnerJs": "board.playersByCount.entrySet.iterator().next().id"
+      }]
     }
   }
 ]

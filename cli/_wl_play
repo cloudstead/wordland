@@ -249,22 +249,27 @@ function move_board {
         q|Q)
           echo ; return
         ;;
-        ?)
+        '?')
           lang_file "move_board"
           echo ; echo -n "$(move_board_prompt)"
           continue
         ;;
         w|W)
-          Y1=$(expr ${Y1} + 1)
+        echo "moving up?"
+          X1=$(expr ${X1} - 1)
+          fresh_board_view
         ;;
         a|A)
-          X1=$(expr ${X1} - 1)
+          Y1=$(expr ${Y1} - 1)
+          fresh_board_view
         ;;
         s|S)
-          Y1=$(expr ${Y1} - 1)
+          X1=$(expr ${X1} + 1)
+          fresh_board_view
         ;;
         d|D)
-          X1=$(expr ${X1} + 1)
+          Y1=$(expr ${Y1} + 1)
+          fresh_board_view
         ;;
         *)
           continue

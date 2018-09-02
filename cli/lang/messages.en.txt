@@ -34,6 +34,7 @@ msg_roomDetails="Details for room"
 label_board_name="Board name"
 label_board_dimensions="Board dimensions"
 label_maxPlayers="Max players"
+label_infinity="∞"
 msg_chooseRoom="Enter a room name or number to see more info, or Control-C to exit"
 msg_roomOptions="
 Commands:
