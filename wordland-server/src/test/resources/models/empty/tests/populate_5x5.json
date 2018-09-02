@@ -19,7 +19,7 @@
   {
     "comment": "populate 5x5 model",
     "request": {
-      "uri": "entityConfigs/populate/5x5",
+      "uri": "entityConfigs/models/5x5",
       "method": "post"
     }
   },
