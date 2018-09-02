@@ -17,6 +17,9 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 
+import java.util.regex.Pattern;
+
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static wordland.ApiConstants.GAME_ROOMS_ENDPOINT;
 
 @ECType(root=true)
@@ -31,6 +34,16 @@ public class GameRoom extends NamedIdentityBase {
     }
 
     public GameRoom (String name) { super(name); }
+
+    public static final Pattern GAME_ROOM_NAME_PATTERN = Pattern.compile("[A-Za-z0-9][A-Za-z0-9_-]+[A-Za-z0-9]");
+
+    @Override public NamedIdentityBase setName(String name) {
+        // validate nme
+        if (!GAME_ROOM_NAME_PATTERN.matcher(name).matches()) {
+            throw invalidEx("err.roomName.invalid");
+        }
+        return super.setName(name);
+    }
 
     @Column(updatable=false)
     @Getter @Setter private String accountOwner;
