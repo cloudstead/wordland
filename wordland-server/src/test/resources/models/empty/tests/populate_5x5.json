@@ -17,9 +17,9 @@
   },
 
   {
-    "comment": "populate electrolyte model",
+    "comment": "populate 5x5 model",
     "request": {
-      "uri": "entityConfigs/populate/electrotype",
+      "uri": "entityConfigs/populate/5x5",
       "method": "post"
     }
   },
@@ -33,7 +33,7 @@
       "check": [
         {"condition": "json.length == 1"},
         {"condition": "json[0].name == '5x5'"},
-        {"condition": "json[0].settings.board.name == 'electrotype'"}
+        {"condition": "json[0].settings.board.name == '5x5'"}
       ]
     }
   }

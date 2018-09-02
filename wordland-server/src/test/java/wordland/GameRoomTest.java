@@ -6,7 +6,7 @@ public class GameRoomTest extends ApiModelTestBase {
 
     public static final String DOC_TARGET = "Games";
 
-    @Override public String getModelPrefix() { return "models/electrotype"; }
+    @Override public String getModelPrefix() { return "models/5x5"; }
 
     @Test public void testCreateGameRoom () throws Exception {
         apiDocs.startRecording(DOC_TARGET, "create a game room with standard rules");

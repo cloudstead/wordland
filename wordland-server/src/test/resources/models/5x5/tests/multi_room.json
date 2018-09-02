@@ -56,7 +56,7 @@
       "check": [
         {"condition": "json.length == 5"},
         {"condition": "json[0].name.startsWith('5x5_')"},
-        {"condition": "json[0].roomState == 'awaiting'"},
+        {"condition": "json[0].roomState == 'waiting'"},
         {"condition": "find(json, 'roomState', 'active') == null"},
         {"condition": "find(json, 'roomState', 'ended') == null"}
       ]

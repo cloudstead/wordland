@@ -3,7 +3,7 @@
     "name": "5x5",
     "template": true,
     "settings": {
-      "board": { "name": "electrotype" },
+      "board": { "name": "5x5" },
       "maxPlayers": 2,
       "turnPolicies": [
         {
