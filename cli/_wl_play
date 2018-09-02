@@ -15,18 +15,6 @@ LETTERS=()
 INDEXES=()
 WS_MARKER_FILE="${WS_MARKER_FILE_DIR}/$$"
 
-function show_help {
-  HELP_FILE="${SCRIPT_DIR}/lang/help.$(lang).md"
-  if [[ ! -f ${HELP_FILE} ]] ; then
-    HELP_FILE="${SCRIPT_DIR}/lang/help.en.md"
-  fi
-  if [[ ! -f ${HELP_FILE} ]] ; then
-    error "$(translate_message err_help_notFound): ${HELP_FILE}"
-  else
-    cat ${HELP_FILE}
-  fi
-}
-
 function reset_play {
   unset TILES
   TILES=()
@@ -139,51 +127,6 @@ function save_palette {
   fi
 }
 
-function show_rooms {
-  rooms_json=$(wl_get ${WL_API}/me/rooms)
-  i=1
-  #echo "${rooms_json}" >> /tmp/rooms.json
-  for room in $(echo "${rooms_json}" | jq '.[] | .name' | tr -d '"') ; do
-    roomState=$(json_find "${rooms_json}" name "${room}" roomState)
-    echo "${i} - ${room} - $(translate_message msg_room_state_${roomState})"
-    i=$(expr ${i} + 1)
-  done
-  echo "n - New Game"
-  echo "q - Back to Current Game"
-  echo ; echo -n "$(room_prompt)"
-  while IFS= read line 2> /dev/null ; do
-    if [[ ! -z "${line}" ]] ; then
-      case ${line} in
-        q|Q)
-          return
-        ;;
-        n|N)
-          echo ; echo ; exec ${SCRIPT_DIR}/wl_rooms
-        ;;
-        (*[!0-9]*)
-          echo ; echo -n "$(room_prompt)"
-          continue
-        ;;
-        *)
-          # all digits, must be room number
-          line=$(echo "${line}" | tr -d ' \n')
-          if [[ -z "${line}" ]] ; then
-            break
-          fi
-          roomName=$(echo "${rooms_json}" | jq '.['$(expr ${line} - 1)'] | .name' | tr -d '"')
-          if [[ $(wl_exists "${WL_API}/rooms/${roomName}") == "true" ]] ; then
-            exec ${SCRIPT_DIR}/wl_join "${roomName}"
-          else
-            error "$(translate_message err_room_notFound)"
-          fi
-        ;;
-      esac
-    fi
-    echo ; echo -n "$(room_prompt)"
-  done
-  echo "end of script" >> /tmp/roomlog
-}
-
 function show_tray {
   echo
   if [[ -z "$(current_word)" ]] ; then
@@ -246,6 +189,94 @@ function fresh_board_view {
 
 function async_fresh_board_view {
   echo ; echo ; echo "<?~~~ !! async update !! ~~~~?>"; fresh_board_view
+}
+
+function show_rooms {
+  rooms_json=$(wl_get ${WL_API}/me/rooms)
+  i=1
+  #echo "${rooms_json}" >> /tmp/rooms.json
+  for room in $(echo "${rooms_json}" | jq '.[] | .name' | tr -d '"') ; do
+    roomState=$(json_find "${rooms_json}" name "${room}" roomState)
+    echo "${i} - ${room} - $(translate_message msg_room_state_${roomState})"
+    i=$(expr ${i} + 1)
+  done
+  echo "n - New Game"
+  echo "q - Back to Current Game"
+  echo ; echo -n "$(room_prompt)"
+  while IFS= read line 2> /dev/null ; do
+    if [[ ! -z "${line}" ]] ; then
+      case ${line} in
+        q|Q)
+          return
+        ;;
+        n|N)
+          echo ; echo ; exec ${SCRIPT_DIR}/wl_rooms
+        ;;
+        (*[!0-9]*)
+          echo ; echo -n "$(room_prompt)"
+          continue
+        ;;
+        *)
+          # all digits, must be room number
+          line=$(echo "${line}" | tr -d ' \n')
+          if [[ -z "${line}" ]] ; then
+            break
+          fi
+          roomName=$(echo "${rooms_json}" | jq '.['$(expr ${line} - 1)'] | .name' | tr -d '"')
+          if [[ $(wl_exists "${WL_API}/rooms/${roomName}") == "true" ]] ; then
+            exec ${SCRIPT_DIR}/wl_join "${roomName}"
+          else
+            error "$(translate_message err_room_notFound)"
+          fi
+        ;;
+      esac
+    fi
+    echo ; echo -n "$(room_prompt)"
+  done
+  echo "end of script" >> /tmp/roomlog
+}
+
+function move_board_prompt {
+  echo -n "$(translate_message msg_move_board_prompt)>>> "
+}
+
+function move_board {
+  debug "move_board: starting with x1=${X1}, y1=${Y1}"
+  echo ; echo -n "$(move_board_prompt)"
+  while [ 1 ] ; do
+    while IFS= read -s -r -t 2 -n1 char 2> /dev/null ; do
+      case ${char} in
+        q|Q)
+          echo ; return
+        ;;
+        ?)
+          lang_file "move_board"
+          echo ; echo -n "$(move_board_prompt)"
+          continue
+        ;;
+        w|W)
+          Y1=$(expr ${Y1} + 1)
+        ;;
+        a|A)
+          X1=$(expr ${X1} - 1)
+        ;;
+        s|S)
+          Y1=$(expr ${Y1} - 1)
+        ;;
+        d|D)
+          X1=$(expr ${X1} + 1)
+        ;;
+        *)
+          continue
+        ;;
+      esac
+      debug "move_board: ending with x1=${X1}, y1=${Y1}"
+      echo "${X1}" > ${WL_DIR}/rooms/${ROOM_NAME}/x1
+      echo "${Y1}" > ${WL_DIR}/rooms/${ROOM_NAME}/y1
+      reset_play
+      fresh_board_view
+    done
+  done
 }
 
 fresh_board_view
@@ -500,12 +531,17 @@ while [ 1 ] ; do
     ;;
 
     '?')
-      show_help
+      lang_file "help"
     ;;
 
     '/')
       echo ; echo
       show_rooms
+    ;;
+
+    '~')
+      echo ; echo
+      move_board
     ;;
 
     # Didn't understand that, skip it

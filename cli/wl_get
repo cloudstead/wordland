@@ -10,5 +10,27 @@ ENTITY="$(cat ${ENTITY})"
 OUTFILE="${3:-/dev/null}"
 
 TMP_FILE=$(mktemp /tmp/$(basename $0).XXXXXXX)
-echo "GET ${URI}"
-wl_get "${WL_API}/${URI}"
+
+dot_pos=$(str_index ${URI} '.')
+if [[ ${dot_pos} == "-1" ]] ; then
+  echo "GET ${URI}"
+  wl_get "${WL_API}/${URI}"
+else
+  URI_LEN=$(echo -n "${URI}" | wc -c | tr -d ' ')
+  OBJ_PATH="$(echo -n "${URI}" | tail -c $(expr ${URI_LEN} - ${dot_pos}))"
+  URI="$(echo -n "${URI}" | head -c ${dot_pos})"
+  # echo "GET ${URI} -dot- ${OBJ_PATH}, URI_LEN=${URI_LEN}, dp=${dot_pos}"
+  JSON=$(wl_get "${WL_API}/${URI}")
+  if [[ "$(echo "${JSON}" | tr -d ' \n')" == [* ]] ; then
+    if [[ "${OBJ_PATH}" == ".length" ]] ; then
+      echo "${JSON}" | jq '. | length'
+    else
+      mapfile -t json_objects < <(echo "${JSON}" | jq -c '.[]')
+      for obj in "${json_objects[@]}"; do
+        echo "${obj}" | jq ''${OBJ_PATH}'' | tr -d '"'
+      done
+    fi
+  else
+    echo "${JSON}" | jq ''${OBJ_PATH}'' | tr -d '"'
+  fi
+fi

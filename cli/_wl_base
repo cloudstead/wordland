@@ -70,6 +70,11 @@ function debug {
   echo "${@}" >> ${DEBUG_LOGFILE}
 }
 
+function str_index() {
+  x="${1%%$2*}"
+  [[ "$x" = "$1" ]] && echo -1 || echo "${#x}"
+}
+
 function json_node {
   if [[ ! -z "${WL_VERBOSE_ERRORS}" && "${WL_VERBOSE_ERRORS}" == "Y" ]] ; then
     echo "${1}" | jq .${2}
@@ -120,6 +125,19 @@ function lang_pack_msg {
   LANG_PACK="${1}"
   msg_key="${2}"
   echo "$(. ${LANG_PACK} && echo "${!msg_key}")"
+}
+
+function lang_file {
+  f=${1}
+  L_FILE="${SCRIPT_DIR}/lang/${f}.$(lang).md"
+  if [[ ! -f ${L_FILE} ]] ; then
+    L_FILE="${SCRIPT_DIR}/lang/${f}.en.md"
+  fi
+  if [[ ! -f ${L_FILE} ]] ; then
+    error "$(translate_message err_${f}_notFound): ${L_FILE}"
+  else
+    cat ${L_FILE}
+  fi
 }
 
 function translate_message {
@@ -195,6 +213,7 @@ function room_prompt {
     echo "$(session_name)/$(translate_message msg_room_prompt_rooms)>>> "
   fi
 }
+
 function http_code {
  code="${1}"
  if [[ ! -z "${code}" && ! "${code}" =~ [A-Za-z] ]] ; then

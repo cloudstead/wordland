@@ -16,6 +16,8 @@
     
     -            :  remove current letter from the tray
     
+    ~            :  move board view  
+    
     (space)      :  clear the tray
     
     (enter)      :  play the word currently in the tray
