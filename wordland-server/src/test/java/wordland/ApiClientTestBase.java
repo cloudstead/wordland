@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.mail.sender.mock.MockTemplatedMailSender;
 import org.cobbzilla.mail.sender.mock.MockTemplatedMailService;
 import org.cobbzilla.util.collection.SingletonList;
+import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.system.CommandShell;
 import org.cobbzilla.wizard.api.ApiException;
 import org.cobbzilla.wizard.auth.LoginRequest;
@@ -59,6 +60,12 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
         final String command = background ? "set -m ; " + dropCommand + " &" : dropCommand;
         execScript(command, config.pgEnv(), DROP_EXIT_VALUES);
         return true;
+    }
+
+    protected <T> T bean(Class<T> clazz) { return getServer().getConfiguration().getBean(clazz); }
+
+    protected String handlebars(String template, Map<String, Object> ctx) {
+        return HandlebarsUtil.apply(getConfiguration().getHandlebars(), template, ctx);
     }
 
     @Override public void beforeStart(RestServer<WordlandConfiguration> server) {

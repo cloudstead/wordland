@@ -8,9 +8,12 @@ import lombok.experimental.Accessors;
 import wordland.model.support.AttemptedTile;
 import wordland.model.support.TextGridResponse;
 
+import static wordland.model.game.TileFunctions.countUnclaimed;
+
 @NoArgsConstructor @AllArgsConstructor @Accessors(chain=true)
 public class GameBoardState {
 
+    @Getter @Setter private RoomState roomState;
     @Getter @Setter private long version;
     @Getter @Setter private int x1;
     @Getter @Setter private int x2;
@@ -18,13 +21,13 @@ public class GameBoardState {
     @Getter @Setter private int y2;
     @Getter @Setter private GameTileState[][] tiles;
 
-    public GameBoardState(long version, int x1, int x2, int y1, int y2) {
-        this(version, x1, x2, y1, y2, null);
+    public GameBoardState(long version, int x1, int x2, int y1, int y2, RoomState roomState) {
+        this(roomState, version, x1, x2, y1, y2, null);
     }
 
-    public String grid () { return GameTileState.grid(tiles); }
-    public String grid (GameBoardPalette palette) { return GameTileState.grid(tiles, palette); }
-    public TextGridResponse grid (GameBoardPalette palette, AttemptedTile[] attempt) { return GameTileState.grid(tiles, palette, attempt); }
+    public String grid () { return TileGridFunctions.grid(tiles); }
+    public String grid (GameBoardPalette palette) { return TileGridFunctions.grid(tiles, palette); }
+    public TextGridResponse grid (GameBoardPalette palette, AttemptedTile[] attempt) { return TileGridFunctions.grid(tiles, palette, attempt); }
 
     @SuppressWarnings("unused") // used in JSON tests. see models/infinity/tests/play_infinity.json
     public boolean claimedWord(String word) {
@@ -37,4 +40,7 @@ public class GameBoardState {
         }
         return false;
     }
+
+    public int unclaimed () { return countUnclaimed(tiles); }
+
 }

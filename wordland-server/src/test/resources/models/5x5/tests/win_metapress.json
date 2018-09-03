@@ -1,0 +1,79 @@
+[
+  {
+    "comment": "login as player 1",
+    "request": { "session": "new", "uri": "auth/login", "method": "post" },
+    "response": {
+      "sessionName": "player1",
+      "session": "apiToken"
+    }
+  },
+
+  {
+    "comment": "player1 join room",
+    "request": {
+      "uri": "rooms/5x5/join",
+      "entity": {
+        "name": "Joe Smith"
+      }
+    },
+    "response": {
+      "store": "p1room",
+      "check": [
+        {"condition": "json.player.name == 'Joe Smith'"},
+        {"condition": "json.room.startsWith('5x5_')"},
+        {"condition": "json.room != '5x5'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "login as player 2",
+    "request": { "session": "new", "uri": "auth/login", "method": "post" },
+    "response": {
+      "sessionName": "player2",
+      "session": "apiToken"
+    }
+  },
+
+  {
+    "comment": "player2 join room",
+    "request": {
+      "uri": "rooms/{{p1room.room}}/join",
+      "entity": {}
+    },
+    "response": {
+      "store": "p2room"
+    }
+  },
+
+  {
+    "comment": "get board state, verify game is started",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/board"
+    },
+    "response": {
+      "store": "board",
+      "check": [
+        {"condition": "json.roomState == 'active'"},
+        {"condition": "json.unclaimed() == 25"}
+      ]
+    }
+  },
+
+  {
+    "comment": "play moves until no blank tiles remain, get room info",
+    "before": "play-all-tiles board {{p1room.room}} p1room.player p2room.player",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/board"
+    },
+    "response": {
+      "store": "board",
+      "check": [
+        {"condition": "json.unclaimed() == 0"},
+        {"condition": "json.roomState == 'ended'"}
+      ]
+    }
+  }
+]

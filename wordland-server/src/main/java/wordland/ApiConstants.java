@@ -57,7 +57,6 @@ public class ApiConstants {
     // max number of rows/cols to show in a PNG overview
     public static final int MAX_BOARD_VIEW = 10_000;
 
-    public static final String[] VOWELS = {"e", "a", "o", "i", "u"};
     public static final int[][] CIRCULAR_SEARCH_1 = {
             {-1, -1}, {-1, 0}, {-1, 1},
             {0, -1}, {0, 0}, {0, 1},

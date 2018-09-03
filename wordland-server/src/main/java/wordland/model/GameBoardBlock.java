@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.ToString;
 import wordland.model.game.GameTileState;
 import wordland.model.game.GameTileStateExtended;
+import wordland.model.game.TileGridFunctions;
 
 import java.util.*;
 
@@ -117,7 +118,7 @@ public class GameBoardBlock {
         return tiles[x - getX1()][y - getY1()];
     }
 
-    public String grid () { return GameTileState.grid(getTiles()); }
+    public String grid () { return TileGridFunctions.grid(getTiles()); }
 
     @JsonIgnore @Getter(lazy=true) private final GameTileStateExtended[][] tilesExtended = initTilesExtended();
     public GameTileStateExtended[][] initTilesExtended () {

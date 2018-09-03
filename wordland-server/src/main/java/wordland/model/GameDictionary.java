@@ -28,6 +28,7 @@ import static java.util.Comparator.comparingInt;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.CLASSPATH_PREFIX;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static wordland.ApiConstants.EP_DICTIONARIES;
 
 @ECType @ECTypeURIs(baseURI=EP_DICTIONARIES)
@@ -94,10 +95,13 @@ public class GameDictionary extends NamedIdentityBase {
     }
 
 
-    public GameRuntimeEvent findWord(List<GameTileStateExtended> tiles, Set<String> playedWords) {
+    public GameRuntimeEvent findWord(List<GameTileStateExtended> tiles, Set<String> playedWords, GameTileStateExtended requiredTile) {
         final List<Character> letters = tiles.stream().map((t) -> t.getSymbol().charAt(0)).collect(Collectors.toList());
         for (String word : getShortestFirst()) {
             if (playedWords != null && playedWords.contains(word)) continue;
+
+            final PlayedTile[] playedTiles = pickTiles(tiles, word, requiredTile);
+            if (empty(playedTiles)) continue;
 
             char[] charsInWord = word.toCharArray();
             final List<Character> test = new ArrayList<>(letters);
@@ -109,31 +113,45 @@ public class GameDictionary extends NamedIdentityBase {
                 }
             }
             if (ok) {
-                return new GameRuntimeEvent().setWord(word).setTiles(pickTiles(tiles, word));
+                return new GameRuntimeEvent().setWord(word).setTiles(playedTiles);
             }
         }
         return null;
     }
 
-    private PlayedTile[] pickTiles(List<GameTileStateExtended> tiles, String word) {
+    private PlayedTile[] pickTiles(List<GameTileStateExtended> tiles, String word, GameTileStateExtended requiredTile) {
         final List<PlayedTile> playedTiles = new ArrayList<>();
         final Set<GameTileStateExtended> picked = new HashSet<>();
+
+        if (requiredTile != null) {
+            for (int i = 0; i < word.length(); i++) {
+                if (requiredTile.same(word, i)) {
+                    picked.add(requiredTile);
+                    playedTiles.add(new PlayedTile(requiredTile));
+                    break;
+                }
+            }
+            if (picked.isEmpty()) return null;
+            word = word.replaceFirst(requiredTile.getSymbol(), ""); // don't look for this letter again
+        }
+
         for (int i=0; i<word.length(); i++) {
             GameTileStateExtended matchingTile = null;
             for (GameTileStateExtended tile : tiles) {
                 if (picked.contains(tile)) continue;
-                if (tile.getSymbol().charAt(0) == word.charAt(i)) {
+                if (tile.same(word, i)) {
                     matchingTile = tile;
                     break;
                 }
             }
             if (matchingTile != null) {
-                playedTiles.add(new PlayedTile(matchingTile.getX(), matchingTile.getY(), matchingTile.getSymbol()));
+                playedTiles.add(new PlayedTile(matchingTile));
                 picked.add(matchingTile);
             } else {
-                return die("pickTiles: cannot find tile with symbol "+word.charAt(i));
+                return null;
             }
         }
+
         return playedTiles.toArray(new PlayedTile[playedTiles.size()]);
     }
 }

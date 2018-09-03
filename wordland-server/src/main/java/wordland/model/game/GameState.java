@@ -119,7 +119,7 @@ public class GameState {
         final Map<String,  GameBoardBlock> blockMap = new HashMap<>();
         final GameBoardState boardState;
         synchronized (stateStorage) {
-            boardState = new GameBoardState(stateStorage.getVersion(), x1, x2, y1, y2);
+            boardState = new GameBoardState(stateStorage.getVersion(), x1, x2, y1, y2, stateStorage.getRoomState());
             for (String blockKey : blockKeys) {
                 final GameBoardBlock block = stateStorage.getBlockOrCreate(blockKey, roomSettings().getSymbolDistribution());
                 blockMap.put(block.getBlockKey(), block);
@@ -168,6 +168,19 @@ public class GameState {
             if (farTile != null) {
                 throw new GameNotificationException(sparseWord(word, roomSettings().getMaxLetterDistance(), farTile));
             }
+        }
+
+        // do these tiles correspond to this word?
+        if (tiles.length != word.length()) {
+            throw new GameNotificationException(invalidWord(word));
+        }
+        final StringBuffer buf = new StringBuffer(word);
+        while (buf.length() > 0) {
+            int index = PlayedTile.indexOf(tiles, buf.charAt(0));
+            if (index == -1) {
+                throw new GameNotificationException(invalidWord(word));
+            }
+            buf.delete(0, 1);
         }
 
         final PointSystem pointSystem = roomSettings().getPointSystem();

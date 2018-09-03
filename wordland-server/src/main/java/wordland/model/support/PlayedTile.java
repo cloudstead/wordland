@@ -2,14 +2,22 @@ package wordland.model.support;
 
 import lombok.*;
 import lombok.experimental.Accessors;
+import wordland.model.TileXYS;
+import wordland.model.game.GameTileState;
 
 @NoArgsConstructor @AllArgsConstructor @Accessors(chain=true)
 @EqualsAndHashCode(of={"x", "y"}) @ToString
-public class PlayedTile {
+public class PlayedTile implements TileXYS {
 
     @Getter @Setter private int x;
     @Getter @Setter private int y;
     @Getter @Setter private String symbol;
+
+    public PlayedTile(TileXYS tile) {
+        setX(tile.getX());
+        setY(tile.getY());
+        setSymbol(tile.getSymbol());
+    }
 
     public static PlayedTile letterFarFromOthers(PlayedTile[] tiles, int allowedMax) {
         for (PlayedTile t1 : tiles) {
@@ -28,4 +36,14 @@ public class PlayedTile {
         return null;
     }
 
+    public static void claimTiles(String playerId, GameTileState[][] boardTiles, PlayedTile[] playedTiles) {
+        for (PlayedTile t : playedTiles) boardTiles[t.getX()][t.getY()].setOwner(playerId);
+    }
+
+    public static int indexOf(PlayedTile[] tiles, char c) {
+        for (int i=0; i<tiles.length; i++) {
+            if (tiles[i].getSymbol().equalsIgnoreCase(""+c)) return i;
+        }
+        return -1;
+    }
 }
