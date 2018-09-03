@@ -67,7 +67,7 @@ function maybe_verbose {
 }
 
 function debug {
-  echo "${@}" >> ${DEBUG_LOGFILE}
+  echo "${@}" 2> /dev/null >> ${DEBUG_LOGFILE}
 }
 
 function str_index() {
