@@ -156,13 +156,13 @@ function show_board {
       board="$(json_node "$(cat ${BOARD_JSON})" grid)"
       if [[ ! -z "${board}" ]] ; then
         save_palette
-        roomState="$(json_node "$(cat ${BOARD_JSON})" roomState)"
+        roomState="$(json_node "$(cat ${BOARD_JSON})" roomState | tr -d '"')"
+        debug "roomState=${roomState}"
         if [[ ! -z "${roomState}" && "${roomState}" == "ended" ]] ; then
           echo "$(translate_message msg_game_over)"
-          winners="$(cat ${BOARD_JSON} | jq -c '.scoreboard.[] | select(.winner == "true") | .name' | tr -d '"')"
+          winners="$(cat ${BOARD_JSON} | jq -c '.scoreboard[] | select(.winner) | .name' | tr -d '"')"
           if [[ $(echo "${winners}" | wc -l) -gt 1 ]] ; then
-            echo "$(translate_message label_winners):"
-            echo "${winners}"
+            echo "$(translate_message label_winners): ${winners}"
           else
             echo "$(translate_message label_winner): ${winners}"
           fi

@@ -70,7 +70,7 @@ function debug {
   echo "${@}" 2> /dev/null >> ${DEBUG_LOGFILE}
 }
 
-function str_index() {
+function str_index {
   x="${1%%$2*}"
   [[ "$x" = "$1" ]] && echo -1 || echo "${#x}"
 }
