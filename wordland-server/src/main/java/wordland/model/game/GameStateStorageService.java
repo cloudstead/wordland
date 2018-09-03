@@ -39,5 +39,6 @@ public interface GameStateStorageService {
     String getCurrentPlayerId();
 
     Map<String, String> getScoreboard();
+    Collection<String> getWinners();
 
 }

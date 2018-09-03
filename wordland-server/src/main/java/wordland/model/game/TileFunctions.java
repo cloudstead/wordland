@@ -41,6 +41,9 @@ public class TileFunctions {
             }
             return hasAccumulator ? accumulator.getTotal() : null;
 
+        } catch (FirstMatchFoundException e) {
+            throw e;
+
         } catch (Exception e) {
             return die("forEachTile: "+e.getClass().getSimpleName()+": "+e.getMessage(), e);
         }

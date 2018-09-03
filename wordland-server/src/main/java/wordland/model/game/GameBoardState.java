@@ -7,14 +7,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.util.collection.NameAndValue;
+import wordland.model.TileXY;
 import wordland.model.support.AttemptedTile;
 import wordland.model.support.PlayedTile;
 import wordland.model.support.TextGridResponse;
 
 import java.util.*;
 
-import static wordland.model.game.TileFunctions.MATCH_CLAIMED;
-import static wordland.model.game.TileFunctions.countUnclaimed;
+import static wordland.model.game.TileFunctions.*;
 
 @NoArgsConstructor @AllArgsConstructor @Accessors(chain=true)
 public class GameBoardState {
@@ -26,9 +26,10 @@ public class GameBoardState {
     @Getter @Setter private int y1;
     @Getter @Setter private int y2;
     @Getter @Setter private GameTileState[][] tiles;
+    @Getter @Setter private String[] winners;
 
     public GameBoardState(long version, int x1, int x2, int y1, int y2, RoomState roomState) {
-        this(roomState, version, x1, x2, y1, y2, null);
+        this(roomState, version, x1, x2, y1, y2, null, null);
     }
 
     public String grid () { return TileGridFunctions.grid(tiles); }
@@ -96,5 +97,17 @@ public class GameBoardState {
         for (PlayedTile t : tiles) {
             board[t.getX()][t.getY()].setOwner(owner);
         }
+    }
+
+    public <T extends TileXY> T fromRelativeTile(T tile) {
+        return (T) tile.setX(tile.getX() + getX1()).setY(tile.getY() + getY1());
+    }
+
+    public <T extends TileXY> T toRelativeTile(T tile) {
+        return (T) tile.setX(tile.getX() - getX1()).setY(tile.getY() - getY1());
+    }
+
+    public GameTileStateExtended firstMatch(GameTileMatcher matcher, int x, int y) {
+        return firstMatchingTile(getTiles(), matcher, x, y);
     }
 }

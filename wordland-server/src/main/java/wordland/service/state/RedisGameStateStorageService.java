@@ -1,5 +1,6 @@
 package wordland.service.state;
 
+import edu.emory.mathcs.backport.java.util.Arrays;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import wordland.model.GameBoardBlock;
 import wordland.model.GameRoom;
@@ -19,6 +20,7 @@ import java.util.Map;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static wordland.model.game.GameStateChange.*;
 
 public class RedisGameStateStorageService implements GameStateStorageService {
@@ -31,6 +33,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     public static final String K_JOIN_ORDER  = "joinOrder";
     public static final String K_NEXT_PLAYER = "nextPlayer";
     public static final String K_SCOREBOARD  = "scoreboard";
+    public static final String K_WINNERS     = "winners";
 
     private GameRoom room;
     private RedisService redis;
@@ -156,15 +159,38 @@ public class RedisGameStateStorageService implements GameStateStorageService {
                                                            PlayedTile[] tiles,
                                                            PlayScore score,
                                                            Collection<String> winners) {
+        final GameRoomSettings rs = roomSettings();
+        final String roomStateJson = redis.get(K_STATE);
+        if (roomStateJson == null) throw invalidEx("err.game.noState");
+        switch (RoomState.valueOf(roomStateJson)) {
+            case ended:
+                throw invalidEx("err.game.gameOver");
+            case waiting:
+              if (!rs.hasRoundRobinPolicy()) {
+                  throw invalidEx("err.game.waiting");
+              } else {
+                  final String currentPlayerId = getCurrentPlayerId();
+                  if (currentPlayerId == null || !currentPlayerId.equals(player.getId())) {
+                      throw invalidEx("err.game.notYourTurn");
+                  }
+              }
+        }
+
         for (GameBoardBlock block : blocks) setBlock(block);
         incrementPlayerScore(player, score);
 
-        final GameRoomSettings rs = roomSettings();
         final GameStateChange stateChange = !empty(winners)
                 ? nextState(wordPlayedGameEnded(nextVersion(), player, word, tiles, score, winners))
                 : nextState(wordPlayed(nextVersion(), player, word, tiles, score));
 
-        if (rs.hasRoundRobinPolicy() && empty(winners)) {
+        if (stateChange.getStateChange().endsGame()) {
+            redis.set(K_STATE, RoomState.ended.name());
+            if (!empty(getWinners())) {
+                return die("playWord: winners provided but game already ended, room: "+room.getName());
+            }
+            redis.set(K_WINNERS, json(winners));
+
+        } else if (rs.hasRoundRobinPolicy()) {
             // advance to next player ID
             int index = getCurrentPlayerIndex();
             final int playerCount = getPlayerCount();
@@ -187,9 +213,6 @@ public class RedisGameStateStorageService implements GameStateStorageService {
             }
         }
 
-        if (stateChange.getStateChange().endsGame()) {
-            redis.set(K_STATE, RoomState.ended.name());
-        }
         return stateChange;
     }
 
@@ -200,6 +223,10 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     }
 
     @Override public Map<String, String> getScoreboard() { return redis.hgetall(K_SCOREBOARD); }
+
+    @Override public Collection<String> getWinners() {
+        final String[] winners = json(redis.get(K_WINNERS), String[].class);
+        return empty(winners) ? null : new ArrayList<>(Arrays.asList(winners)); }
 
     @Override public synchronized GameBoardBlock getBlock(String blockKey) {
         final String json = redis.get(K_BLOCKS + "/" + blockKey);

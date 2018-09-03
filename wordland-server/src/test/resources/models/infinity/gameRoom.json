@@ -3,7 +3,8 @@
     "name": "the_expanse",
     "settings": {
       "board": { "name": "infinity" },
-      "maxLetterDistance": 5
+      "maxLetterDistance": 5,
+      "minPlayersToStart": 1
     }
   }
 ]

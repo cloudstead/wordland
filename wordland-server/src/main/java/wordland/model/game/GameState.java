@@ -31,6 +31,7 @@ import java.util.concurrent.Future;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.DaemonThreadFactory.fixedPool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.string.ValidationRegexes.UUID_PATTERN;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
@@ -66,6 +67,10 @@ public class GameState {
 
     public Collection<GamePlayer> getPlayers() { return stateStorage.getPlayers(); }
     public Map<String, String> getScoreboard() { return stateStorage.getScoreboard(); }
+    public RoomState getRoomState() { return stateStorage.getRoomState(); }
+
+    public Collection<String> getWinners() { return stateStorage.getWinners(); }
+    public boolean hasWinners () { return !empty(getWinners()); }
 
     public GameStateChange addPlayer(GamePlayer player) {
         // todo check maxPlayers. if maxPlayers reached, see if any can be evicted? maybe not, let GameDaemon handle that...

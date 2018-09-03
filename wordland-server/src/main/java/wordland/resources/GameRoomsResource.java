@@ -112,7 +112,11 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (y1 == null) y1 = 0;
         if (y2 == null) y2 = BLOCK_SIZE-1;
 
-        return state.getBoard(x1, x2, y1, y2);
+        return state.getBoard(x1, x2, y1, y2)
+                .setRoomState(state.getRoomState())
+                .setWinners(state.hasWinners()
+                        ? state.getWinners().toArray(new String[0])
+                        : null);
     }
 
     @POST @Path("/{name}"+EP_PLAY)
@@ -286,7 +290,8 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         final GameBoardState board = getGameBoardState(room, x1, x2, y1, y2);
         final TextGridResponse text = board.grid(request.getPalette(), request.getTiles())
                 .setPalette(request.getPalette())
-                .setRoomState(board.getRoomState());
+                .setRoomState(board.getRoomState())
+                .setWinners(board.getWinners());
         return ok(text);
     }
 

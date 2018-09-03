@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import wordland.model.GameDictionary;
 import wordland.model.TileXYS;
 import wordland.model.support.GameRuntimeEvent;
+import wordland.model.support.PlayedTile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class GameTileStateExtended extends GameTileState implements TileXYS {
             final int tileX = x + offset[0];
             final int tileY = y + offset[1];
             if (tileX < 0 || tileY < 0 || tileX >= tiles.length || tileY >= tiles[0].length) continue;
-            letters.add(new GameTileStateExtended(boardState, tiles[tileX][tileY], tileX, tileY));
+            letters.add(new GameTileStateExtended(tiles[tileX][tileY], tileX, tileY));
         }
         return letters;
     }
@@ -54,6 +55,7 @@ public class GameTileStateExtended extends GameTileState implements TileXYS {
             final GameRuntimeEvent event = dictionary.findWord(letters, playedWords, this);
             if (event != null) {
                 playedWords.add(event.getWord());
+                for (PlayedTile t : event.getTiles()) boardState.fromRelativeTile(t);
                 log.info("findWord: found '" + event.getWord() + "' with tiles: " + event.tileCoordinates());
                 return function.apply(event);
             }

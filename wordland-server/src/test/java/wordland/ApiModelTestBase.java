@@ -32,7 +32,6 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 import static org.cobbzilla.util.system.Sleep.sleep;
 import static wordland.model.game.GameTileMatcher.MATCH_VOWEL;
-import static wordland.model.game.TileFunctions.firstMatchingTile;
 import static wordland.model.support.PlayedTile.claimTiles;
 
 @Slf4j
@@ -89,7 +88,7 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                         if (boardState == null) die("beforeCall: boardVar '" + boardVar + "' is undefined");
 
                         // find a vowel near xPos/xPos
-                        final GameTileStateExtended vowelTile = firstMatchingTile(boardState.getTiles(), MATCH_VOWEL, xPos, yPos);
+                        final GameTileStateExtended vowelTile = boardState.firstMatch(MATCH_VOWEL, xPos, yPos);
                         if (vowelTile == null) die("beforeCall: " + FIND_WORD_AND_TILES + ": no vowels found!");
 
                         final GameDictionary dictionary = bean(GameDictionaryDAO.class).findDefault();
