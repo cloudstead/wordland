@@ -59,21 +59,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (existing != null) return invalid("err.room.exists");
 
         final GameRoomSettings rs = gameRoom.getSettings();
-        if (rs.getSymbolSet() == null) {
-            rs.setSymbolSet(symbolSetDAO.findByName(STANDARD));
-        }
-        if (rs.getSymbolDistribution() == null) {
-            rs.setSymbolDistribution(distributionDAO.findByName(STANDARD));
-        }
-        if (rs.getPointSystem() == null) {
-            rs.setPointSystem(pointSystemDAO.findByName(STANDARD));
-        }
-        if (rs.getDictionary() == null) {
-            rs.setDictionary(dictionaryDAO.findByName(STANDARD));
-        }
-        if (rs.getBoard() == null) {
-            rs.setBoard(gameBoardDAO.findByName(STANDARD));
-        }
+        dao.setDefaults(rs);
         if (account != null) gameRoom.setAccountOwner(account.getUuid());
 
         return super.create(ctx, gameRoom);

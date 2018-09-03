@@ -1,0 +1,33 @@
+[
+  {
+    "comment": "login as superuser",
+    "include": "parts/login_superuser"
+  },
+
+  {
+    "comment": "generate many combinations of 3x3 rooms",
+    "request": {
+      "uri": "boards/3x3/generateRooms",
+      "entity": {
+        "symbolSets": [{
+          "name": "standard"
+        }],
+        "maxPlayerCounts": [2, 3, 4, 5]
+      }
+    }
+  },
+
+  {
+    "comment": "verify there are now 4 rooms with 3x3 board",
+    "request": {
+      "uri": "rooms"
+    },
+    "response": {
+      "store": "rooms",
+      "check": [
+        {"condition": "rooms.length >= 4"}
+      ]
+    }
+  }
+
+]

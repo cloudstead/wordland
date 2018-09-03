@@ -10,4 +10,8 @@ public class EmptyModelTest extends ApiModelTestBase {
         runScript("populate_5x5");
     }
 
+    @Test public void testGenerateRooms () throws Exception {
+        runScript("generate_3x3");
+    }
+
 }
