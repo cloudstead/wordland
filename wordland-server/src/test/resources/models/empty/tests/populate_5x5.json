@@ -5,13 +5,13 @@
   },
 
   {
-    "comment": "verify there are no rooms",
+    "comment": "verify there are no 5x5 rooms",
     "request": {
       "uri": "rooms"
     },
     "response": {
       "check": [
-        {"condition": "json.length == 0"}
+        {"condition": "find(json, 'name', '5x5') == null"}
       ]
     }
   },
