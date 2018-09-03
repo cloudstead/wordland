@@ -8,7 +8,7 @@
   },
 
   {
-    "comment": "login as anonymous player 1",
+    "comment": "login as player 1",
     "request": { "uri": "auth/login", "method": "post" },
     "response": {
       "sessionName": "player1",

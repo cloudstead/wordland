@@ -1,0 +1,25 @@
+[
+  {
+    "name": "metapress",
+    "template": true,
+    "settings": {
+      "board": { "name": "5x5" },
+      "maxPlayers": 2,
+      "pointSystem": {"name": "tile_count" },
+      "turnPolicies": [
+        {
+          "name": "round_robin",
+          "type": "round_robin",
+          "params": [{"name": "max_turn_duration", "value": "5d"}]
+        }
+      ],
+      "missedTurnPolicy": "forfeit_game",
+      "winConditions": [{
+        "name": "controls_board",
+        "defaultMessage": "The winner has the most tiles after all tiles have been played",
+        "endJs": "board.allClaimed",
+        "winnersJs": "board.topPlayersByCount"
+      }]
+    }
+  }
+]

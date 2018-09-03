@@ -8,6 +8,6 @@ public class DbInit extends ApiClientTestBase {
 
     @Override public boolean useTestSpecificDatabase() { return false; }
 
-    @Test public void init () throws Exception { docsEnabled = false; }
+    @Test public void init () { docsEnabled = false; }
 
 }

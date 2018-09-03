@@ -15,6 +15,7 @@ public class PlayScoreComponent {
     @Getter @Setter private PlayScoreComponentType type;
     @Getter @Setter private int picas;
     @Getter @Setter private String info;
+    @Getter @Setter private boolean absolute;
 
     public static PlayScoreComponent symbol(PlayedTile tile, int picas) {
         return new PlayScoreComponent()
@@ -30,10 +31,11 @@ public class PlayScoreComponent {
                 .setInfo(word);
     }
 
-    public static PlayScoreComponent board(BoardScore b, int picas) {
+    public static PlayScoreComponent board(BoardScore b, int picas, boolean absolute) {
         return new PlayScoreComponent()
                 .setType(PlayScoreComponentType.board)
                 .setPicas(picas)
-                .setInfo(json(b));
+                .setInfo(json(b))
+                .setAbsolute(absolute);
     }
 }

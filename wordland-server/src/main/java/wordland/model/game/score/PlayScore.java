@@ -10,11 +10,15 @@ import java.util.List;
 public class PlayScore {
 
     @Getter @Setter private List<PlayScoreComponent> scores;
+    @Getter @Setter private boolean absolute;
 
     public int getTotal () {
         int picas = 0;
         if (scores != null) {
-            for (PlayScoreComponent c : scores) picas += c.getPicas();
+            for (PlayScoreComponent c : scores) {
+                if (c.isAbsolute()) return c.getPicas();
+                picas += c.getPicas();
+            }
         }
         return picas;
     }
@@ -26,10 +30,13 @@ public class PlayScore {
         scores.add(c);
     }
 
-    public void addScores(Collection<PlayScoreComponent> c) {
-        if (c == null) return;
+    public void addScores(Collection<PlayScoreComponent> components) {
+        if (components == null) return;
         if (scores == null) scores = new ArrayList<>();
-        scores.addAll(c);
+        for (PlayScoreComponent c : components) {
+            if (c.isAbsolute()) setAbsolute(true);
+            scores.add(c);
+        }
     }
 
 }

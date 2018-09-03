@@ -219,7 +219,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     private void incrementPlayerScore(GamePlayer player, PlayScore playScore) {
         final String playerScore = redis.hget(K_SCOREBOARD, player.getId());
         final int score = playerScore == null ? 0 : Integer.parseInt(playerScore);
-        redis.hset(K_SCOREBOARD, player.getId(), ""+(score + playScore.getTotal()));
+        redis.hset(K_SCOREBOARD, player.getId(), ""+(playScore.isAbsolute() ? playScore.getTotal() : score + playScore.getTotal()));
     }
 
     @Override public Map<String, String> getScoreboard() { return redis.hgetall(K_SCOREBOARD); }

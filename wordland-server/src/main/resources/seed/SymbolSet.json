@@ -8,6 +8,17 @@
       ],
       "PointSystem": [
         {
+          "name": "tile_count",
+          "settings": {
+            "boardScoring": [{
+              "name": "score_tiles",
+              "condition": "true",
+              "picas": "board.countTiles(player)",
+              "absolute": true
+            }]
+          }
+        },
+        {
           "name": "standard",
           "settings": {
             "wordScoring": [

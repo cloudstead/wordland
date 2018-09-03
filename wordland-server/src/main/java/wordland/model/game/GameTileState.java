@@ -31,6 +31,7 @@ public class GameTileState implements TileSymbol {
 
     public boolean hasOwner () { return owner != null; }
     public boolean unclaimed () { return !hasOwner(); }
+    public boolean hasOwner(String id) { return hasOwner() && getOwner().equals(id); }
 
     public boolean same(String word, int i) { return getSymbol().charAt(0) == word.charAt(i); }
     public boolean same(String word) { return same(word, 0); }

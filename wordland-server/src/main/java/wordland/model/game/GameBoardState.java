@@ -59,6 +59,14 @@ public class GameBoardState {
     public boolean allClaimed() { return unclaimed() == 0; }
     @JsonIgnore public boolean getAllClaimed() { return allClaimed(); }
 
+    public int countTiles (final GamePlayer player) {
+        if (player == null) return 0;
+        return TileFunctions.forEachTile(tiles, new TileMapReduce<Boolean, Integer>()
+                .setMatch((tiles, x, y) -> tiles[x][y].hasOwner(player.getId()))
+                .setReducer(GameTileReducer.TRUE)
+                .setAccumulator(GameTileAccumulator.booleanCounter())).intValue();
+    }
+
     @JsonIgnore @Getter(lazy=true) private final List<NameAndValue> playersByCount = initPlayersByCount();
     private List<NameAndValue> initPlayersByCount() {
         final Map<String, Integer> counts = TileFunctions.forEachTile(tiles, new TileMapReduce<String, Map<String, Integer>>()

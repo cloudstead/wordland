@@ -232,25 +232,19 @@ public class GameState {
                     claimableTiles.add(tile);
                 }
             }
+
             playScore.addScore(pointSystem.scoreWord(word));
-            playScore.addScores(pointSystem.scoreBoard(stateStorage, player, word, tiles));
+
+            final Map<String, Object> jsContext = pointSystem.hasBoardScoring() || rs.hasWinConditions()
+                    ? getJsContext(player, word, tiles, rs, claimableTiles)
+                    : null;
+            playScore.addScores(pointSystem.scoreBoard(jsContext));
 
             Collection<String> winners = null;
             if (rs.hasWinConditions()) {
-                final Map<String, Object> ctx = new HashMap<>();
-                ctx.put("player", player);
-                ctx.put("word", word);
-                ctx.put("tiles", tiles);
-                ctx.put("scoreboard", getScoreboard());
-                if (!rs.getBoard().infinite()) {
-                    final GameBoardSettings bs = rs.getBoard().getSettings();
-                    final GameBoardState board = getBoard(0, bs.getWidth()-1, 0, bs.getLength()-1);
-                    board.setOwner(player.getId(), claimableTiles);
-                    ctx.put("board", board);
-                }
                 for (WinCondition w : rs.getWinConditions()) {
-                    if (JS.evaluateBoolean(w.getEndJs(), ctx, false)) {
-                        final Object rawWinners = JS.evaluate(w.getWinnersJs(), ctx);
+                    if (JS.evaluateBoolean(w.getEndJs(), jsContext, false)) {
+                        final Object rawWinners = JS.evaluate(w.getWinnersJs(), jsContext);
                         if (rawWinners instanceof Collection) {
                             winners = new ArrayList<>((Collection<String>) rawWinners);
                         } else if (rawWinners.getClass().isArray()) {
@@ -269,6 +263,25 @@ public class GameState {
 
             return stateStorage.playWord(player, alteredBlocks.values(), word, tiles, playScore, winners);
         }
+    }
+
+    protected Map<String, Object> getJsContext(GamePlayer player, String word, PlayedTile[] tiles, GameRoomSettings rs, List<PlayedTile> claimableTiles) {
+        final Map<String, Object> ctx = new HashMap<>();
+        ctx.put("player", player);
+        ctx.put("word", word);
+        ctx.put("tiles", tiles);
+        ctx.put("scoreboard", getScoreboard());
+        if (!rs.getBoard().infinite()) {
+            final GameBoardSettings bs = rs.getBoard().getSettings();
+            final GameBoardState board = getBoard(0, bs.getWidth()-1, 0, bs.getLength()-1);
+            if (board.getX2() - board.getX1() != bs.getWidth() || board.getY2() - board.getY1() != bs.getLength()) {
+                log.warn("getJsContext: board is too big, cannot be used in JS expressions");
+            } else {
+                board.setOwner(player.getId(), claimableTiles);
+                ctx.put("board", board);
+            }
+        }
+        return ctx;
     }
 
     private boolean isClaimableByPlayer(GamePlayer player, GameTileState boardTile, int x, int y) {
