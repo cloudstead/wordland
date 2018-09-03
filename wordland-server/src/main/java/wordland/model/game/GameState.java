@@ -35,6 +35,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.string.ValidationRegexes.UUID_PATTERN;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
+import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static wordland.ApiConstants.MAX_BOARD_DETAIL_VIEW;
 import static wordland.ApiConstants.MAX_BOARD_VIEW;
 import static wordland.model.GameBoardBlock.SORT_POSITION;
@@ -73,18 +74,21 @@ public class GameState {
     public boolean hasWinners () { return !empty(getWinners()); }
 
     public GameStateChange addPlayer(GamePlayer player) {
-        // todo check maxPlayers. if maxPlayers reached, see if any can be evicted? maybe not, let GameDaemon handle that...
         synchronized (stateStorage) {
             final RoomState roomState = stateStorage.getRoomState();
-            if (roomState == RoomState.ended) throw new GameEndedException(room);
 
             if (getPlayer(player.getId()) != null) {
                 // player already in room, start new room session
                 return playerJoined(stateStorage.getVersion(), player);
             }
 
+            if (roomState == RoomState.ended) throw new GameEndedException(room);
+
             int playerCount = stateStorage.getPlayerCount();
+
+            // todo: if maxPlayers reached, see if any can be evicted? maybe not, let GameDaemon handle that...
             if (roomSettings().hasMaxPlayers() && playerCount >= roomSettings().getMaxPlayers()) throw new RoomFullException(room);
+
             if (roomState == RoomState.waiting
                     && (!roomSettings().hasMinPlayersToStart() || playerCount+1 >= roomSettings().getMinPlayersToStart())) {
                 return stateStorage.addPlayerStartGame(player);
@@ -165,6 +169,8 @@ public class GameState {
 
     public GameStateChange playWord(GamePlayer player, String word, PlayedTile[] tiles) {
 
+        if (stateStorage.isGameOver()) throw invalidEx("err.game.gameOver");
+
         if (word.length() < 2) {
             throw new GameNotificationException(invalidWord(word));
         }
@@ -199,6 +205,8 @@ public class GameState {
         final Map<String, GameBoardBlock> alteredBlocks = new HashMap<>();
         final List<PlayedTile> claimableTiles = new ArrayList<>();
         synchronized (stateStorage) {
+
+            if (stateStorage.isGameOver()) throw invalidEx("err.game.gameOver");
 
             // is it our turn?
             if (rs.hasRoundRobinPolicy()) {

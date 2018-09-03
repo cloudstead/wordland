@@ -13,6 +13,11 @@ public interface GameStateStorageService {
     long getVersion();
 
     RoomState getRoomState();
+    default boolean isGameOver() {
+        final RoomState state = getRoomState();
+        return state == null || state == RoomState.ended;
+    }
+
     void startGame();
     void endGame();
 

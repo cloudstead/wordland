@@ -17,7 +17,7 @@ EOF
 }
 
 TEMP_SESSION=$(mktemp /tmp/wl_room_session.XXXXXXXX.json)
-join_status=$(wl_post "${WL_API}/rooms/${ROOM_NAME}/join" "$(join_obj)" ${TEMP_SESSION})
+join_status=$(wl_post "${WL_API}/rooms/${ROOM_NAME}/join" "$(join_obj)" ${TEMP_SESSION} "200 422")
 case $(http_code ${join_status}) in
   200)
   ;;
