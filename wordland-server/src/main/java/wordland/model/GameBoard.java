@@ -23,4 +23,6 @@ public class GameBoard extends NamedIdentityBase {
     @Type(type=GameBoardSettings.JSONB_TYPE) @Column(nullable=false, updatable=false)
     @Getter @Setter private GameBoardSettings settings;
 
+    public boolean infinite() { return settings.infinite(); }
+
 }

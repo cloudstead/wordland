@@ -8,7 +8,7 @@ public enum GameStateChangeType {
 
     player_joined, player_joined_game_started,
     player_left,   player_left_game_ended,
-    word_played;
+    word_played,   word_played_game_ended;
 
     @JsonCreator public static GameStateChangeType fromString(String val) { return valueOf(val.toLowerCase()); }
 
@@ -21,4 +21,7 @@ public enum GameStateChangeType {
         }
         return node;
     }
+
+    public boolean endsGame() { return name().endsWith("_game_ended"); }
+
 }

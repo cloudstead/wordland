@@ -31,8 +31,10 @@ public interface GameStateStorageService {
 
     GameStateChange playWord(GamePlayer player,
                              Collection<GameBoardBlock> blocks,
+                             String word,
                              PlayedTile[] tiles,
-                             PlayScore score);
+                             PlayScore score,
+                             Collection<String> winners);
 
     String getCurrentPlayerId();
 

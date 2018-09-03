@@ -8,6 +8,7 @@ import org.cobbzilla.util.reflect.ReflectionUtil;
 import org.cobbzilla.wizard.model.json.JSONBUserType;
 import wordland.model.*;
 
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static wordland.ApiConstants.STANDARD;
 
 @Accessors(chain=true)
@@ -47,6 +48,7 @@ public class GameRoomSettings {
     @Getter @Setter private MissedTurnPolicy missedTurnPolicy;
     @Getter @Setter private BonusPolicy[] bonusPolicies;
     @Getter @Setter private WinCondition[] winConditions;
+    public boolean hasWinConditions () { return !empty(getWinConditions()); }
 
     public String symbolSetName() {
         return symbolSet != null && symbolSet.getName() != null ? symbolSet.getName() : STANDARD;

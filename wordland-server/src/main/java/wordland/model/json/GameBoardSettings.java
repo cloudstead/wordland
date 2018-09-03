@@ -18,4 +18,6 @@ public class GameBoardSettings {
     public boolean hasWidth () { return width != null; }
     public boolean infiniteWidth () { return !hasWidth(); }
 
+    public boolean infinite () { return infiniteWidth() || infiniteLength(); }
+
 }

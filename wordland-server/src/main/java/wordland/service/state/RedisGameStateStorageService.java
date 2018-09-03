@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static wordland.model.game.GameStateChange.*;
 
@@ -151,20 +152,24 @@ public class RedisGameStateStorageService implements GameStateStorageService {
 
     @Override public synchronized GameStateChange playWord(GamePlayer player,
                                                            Collection<GameBoardBlock> blocks,
+                                                           String word,
                                                            PlayedTile[] tiles,
-                                                           PlayScore score) {
+                                                           PlayScore score,
+                                                           Collection<String> winners) {
         for (GameBoardBlock block : blocks) setBlock(block);
-
         incrementPlayerScore(player, score);
 
-        final GameStateChange stateChange = nextState(wordPlayed(nextVersion(), player, tiles, score));
+        final GameRoomSettings rs = roomSettings();
+        final GameStateChange stateChange = !empty(winners)
+                ? nextState(wordPlayedGameEnded(nextVersion(), player, word, tiles, score, winners))
+                : nextState(wordPlayed(nextVersion(), player, word, tiles, score));
 
-        if (roomSettings().hasRoundRobinPolicy()) {
+        if (rs.hasRoundRobinPolicy() && empty(winners)) {
             // advance to next player ID
             int index = getCurrentPlayerIndex();
             final int playerCount = getPlayerCount();
-            final boolean hasMinPlayersToStart = roomSettings().hasMinPlayersToStart();
-            final boolean hasMinimumPlayers = !hasMinPlayersToStart || roomSettings().getMinPlayersToStart() <= playerCount;
+            final boolean hasMinPlayersToStart = rs.hasMinPlayersToStart();
+            final boolean hasMinimumPlayers = !hasMinPlayersToStart || rs.getMinPlayersToStart() <= playerCount;
 
             // if fewer than minimum number of players have arrived, advance to the next player that will join
             if (!hasMinimumPlayers) {
@@ -182,6 +187,9 @@ public class RedisGameStateStorageService implements GameStateStorageService {
             }
         }
 
+        if (stateChange.getStateChange().endsGame()) {
+            redis.set(K_STATE, RoomState.ended.name());
+        }
         return stateChange;
     }
 

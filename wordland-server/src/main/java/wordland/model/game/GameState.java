@@ -4,11 +4,11 @@ import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.daemon.Await;
 import org.cobbzilla.util.daemon.AwaitResult;
+import org.cobbzilla.util.javascript.JsEngine;
+import org.cobbzilla.util.javascript.StandardJsEngine;
+import org.cobbzilla.util.string.StringUtil;
 import org.cobbzilla.util.time.TimeUtil;
-import wordland.model.GameBoard;
-import wordland.model.GameBoardBlock;
-import wordland.model.GameRoom;
-import wordland.model.PointSystem;
+import wordland.model.*;
 import wordland.model.game.score.PlayScore;
 import wordland.model.json.GameBoardSettings;
 import wordland.model.json.GameRoomSettings;
@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -31,6 +32,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.DaemonThreadFactory.fixedPool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.string.ValidationRegexes.UUID_PATTERN;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 import static wordland.ApiConstants.MAX_BOARD_DETAIL_VIEW;
 import static wordland.ApiConstants.MAX_BOARD_VIEW;
@@ -154,19 +156,23 @@ public class GameState {
         return boardState.setTiles(tiles);
     }
 
+    public static final JsEngine JS = new StandardJsEngine();
+
     public GameStateChange playWord(GamePlayer player, String word, PlayedTile[] tiles) {
 
         if (word.length() < 2) {
             throw new GameNotificationException(invalidWord(word));
         }
-        if (!roomSettings().getDictionary().isWord(word)) {
+
+        final GameRoomSettings rs = roomSettings();
+        if (!rs.getDictionary().isWord(word)) {
             throw new GameNotificationException(invalidWord(word));
         }
 
-        if (roomSettings().hasMaxLetterDistance()) {
-            final PlayedTile farTile = letterFarFromOthers(tiles, roomSettings().getMaxLetterDistance());
+        if (rs.hasMaxLetterDistance()) {
+            final PlayedTile farTile = letterFarFromOthers(tiles, rs.getMaxLetterDistance());
             if (farTile != null) {
-                throw new GameNotificationException(sparseWord(word, roomSettings().getMaxLetterDistance(), farTile));
+                throw new GameNotificationException(sparseWord(word, rs.getMaxLetterDistance(), farTile));
             }
         }
 
@@ -183,13 +189,14 @@ public class GameState {
             buf.delete(0, 1);
         }
 
-        final PointSystem pointSystem = roomSettings().getPointSystem();
+        final PointSystem pointSystem = rs.getPointSystem();
         final PlayScore playScore = new PlayScore();
         final Map<String, GameBoardBlock> alteredBlocks = new HashMap<>();
+        final List<PlayedTile> claimableTiles = new ArrayList<>();
         synchronized (stateStorage) {
 
             // is it our turn?
-            if (roomSettings().hasRoundRobinPolicy()) {
+            if (rs.hasRoundRobinPolicy()) {
                 final String nextPlayerId = stateStorage.getCurrentPlayerId();
                 if (nextPlayerId == null || !nextPlayerId.equals(player.getId())) throw new NotYourTurnException();
             }
@@ -203,17 +210,51 @@ public class GameState {
 
                 final GameTileState boardTile = block.getTiles()[tile.getX() - block.getX1()][tile.getY() - block.getY1()];
                 if (!boardTile.getSymbol().equals(tile.getSymbol())) {
-                    die("playWord: invalid play");
+                    return die("playWord: invalid play");
                 }
                 if (isClaimableByPlayer(player, boardTile, tile.getX(), tile.getY())) {
                     boardTile.setOwner(player.getId());
                     alteredBlocks.put(block.getBlockKey(), block);
                     playScore.addScore(pointSystem.scoreLetter(tile));
+                    claimableTiles.add(tile);
                 }
             }
             playScore.addScore(pointSystem.scoreWord(word));
             playScore.addScores(pointSystem.scoreBoard(stateStorage, player, word, tiles));
-            return stateStorage.playWord(player, alteredBlocks.values(), tiles, playScore);
+
+            Collection<String> winners = null;
+            if (rs.hasWinConditions()) {
+                final Map<String, Object> ctx = new HashMap<>();
+                ctx.put("player", player);
+                ctx.put("word", word);
+                ctx.put("tiles", tiles);
+                ctx.put("scoreboard", getScoreboard());
+                if (!rs.getBoard().infinite()) {
+                    final GameBoardSettings bs = rs.getBoard().getSettings();
+                    final GameBoardState board = getBoard(0, bs.getWidth()-1, 0, bs.getLength()-1);
+                    board.setOwner(player.getId(), claimableTiles);
+                    ctx.put("board", board);
+                }
+                for (WinCondition w : rs.getWinConditions()) {
+                    if (JS.evaluateBoolean(w.getEndJs(), ctx, false)) {
+                        final Object rawWinners = JS.evaluate(w.getWinnersJs(), ctx);
+                        if (rawWinners instanceof Collection) {
+                            winners = new ArrayList<>((Collection<String>) rawWinners);
+                        } else if (rawWinners.getClass().isArray()) {
+                            winners = new ArrayList<>(Arrays.asList((String[]) rawWinners));
+                        } else {
+                            winners = StringUtil.split(rawWinners.toString(), ", \n\t");
+                        }
+                        for (String winner : winners) {
+                            if (!UUID_PATTERN.matcher(winner).matches()) {
+                                return die("playWord: invalid winner: "+winner);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return stateStorage.playWord(player, alteredBlocks.values(), word, tiles, playScore, winners);
         }
     }
 

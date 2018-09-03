@@ -1,5 +1,19 @@
 [
   {
+    "name": "3x3",
+    "settings": {
+      "length": 5,
+      "width": 5
+    }
+  },
+  {
+    "name": "4x4",
+    "settings": {
+      "length": 4,
+      "width": 4
+    }
+  },
+  {
     "name": "5x5",
     "settings": {
       "length": 5,

@@ -1,13 +1,19 @@
 package wordland.model.game;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.cobbzilla.util.collection.NameAndValue;
 import wordland.model.support.AttemptedTile;
+import wordland.model.support.PlayedTile;
 import wordland.model.support.TextGridResponse;
 
+import java.util.*;
+
+import static wordland.model.game.TileFunctions.MATCH_CLAIMED;
 import static wordland.model.game.TileFunctions.countUnclaimed;
 
 @NoArgsConstructor @AllArgsConstructor @Accessors(chain=true)
@@ -42,5 +48,53 @@ public class GameBoardState {
     }
 
     public int unclaimed () { return countUnclaimed(tiles); }
+    public boolean allClaimed() { return unclaimed() == 0; }
+    @JsonIgnore public boolean getAllClaimed() { return allClaimed(); }
 
+    @JsonIgnore @Getter(lazy=true) private final List<NameAndValue> playersByCount = initPlayersByCount();
+    private List<NameAndValue> initPlayersByCount() {
+        final Map<String, Integer> counts = TileFunctions.forEachTile(tiles, new TileMapReduce<String, Map<String, Integer>>()
+                .setMatch(MATCH_CLAIMED)
+                .setReducer((tiles, x, y) -> tiles[x][y].getOwner())
+                .setAccumulator(new GameTileAccumulator<String, Map<String, Integer>>() {
+                    @Getter final Map<String, Integer> total = new HashMap<>();
+                    @Override public void add(GameTileState[][] tiles, int x, int y, String owner) {
+                        final Integer count = total.computeIfAbsent(owner, k -> 0);
+                        total.put(owner, count+1);
+                    }
+                }));
+
+        final List<Map.Entry<String, Integer>> entries = new ArrayList<>(counts.entrySet());
+        Collections.sort(entries, (e1, e2) -> e2.getValue().compareTo(e1.getValue()));
+        final List<NameAndValue> playersByCount = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : entries) {
+            playersByCount.add(new NameAndValue(entry.getKey(), ""+entry.getValue()));
+        }
+        return playersByCount;
+    }
+
+    @SuppressWarnings("unused") // used in gameRoom.json for metapress room, in winConditions
+    @JsonIgnore public Collection<String> getTopPlayersByCount () {
+        final List<NameAndValue> counts = getPlayersByCount();
+        final List<String> tops = new ArrayList<>();
+        Integer topCount = null;
+        for (NameAndValue c : counts) {
+            if (topCount == null) {
+                topCount = Integer.valueOf(c.getValue());
+                tops.add(c.getName());
+            } else if (topCount.equals(Integer.valueOf(c.getValue()))) {
+                tops.add(c.getName());
+            } else {
+                break;
+            }
+        }
+        return tops;
+    }
+
+    public void setOwner(String owner, Collection<PlayedTile> tiles) {
+        final GameTileState[][] board = getTiles();
+        for (PlayedTile t : tiles) {
+            board[t.getX()][t.getY()].setOwner(owner);
+        }
+    }
 }

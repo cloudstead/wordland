@@ -1,9 +1,9 @@
 [
   {
-    "name": "5x5",
+    "name": "tictac",
     "template": true,
     "settings": {
-      "board": { "name": "5x5" },
+      "board": { "name": "3x3" },
       "maxPlayers": 2,
       "turnPolicies": [
         {
