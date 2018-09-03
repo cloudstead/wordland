@@ -3,15 +3,14 @@ package wordland.model.game;
 import java.util.function.Function;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static wordland.model.game.GameTileMatcher.MATCH_ALL_TILES;
+import static wordland.model.game.GameTileMatcher.MATCH_CLAIMED;
+import static wordland.model.game.GameTileMatcher.MATCH_UNCLAIMED;
+import static wordland.model.game.GameTileReducer.REDUCE_FIRST;
+import static wordland.model.game.GameTileReducer.REDUCE_UNIT;
 import static wordland.model.game.GameTileReducer.functionReducer;
 
 public class TileFunctions {
-
-    public static final GameTileMatcher MATCH_CLAIMED = (tiles, x, y) -> tiles[x][y].hasOwner();
-    public static final GameTileMatcher MATCH_UNCLAIMED = (tiles, x, y) -> tiles[x][y].unclaimed();
-    public static final GameTileMatcher MATCH_ANY_CLAIMED = (tiles, x, y) -> countClaimed(tiles) > 0;
-    public static final GameTileMatcher MATCH_ANY_UNCLAIMED = (tiles, x, y) -> countUnclaimed(tiles) > 0;
-    public static final GameTileMatcher MATCH_ALL_TILES = (tiles, x, y) -> true;
 
     public static <T> void forEachTile(GameTileState[][] tiles, Function<GameTileState, T> function) {
         TileMapReduce<Object, T> mapReduce = new TileMapReduce<>();
@@ -25,6 +24,7 @@ public class TileFunctions {
         try {
             final GameTileMatcher match = mapReduce.getMatch();
             final GameTileReducer<R> reducer = mapReduce.getReducer();
+            final boolean reduceNulls = mapReduce.isReduceNulls();
             final boolean hasAccumulator = mapReduce.hasAccumulator();
             final GameTileAccumulator<R, T> accumulator = mapReduce.getAccumulator();
 
@@ -34,7 +34,7 @@ public class TileFunctions {
                     for (int y = 0; y < row.length; y++) {
                         if (match.matches(tiles, x, y)) {
                             final R r = reducer.apply(tiles, x, y);
-                            if (r != null && hasAccumulator) accumulator.add(tiles, x, y, r);
+                            if ((r != null || reduceNulls) && hasAccumulator) accumulator.add(tiles, x, y, r);
                         }
                     }
                 }
@@ -58,7 +58,7 @@ public class TileFunctions {
         try {
             return forEachTile(tiles, new TileMapReduce<Integer, Integer>()
                     .setMatch(matcher)
-                    .setReducer(GameTileReducer.UNIT)
+                    .setReducer(REDUCE_UNIT)
                     .setAccumulator(GameTileAccumulator.intCounter()));
         } catch (Exception e) {
             return die("count: "+e, e);
@@ -78,7 +78,7 @@ public class TileFunctions {
                     .setX1(x1)
                     .setY1(y1)
                     .setMatch(matcher)
-                    .setReducer(GameTileReducer.FIRST));
+                    .setReducer(REDUCE_FIRST));
 
         } catch (FirstMatchFoundException first) {
             return new GameTileStateExtended(first.getTile(), first.getX(), first.getY());

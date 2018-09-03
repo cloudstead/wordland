@@ -14,7 +14,8 @@
               "name": "score_tiles",
               "condition": "true",
               "picas": "board.countTiles(player)",
-              "absolute": true
+              "absolute": true,
+              "allPlayers": true
             }]
           }
         },
@@ -22,22 +23,22 @@
           "name": "standard",
           "settings": {
             "wordScoring": [
-              {"length": 5, "picas": 1},
-              {"length": 6, "picas": 3},
-              {"length": 7, "picas": 5},
-              {"length": 8, "picas": 10},
-              {"length": 9, "picas": 20},
-              {"length": 10, "picas": 40},
-              {"length": 11, "picas": 100},
-              {"length": 12, "picas": 250},
-              {"length": 13, "picas": 500},
-              {"length": 14, "picas": 1500},
-              {"length": 15, "picas": 3000},
-              {"length": 16, "picas": 5000},
-              {"length": 17, "picas": 8000},
-              {"length": 18, "picas": 12000},
+              {"length": 20, "picas": 30000},
               {"length": 19, "picas": 20000},
-              {"length": 20, "picas": 30000}
+              {"length": 18, "picas": 12000},
+              {"length": 17, "picas": 8000},
+              {"length": 16, "picas": 5000},
+              {"length": 15, "picas": 3000},
+              {"length": 14, "picas": 1500},
+              {"length": 13, "picas": 500},
+              {"length": 12, "picas": 250},
+              {"length": 11, "picas": 100},
+              {"length": 10, "picas": 40},
+              {"length": 9,  "picas": 20},
+              {"length": 8,  "picas": 10},
+              {"length": 7,  "picas": 5},
+              {"length": 6,  "picas": 3},
+              {"length": 5,  "picas": 1}
             ],
             "symbolScoring": [
               {"symbol": "a", "picas": 1},

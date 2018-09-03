@@ -58,7 +58,7 @@ public class GameRuntimeEvent {
     }
 
     @Getter @Setter private PlayScore score;
-    public boolean hasScore () { return score != null && score.getTotal() > 0; }
+    public boolean hasScore () { return score != null && score.getTotal(id) > 0; }
 
     @Getter @Setter private String[] winners;
     public boolean hasWinners () { return !empty(winners); }

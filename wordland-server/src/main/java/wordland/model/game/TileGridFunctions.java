@@ -11,11 +11,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.graphics.ColorUtil.ANSI_RESET;
 import static org.cobbzilla.util.graphics.ColorUtil.ansiColor;
 import static org.cobbzilla.util.graphics.ColorUtil.parseRgb;
+import static wordland.model.game.GameTileReducer.REDUCE_OWNER;
 
 public class TileGridFunctions {
 
@@ -97,6 +99,26 @@ public class TileGridFunctions {
             bg = F_PREVIEW_PLAY_BLOCKED_BG;
         }
         return ansiColor(fg, bg);
+    }
+
+    public static String ownerGrid(GameTileState[][] tiles) {
+        final StringBuilder b = new StringBuilder();
+        final AtomicInteger currentRow = new AtomicInteger(0);
+        final AtomicInteger currentIndex = new AtomicInteger(1);
+        final Map<String, Integer> owners = new HashMap<>();
+        TileFunctions.forEachTile(tiles, new TileMapReduce<String, Object>()
+                .setReducer(REDUCE_OWNER)
+                .setAccumulator((tiles1, x, y, reducerResult) -> {
+                    if (x > currentRow.get()) {
+                        b.append("\n");
+                        currentRow.incrementAndGet();
+                    }
+                    final Integer index = reducerResult == null ? null : owners.computeIfAbsent(tiles1[x][y].getOwner(), k -> currentIndex.getAndIncrement());
+                    if (y > 0) b.append(" | ");
+                    b.append(index == null ? " " : index);
+                })
+                .setReduceNulls(true));
+        return b.toString();
     }
 
     public static class AttemptState {

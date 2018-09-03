@@ -1,53 +1,7 @@
 [
   {
-    "comment": "login as player 1",
-    "request": { "uri": "auth/login", "method": "post" },
-    "response": {
-      "sessionName": "player1",
-      "session": "apiToken"
-    }
-  },
-
-  {
-    "comment": "join room as player1",
-    "request": {
-      "uri": "rooms/metapress/join",
-      "entity": {}
-    },
-    "response": {
-      "store": "p1room"
-    }
-  },
-
-  {
-    "comment": "login as player 2",
-    "request": { "session": "new", "uri": "auth/login", "method": "post" },
-    "response": {
-      "sessionName": "player2",
-      "session": "apiToken"
-    }
-  },
-
-  {
-    "comment": "join room as player2",
-    "request": {
-      "uri": "rooms/{{p1room.room}}/join",
-      "entity": {}
-    },
-    "response": {
-      "store": "p2room"
-    }
-  },
-
-  {
-    "comment": "player1 requests board state",
-    "request": {
-      "session": "player1",
-      "uri": "rooms/{{p1room.room}}/board"
-    },
-    "response": {
-      "store": "board"
-    }
+    "include": "parts/start_2player_game",
+    "params": { "room": "metapress" }
   },
 
   {
@@ -127,7 +81,7 @@
       "uri": "rooms/{{p1room.room}}/scoreboard"
     },
     "response": {
-      "store": "board",
+      "store": "scoreboard",
       "check": [
         {"condition": "json.length == 2"},
         {"condition": "json[0].score + json[1].score == 25"}

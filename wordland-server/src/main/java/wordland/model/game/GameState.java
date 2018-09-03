@@ -53,6 +53,8 @@ public class GameState {
     public static final int TILE_PIXEL_SIZE = 10;
     public static final double TILE_PIXEL_SIZE_DOUBLE = (double) TILE_PIXEL_SIZE;
     public static final long BOARD_RENDER_TIMEOUT = 20 * TimeUtil.SECOND;
+    public static final String CTX_PLAYER = "player";
+    public static final String CTX_PLAYERS = "players";
 
     private final GameRoom room;
     private final GameStateStorageService stateStorage;
@@ -201,7 +203,7 @@ public class GameState {
         }
 
         final PointSystem pointSystem = rs.getPointSystem();
-        final PlayScore playScore = new PlayScore();
+        final PlayScore playScore = new PlayScore().setPlayer(player);
         final Map<String, GameBoardBlock> alteredBlocks = new HashMap<>();
         final List<PlayedTile> claimableTiles = new ArrayList<>();
         synchronized (stateStorage) {
@@ -236,7 +238,7 @@ public class GameState {
             playScore.addScore(pointSystem.scoreWord(word));
 
             final Map<String, Object> jsContext = pointSystem.hasBoardScoring() || rs.hasWinConditions()
-                    ? getJsContext(player, word, tiles, rs, claimableTiles)
+                    ? getJsContext(player, getPlayers(), word, tiles, rs, claimableTiles)
                     : null;
             playScore.addScores(pointSystem.scoreBoard(jsContext));
 
@@ -265,9 +267,15 @@ public class GameState {
         }
     }
 
-    protected Map<String, Object> getJsContext(GamePlayer player, String word, PlayedTile[] tiles, GameRoomSettings rs, List<PlayedTile> claimableTiles) {
+    protected Map<String, Object> getJsContext(GamePlayer player,
+                                               Collection<GamePlayer> players,
+                                               String word,
+                                               PlayedTile[] tiles,
+                                               GameRoomSettings rs,
+                                               List<PlayedTile> claimableTiles) {
         final Map<String, Object> ctx = new HashMap<>();
-        ctx.put("player", player);
+        ctx.put(CTX_PLAYER, player);
+        ctx.put(CTX_PLAYERS, players);
         ctx.put("word", word);
         ctx.put("tiles", tiles);
         ctx.put("scoreboard", getScoreboard());

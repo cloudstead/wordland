@@ -13,7 +13,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static wordland.ApiConstants.EP_PLAY;
 import static wordland.ApiConstants.GAME_ROOMS_ENDPOINT;
-import static wordland.model.game.TileFunctions.MATCH_UNCLAIMED;
+import static wordland.model.game.GameTileMatcher.MATCH_UNCLAIMED;
 import static wordland.model.game.TileFunctions.countUnclaimed;
 import static wordland.model.game.TileFunctions.forEachTile;
 

@@ -13,9 +13,12 @@ import wordland.model.json.GameRoomSettings;
 import wordland.model.support.PlayedTile;
 import wordland.server.WordlandConfiguration;
 
+import java.util.Collection;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
 @SuppressWarnings("SpringJavaAutowiredMembersInspection")
 @Slf4j
@@ -68,7 +71,10 @@ public class GameDaemon extends SimpleDaemon {
                 break;
 
             case active:
-                // check for players that have not played in too long, boot them
+                final Collection<GameStateChange> boots = stateStorage.timeoutInactivePlayers();
+                if (!empty(boots)) {
+                    for (GameStateChange boot : boots) broadcast(boot);
+                }
         }
     }
 

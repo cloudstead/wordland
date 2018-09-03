@@ -1,0 +1,9 @@
+[
+  // login as player1
+  // join room as player1
+  // login as player2
+  // join room as player2
+  // play as player1
+  // play as player2, fast-forward clock
+  // trigger game daemon, check scoreboard. verify winner since game started and only 1 player remains
+]

@@ -76,4 +76,5 @@ public interface GameStateStorageService {
         return events;
     }
 
+    Collection<GameStateChange> timeoutInactivePlayers();
 }

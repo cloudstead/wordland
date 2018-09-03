@@ -43,6 +43,8 @@ public class GameBoardState {
                 .adjustPlayedTiles(this);
     }
 
+    public String ownerGrid () { return TileGridFunctions.ownerGrid(tiles); }
+
     @SuppressWarnings("unused") // used in JSON tests. see models/infinity/tests/play_infinity.json
     public boolean claimedWord(String word) {
         for (GameTileState[] row : tiles) {
@@ -63,14 +65,14 @@ public class GameBoardState {
         if (player == null) return 0;
         return TileFunctions.forEachTile(tiles, new TileMapReduce<Boolean, Integer>()
                 .setMatch((tiles, x, y) -> tiles[x][y].hasOwner(player.getId()))
-                .setReducer(GameTileReducer.TRUE)
+                .setReducer(GameTileReducer.REDUCE_TRUE)
                 .setAccumulator(GameTileAccumulator.booleanCounter())).intValue();
     }
 
     @JsonIgnore @Getter(lazy=true) private final List<NameAndValue> playersByCount = initPlayersByCount();
     private List<NameAndValue> initPlayersByCount() {
         final Map<String, Integer> counts = TileFunctions.forEachTile(tiles, new TileMapReduce<String, Map<String, Integer>>()
-                .setMatch(MATCH_CLAIMED)
+                .setMatch(GameTileMatcher.MATCH_CLAIMED)
                 .setReducer((tiles, x, y) -> tiles[x][y].getOwner())
                 .setAccumulator(new GameTileAccumulator<String, Map<String, Integer>>() {
                     @Getter final Map<String, Integer> total = new HashMap<>();

@@ -1,12 +1,15 @@
 package wordland.service.state;
 
 import edu.emory.mathcs.backport.java.util.Arrays;
+import edu.emory.mathcs.backport.java.util.Collections;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import wordland.model.GameBoardBlock;
 import wordland.model.GameRoom;
 import wordland.model.SymbolDistribution;
+import wordland.model.TurnPolicy;
 import wordland.model.game.*;
 import wordland.model.game.score.PlayScore;
+import wordland.model.game.score.PlayScoreComponent;
 import wordland.model.json.GameRoomSettings;
 import wordland.model.support.PlayedTile;
 
@@ -22,16 +25,17 @@ import static wordland.model.game.GameStateChange.*;
 
 public class RedisGameStateStorageService implements GameStateStorageService {
 
-    public static final String K_VERSION     = "version";
-    public static final String K_STATE       = "state";
-    public static final String K_PLAYERS     = "players";
-    public static final String K_LOG         = "log";
-    public static final String K_BLOCKS      = "blocks";
-    public static final String K_JOIN_ORDER  = "joinOrder";
-    public static final String K_LAST_JOIN   = "lastJoin";
-    public static final String K_NEXT_PLAYER = "nextPlayer";
-    public static final String K_SCOREBOARD  = "scoreboard";
-    public static final String K_WINNERS     = "winners";
+    public static final String K_VERSION       = "version";
+    public static final String K_STATE         = "state";
+    public static final String K_PLAYERS       = "players";
+    public static final String K_LOG           = "log";
+    public static final String K_BLOCKS        = "blocks";
+    public static final String K_JOIN_ORDER    = "joinOrder";
+    public static final String K_LAST_JOIN     = "lastJoin";
+    public static final String K_LAST_ACTIVITY = "lastActivity";
+    public static final String K_NEXT_PLAYER   = "nextPlayer";
+    public static final String K_SCOREBOARD    = "scoreboard";
+    public static final String K_WINNERS       = "winners";
 
     private GameRoom room;
     private RedisService redis;
@@ -106,9 +110,9 @@ public class RedisGameStateStorageService implements GameStateStorageService {
 
         if (startGame) {
             startGame();
-            return nextState(playerJoinedGameStarted(nextVersion(), player));
+            return nextState(player, playerJoinedGameStarted(nextVersion(), player));
         } else {
-            return nextState(playerJoined(nextVersion(), player));
+            return nextState(player, playerJoined(nextVersion(), player));
         }
     }
 
@@ -131,9 +135,9 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         redis.hdel(K_PLAYERS, id);
         if (endGame) {
             endGame();
-            return nextState(playerLeftGameEnded(nextVersion(), id));
+            return nextState(null, playerLeftGameEnded(nextVersion(), id));
         } else {
-            return nextState(playerLeft(nextVersion(), id));
+            return nextState(null, playerLeft(nextVersion(), id));
         }
     }
 
@@ -182,11 +186,11 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         }
 
         for (GameBoardBlock block : blocks) setBlock(block);
-        incrementPlayerScore(player, score);
+        incrementPlayerScore(score);
 
         final GameStateChange stateChange = !empty(winners)
-                ? nextState(wordPlayedGameEnded(nextVersion(), player, word, tiles, score, winners))
-                : nextState(wordPlayed(nextVersion(), player, word, tiles, score));
+                ? nextState(player, wordPlayedGameEnded(nextVersion(), player, word, tiles, score, winners))
+                : nextState(player, wordPlayed(nextVersion(), player, word, tiles, score));
 
         if (stateChange.getStateChange().endsGame()) {
             redis.set(K_STATE, RoomState.ended.name());
@@ -221,10 +225,21 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         return stateChange;
     }
 
-    private void incrementPlayerScore(GamePlayer player, PlayScore playScore) {
-        final String playerScore = redis.hget(K_SCOREBOARD, player.getId());
+    private void incrementPlayerScore(PlayScore playScore) {
+        if (playScore.isAbsolute()) {
+            for (PlayScoreComponent c : playScore.getScores()) {
+                final String playerId = c.getPlayer();
+                incrPlayerScore(playScore, playerId);
+            }
+        } else {
+            incrPlayerScore(playScore, playScore.getPlayer().getId());
+        }
+    }
+
+    private void incrPlayerScore(PlayScore playScore, String playerId) {
+        final String playerScore = redis.hget(K_SCOREBOARD, playerId);
         final int score = playerScore == null ? 0 : Integer.parseInt(playerScore);
-        redis.hset(K_SCOREBOARD, player.getId(), ""+(playScore.isAbsolute() ? playScore.getTotal() : score + playScore.getTotal()));
+        redis.hset(K_SCOREBOARD, playerId, "" + (playScore.isAbsolute() ? playScore.getTotal(playerId) : score + playScore.getTotal(playerId)));
     }
 
     @Override public Map<String, String> getScoreboard() { return redis.hgetall(K_SCOREBOARD); }
@@ -245,8 +260,9 @@ public class RedisGameStateStorageService implements GameStateStorageService {
 
     protected Long nextVersion() { return redis.incr(K_VERSION); }
 
-    protected GameStateChange nextState(GameStateChange stateChange) {
+    protected GameStateChange nextState(GamePlayer player, GameStateChange stateChange) {
         redis.rpush(K_LOG, json(stateChange));
+        if (player != null) redis.hset(K_LAST_ACTIVITY, player.getId(), ""+now());
         return stateChange;
     }
 
@@ -254,7 +270,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         redis.set(K_BLOCKS + "/" + block.getBlockKey(), json(block.incrementVersion()));
     }
 
-    @Override public List<GameStateChange> getHistory() {
+    @Override public synchronized List<GameStateChange> getHistory() {
         final List<String> json = redis.list(K_LOG);
         final List<GameStateChange> events = new ArrayList<>();
         for (String j : json) {
@@ -263,7 +279,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         return events;
     }
 
-    @Override public List<GameStateChange> getHistory(GameStateChangeType changeType) {
+    @Override public synchronized List<GameStateChange> getHistory(GameStateChangeType changeType) {
         final List<String> json = redis.list(K_LOG);
         final List<GameStateChange> events = new ArrayList<>();
         for (String j : json) {
@@ -277,4 +293,27 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         return events;
     }
 
+    @Override public synchronized Collection<GameStateChange> timeoutInactivePlayers() {
+
+        final Map<String, String> allPlayers = redis.hgetall(K_LAST_ACTIVITY);
+        if (allPlayers.size() <= 1) return Collections.emptySet();
+
+        final List<String> playersToBoot = new ArrayList<>();
+        for (Map.Entry<String, String> entry : allPlayers.entrySet()) {
+            final String playerId = entry.getKey();
+            final long lastActive = Long.parseLong(entry.getValue());
+            if (roomSettings().hasRoundRobinPolicy()) {
+                if (!getCurrentPlayerId().equals(playerId)) continue;
+                if (now() - lastActive > roomSettings().getRoundRobinPolicy().longParam(TurnPolicy.PARAM_MAX_TURN_DURATION)) {
+                    playersToBoot.add(playerId);
+                }
+            }
+        }
+
+        final List<GameStateChange> changes = new ArrayList<>();
+        for (String playerId : playersToBoot) {
+            changes.add(nextState(null, removePlayer(playerId)));
+        }
+        return changes;
+    }
 }

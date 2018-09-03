@@ -185,7 +185,7 @@
     "response": {
       "store": "board",
       "check": [
-        {"condition": "json.claimedWord('{{word1.word}}')"}
+        {"condition": "json.claimedWord(word1.word)"}
       ]
     }
   },
@@ -200,9 +200,9 @@
       "store": "scoreboard1",
       "check": [
         {"condition": "json.length == 1"},
-        {"condition": "json[0].id == '{{p1room.player.id}}'"},
-        {"condition": "json[0].name == '{{p1room.player.name}}'"},
-        {"condition": "json[0].score == {{json p1play1.object}}.score.total"}
+        {"condition": "json[0].id == p1room.player.id"},
+        {"condition": "json[0].name == p1room.player.name"},
+        {"condition": "json[0].score == p1play1.object.get('score').get('total')"}
       ]
     }
   },

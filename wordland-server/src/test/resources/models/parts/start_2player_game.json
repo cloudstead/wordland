@@ -1,0 +1,66 @@
+[
+  {
+    "comment": "declare default parameters for start_2player_game test part",
+    "include": "_defaults",
+    "params": {
+      "player1": "player1",
+      "player2": "player2",
+      "p1room": "p1room",
+      "p2room": "p2room",
+      "board": "board",
+      "room": "_required"
+    }
+  },
+
+  {
+    "comment": "login as <<player1>>",
+    "request": { "uri": "auth/login", "method": "post" },
+    "response": {
+      "sessionName": "<<player1>>",
+      "session": "apiToken"
+    }
+  },
+
+  {
+    "comment": "join room as <<player1>>",
+    "request": {
+      "uri": "rooms/<<room>>/join",
+      "entity": {}
+    },
+    "response": {
+      "store": "<<p1room>>"
+    }
+  },
+
+  {
+    "comment": "login as <<player2>>",
+    "request": { "session": "new", "uri": "auth/login", "method": "post" },
+    "response": {
+      "sessionName": "<<player2>>",
+      "session": "apiToken"
+    }
+  },
+
+  {
+    "comment": "join room as <<player2>>",
+    "request": {
+      "uri": "rooms/{{p1room.room}}/join",
+      "entity": {}
+    },
+    "response": {
+      "store": "<<p2room>>"
+    }
+  },
+
+  {
+    "comment": "<<player1>> requests board state",
+    "request": {
+      "session": "<<player1>>",
+      "uri": "rooms/{{p1room.room}}/board"
+    },
+    "response": {
+      "store": "<<board>>"
+    }
+  }
+
+]
