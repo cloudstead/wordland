@@ -120,11 +120,19 @@ function board_preview_obj {
   echo -n "${BOARD_REQUEST_JSON_SUFFIX}"
 }
 
-function save_palette {
+function save_room_state {
   PALETTE="$(json_node "$(cat ${BOARD_JSON})" palette)"
   if [[ ! -z "${PALETTE}" ]] ; then
     echo "${PALETTE}" > ${ROOM_PALETTE}
   fi
+  X1="$(json_node "$(cat ${BOARD_JSON})" x1 | tr -d '"')"
+  X2="$(json_node "$(cat ${BOARD_JSON})" x2 | tr -d '"')"
+  Y1="$(json_node "$(cat ${BOARD_JSON})" y1 | tr -d '"')"
+  Y2="$(json_node "$(cat ${BOARD_JSON})" y2 | tr -d '"')"
+  if [[ ! -z "${X1}" ]] ; then echo "${X1}" > ${WL_DIR}/rooms/${ROOM_NAME}/x1 ; fi
+  if [[ ! -z "${X2}" ]] ; then echo "${X2}" > ${WL_DIR}/rooms/${ROOM_NAME}/x2 ; fi
+  if [[ ! -z "${Y1}" ]] ; then echo "${Y1}" > ${WL_DIR}/rooms/${ROOM_NAME}/y1 ; fi
+  if [[ ! -z "${Y2}" ]] ; then echo "${Y2}" > ${WL_DIR}/rooms/${ROOM_NAME}/y2 ; fi
 }
 
 function show_tray {
@@ -155,9 +163,8 @@ function show_board {
     200)
       board="$(json_node "$(cat ${BOARD_JSON})" grid)"
       if [[ ! -z "${board}" ]] ; then
-        save_palette
+        save_room_state
         roomState="$(json_node "$(cat ${BOARD_JSON})" roomState | tr -d '"')"
-        debug "roomState=${roomState}"
         if [[ ! -z "${roomState}" && "${roomState}" == "ended" ]] ; then
           echo "$(translate_message msg_game_over)"
           winners="$(cat ${BOARD_JSON} | jq -c '.scoreboard[] | select(.winner) | .name' | tr -d '"')"
@@ -195,7 +202,11 @@ function show_board {
 
 function fresh_board_view {
   show_board ; echo ; show_tray
-  echo -n "$(wl_prompt)"
+  if [[ ! -z "${1}" ]] ; then
+    echo -n "${1}"
+  else
+    echo -n "$(wl_prompt)"
+  fi
 }
 
 function async_fresh_board_view {
@@ -252,7 +263,7 @@ function move_board_prompt {
 }
 
 function move_board {
-  debug "move_board: starting with x1=${X1}, y1=${Y1}"
+  # debug "move_board: starting with x1=${X1}, y1=${Y1}"
   echo ; echo -n "$(move_board_prompt)"
   while [ 1 ] ; do
     while IFS= read -s -r -t 2 -n1 char 2> /dev/null ; do
@@ -266,31 +277,30 @@ function move_board {
           continue
         ;;
         w|W)
-        echo "moving up?"
+          # echo "move_board: moving up (W)"
           X1=$(expr ${X1} - 1)
-          fresh_board_view
         ;;
         a|A)
+          # echo "move_board: moving left (A)"
           Y1=$(expr ${Y1} - 1)
-          fresh_board_view
         ;;
         s|S)
+          # echo "move_board: moving down (S)"
           X1=$(expr ${X1} + 1)
-          fresh_board_view
         ;;
         d|D)
+          # echo "move_board: moving right (D)"
           Y1=$(expr ${Y1} + 1)
-          fresh_board_view
         ;;
         *)
           continue
         ;;
       esac
-      debug "move_board: ending with x1=${X1}, y1=${Y1}"
+      # debug "move_board: ending with x1=${X1}, y1=${Y1}"
       echo "${X1}" > ${WL_DIR}/rooms/${ROOM_NAME}/x1
       echo "${Y1}" > ${WL_DIR}/rooms/${ROOM_NAME}/y1
       reset_play
-      fresh_board_view
+      fresh_board_view "$(move_board_prompt)"
     done
   done
 }
@@ -326,7 +336,7 @@ while [ 1 ] ; do
       done
       if [[ ! -z ${correctIndex} ]] ; then
         ACTIVE_CHAR_INDEX=${correctIndex}
-        debug "AZ: correctIndex=${correctIndex}, CWL=$(current_word_length), ATI=${ACTIVE_TRAY_INDEX}"
+        # debug "AZ: correctIndex=${correctIndex}, CWL=$(current_word_length), ATI=${ACTIVE_TRAY_INDEX}"
         if [[ ${#TILES[@]} -gt 0 && ${ACTIVE_TRAY_INDEX} -lt $(current_word_length) ]] ; then
           # shift all other elements forward to make room for new one
           i=${#TILES[@]}
@@ -339,13 +349,13 @@ while [ 1 ] ; do
             INDEXES[${i}]="${INDEXES[$(expr ${i}-1)]}"
             i=$(expr ${i} - 1)
           done
-          debug "AZ: adding letter in middle: ${ACTIVE_TRAY_INDEX}"
+          # debug "AZ: adding letter in middle: ${ACTIVE_TRAY_INDEX}"
           TILES[${ACTIVE_TRAY_INDEX}-1]="\"symbol\": \"${char}\", \"index\": ${ACTIVE_CHAR_INDEX}"
           LETTERS[${ACTIVE_TRAY_INDEX}-1]="${char}"
           INDEXES[${ACTIVE_TRAY_INDEX}-1]=${ACTIVE_CHAR_INDEX}
         else
           # add element at the end
-          debug "AZ: adding letter at end"
+          # debug "AZ: adding letter at end"
           TILES+=("\"symbol\": \"${char}\", \"index\": ${ACTIVE_CHAR_INDEX}")
           LETTERS+=("${char}")
           INDEXES+=(${ACTIVE_CHAR_INDEX})

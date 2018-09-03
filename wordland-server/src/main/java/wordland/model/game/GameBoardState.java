@@ -34,7 +34,14 @@ public class GameBoardState {
 
     public String grid () { return TileGridFunctions.grid(tiles); }
     public String grid (GameBoardPalette palette) { return TileGridFunctions.grid(tiles, palette); }
-    public TextGridResponse grid (GameBoardPalette palette, AttemptedTile[] attempt) { return TileGridFunctions.grid(tiles, palette, attempt); }
+    public TextGridResponse grid (GameBoardPalette palette, AttemptedTile[] attempt) {
+        return TileGridFunctions.grid(tiles, palette, attempt)
+                .setX1(getX1())
+                .setX2(getX2())
+                .setY1(getY1())
+                .setY2(getY2())
+                .adjustPlayedTiles(this);
+    }
 
     @SuppressWarnings("unused") // used in JSON tests. see models/infinity/tests/play_infinity.json
     public boolean claimedWord(String word) {
