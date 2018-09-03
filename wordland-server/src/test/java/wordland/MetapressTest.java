@@ -8,4 +8,6 @@ public class MetapressTest extends ApiModelTestBase {
 
     @Test public void testBoardScoring () throws Exception { runScript("board_scoring"); }
 
+    @Test public void testBotPlayer () throws Exception { runScript("metapress_bot"); }
+
 }

@@ -3,10 +3,15 @@ package wordland.model.game;
 import wordland.model.GameBoardBlock;
 import wordland.model.SymbolDistribution;
 import wordland.model.game.score.PlayScore;
+import wordland.model.support.GameRuntimeEvent;
 import wordland.model.support.PlayedTile;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+
+import static org.cobbzilla.util.json.JsonUtil.json;
 
 public interface GameStateStorageService {
 
@@ -45,5 +50,30 @@ public interface GameStateStorageService {
 
     Map<String, String> getScoreboard();
     Collection<String> getWinners();
+
+    long getTimeSinceLastJoin();
+
+    List<GameStateChange> getHistory();
+
+    default List<GameStateChange> getHistory(GameStateChangeType changeType) {
+        final List<GameStateChange> changes = new ArrayList<>();
+        for (GameStateChange change : getHistory()) {
+            if (changeType == null || changeType.equals(change.getStateChange())) {
+                changes.add(change);
+            }
+        }
+        return changes;
+    }
+
+    default List<GameRuntimeEvent> getEvents (GameStateChangeType changeType) {
+        final List<GameStateChange> changes = getHistory(changeType);
+        final List<GameRuntimeEvent> events = new ArrayList<>();
+        for (GameStateChange change : changes) {
+            if (changeType == null || changeType.equals(change.getStateChange())) {
+                events.add(json(change.getObject(), GameRuntimeEvent.class));
+            }
+        }
+        return events;
+    }
 
 }

@@ -14,6 +14,7 @@ public class GenerateRoomsRequest {
     public SymbolSet[] symbolSets;
     public Integer[] maxPlayers;
     public Integer[] maxLetterDistances;
+    public String[] maxWaitTimesBeforeBotsJoin;
     public TeamPlayMode[] teamPlayModes;
     public TurnPolicy[][] turnPolicies;
     public MissedTurnPolicy[] missedTurnPolicies;
@@ -33,6 +34,7 @@ public class GenerateRoomsRequest {
         private int max = (empty(symbolSets) ? 1 : symbolSets.length)
                 * (empty(maxPlayers) ? 1 : maxPlayers.length)
                 * (empty(maxLetterDistances) ? 1 : maxLetterDistances.length)
+                * (empty(maxWaitTimesBeforeBotsJoin) ? 1 : maxWaitTimesBeforeBotsJoin.length)
                 * (empty(teamPlayModes) ? 1 : teamPlayModes.length)
                 * (empty(turnPolicies) ? 1 : turnPolicies.length)
                 * (empty(missedTurnPolicies) ? 1 : missedTurnPolicies.length)
@@ -64,6 +66,7 @@ public class GenerateRoomsRequest {
                     .setDictionary(symbolSet.hasChildren(GameDictionary.class) ? symbolSet.getChildren(GameDictionary.class).get(0) : defaults.getDictionary())
                     .setMaxPlayers(empty(maxPlayers) ? defaults.getMaxPlayers() : maxPlayers[index % maxPlayers.length])
                     .setMaxLetterDistance(empty(maxLetterDistances) ? defaults.getMaxLetterDistance() : maxLetterDistances[index % maxLetterDistances.length])
+                    .setMaxWaitBeforeBotsJoin(empty(maxWaitTimesBeforeBotsJoin) ? defaults.getMaxWaitBeforeBotsJoin() : maxWaitTimesBeforeBotsJoin[index % maxWaitTimesBeforeBotsJoin.length])
                     .setTeamPlayMode(empty(teamPlayModes) ? defaults.getTeamPlayMode() : teamPlayModes[index % teamPlayModes.length])
                     .setMissedTurnPolicy(empty(missedTurnPolicies) ? defaults.getMissedTurnPolicy() : missedTurnPolicies[index % missedTurnPolicies.length])
                     .setBonusPolicies(empty(bonusPolicies) ? defaults.getBonusPolicies() : bonusPolicies[index % bonusPolicies.length])

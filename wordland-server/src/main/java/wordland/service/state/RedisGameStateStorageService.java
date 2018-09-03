@@ -5,20 +5,17 @@ import org.cobbzilla.wizard.cache.redis.RedisService;
 import wordland.model.GameBoardBlock;
 import wordland.model.GameRoom;
 import wordland.model.SymbolDistribution;
-import wordland.model.game.GamePlayer;
-import wordland.model.game.GameStateChange;
-import wordland.model.game.GameStateStorageService;
-import wordland.model.game.RoomState;
+import wordland.model.game.*;
 import wordland.model.game.score.PlayScore;
 import wordland.model.json.GameRoomSettings;
 import wordland.model.support.PlayedTile;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static wordland.model.game.GameStateChange.*;
@@ -31,6 +28,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     public static final String K_LOG         = "log";
     public static final String K_BLOCKS      = "blocks";
     public static final String K_JOIN_ORDER  = "joinOrder";
+    public static final String K_LAST_JOIN   = "lastJoin";
     public static final String K_NEXT_PLAYER = "nextPlayer";
     public static final String K_SCOREBOARD  = "scoreboard";
     public static final String K_WINNERS     = "winners";
@@ -104,12 +102,19 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         if (roomSettings().hasRoundRobinPolicy()) {
             redis.set(K_JOIN_ORDER + playerCount, player.getId());
         }
+        redis.set(K_LAST_JOIN, ""+now());
+
         if (startGame) {
             startGame();
             return nextState(playerJoinedGameStarted(nextVersion(), player));
         } else {
             return nextState(playerJoined(nextVersion(), player));
         }
+    }
+
+    @Override public long getTimeSinceLastJoin() {
+        final String val = redis.get(K_LAST_JOIN);
+        return empty(val) ? 0 : Long.parseLong(val);
     }
 
     @Override public synchronized GameStateChange removePlayer(String id) {
@@ -248,4 +253,28 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     protected void setBlock(GameBoardBlock block) {
         redis.set(K_BLOCKS + "/" + block.getBlockKey(), json(block.incrementVersion()));
     }
+
+    @Override public List<GameStateChange> getHistory() {
+        final List<String> json = redis.list(K_LOG);
+        final List<GameStateChange> events = new ArrayList<>();
+        for (String j : json) {
+            events.add(json(j, GameStateChange.class));
+        }
+        return events;
+    }
+
+    @Override public List<GameStateChange> getHistory(GameStateChangeType changeType) {
+        final List<String> json = redis.list(K_LOG);
+        final List<GameStateChange> events = new ArrayList<>();
+        for (String j : json) {
+            if (changeType == null || j.contains(changeType.name())) {
+                final GameStateChange change = json(j, GameStateChange.class);
+                if (changeType == null || changeType.equals(change.getStateChange())) {
+                    events.add(change);
+                }
+            }
+        }
+        return events;
+    }
+
 }

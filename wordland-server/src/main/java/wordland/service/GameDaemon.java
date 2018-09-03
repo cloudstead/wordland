@@ -9,6 +9,7 @@ import wordland.model.game.GamePlayer;
 import wordland.model.game.GameState;
 import wordland.model.game.GameStateChange;
 import wordland.model.game.GameStateStorageService;
+import wordland.model.json.GameRoomSettings;
 import wordland.model.support.PlayedTile;
 import wordland.server.WordlandConfiguration;
 
@@ -50,7 +51,25 @@ public class GameDaemon extends SimpleDaemon {
     @Override protected long getSleepTime() { return SLEEP_TIME; }
 
     @Override protected void process() {
-        // todo: check for players who have timed-out, remove them from the game
+        // check for players who have timed-out, remove them from the game
+        final GameStateStorageService stateStorage = getGameStateStorage();
+        switch (stateStorage.getRoomState()) {
+            case ended:
+                return; // nothing more to do
+
+            case waiting:
+                final GameRoomSettings rs = getRoom().getSettings();
+                if (stateStorage.getPlayerCount() > 0
+                        && rs.hasMaxWaitBeforeBotsJoin()
+                        && stateStorage.getTimeSinceLastJoin() > rs.getMillisBeforeBotsJoin()) {
+                    // join bots to room
+                    log.info("would join "+(rs.getMinPlayersToStart()-stateStorage.getPlayerCount())+" bots to start the game");
+                }
+                break;
+
+            case active:
+                // check for players that have not played in too long, boot them
+        }
     }
 
     protected Future<Object> broadcast(GameStateChange stateChange) {

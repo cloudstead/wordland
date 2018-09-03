@@ -12,6 +12,7 @@ import wordland.model.*;
 import wordland.model.game.score.PlayScore;
 import wordland.model.json.GameBoardSettings;
 import wordland.model.json.GameRoomSettings;
+import wordland.model.support.GameRuntimeEvent;
 import wordland.model.support.PlayedTile;
 
 import javax.imageio.ImageIO;
@@ -30,9 +31,7 @@ import java.util.concurrent.Future;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.DaemonThreadFactory.fixedPool;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
-import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.string.ValidationRegexes.UUID_PATTERN;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
@@ -41,6 +40,7 @@ import static wordland.ApiConstants.MAX_BOARD_VIEW;
 import static wordland.model.GameBoardBlock.SORT_POSITION;
 import static wordland.model.GameBoardBlock.getBlockKeyForTile;
 import static wordland.model.game.GameStateChange.playerJoined;
+import static wordland.model.game.GameStateChangeType.word_played;
 import static wordland.model.support.GameNotification.invalidWord;
 import static wordland.model.support.GameNotification.sparseWord;
 import static wordland.model.support.PlayedTile.letterFarFromOthers;
@@ -274,7 +274,7 @@ public class GameState {
         if (!rs.getBoard().infinite()) {
             final GameBoardSettings bs = rs.getBoard().getSettings();
             final GameBoardState board = getBoard(0, bs.getWidth()-1, 0, bs.getLength()-1);
-            if (board.getX2() - board.getX1() != bs.getWidth() || board.getY2() - board.getY1() != bs.getLength()) {
+            if (board.getX2() - board.getX1() + 1 != bs.getWidth() || board.getY2() - board.getY1() + 1 != bs.getLength()) {
                 log.warn("getJsContext: board is too big, cannot be used in JS expressions");
             } else {
                 board.setOwner(player.getId(), claimableTiles);
@@ -469,5 +469,7 @@ public class GameState {
 //        }
         return new ByteArrayInputStream(out.toByteArray());
     }
+
+    public List<GameRuntimeEvent> getPlays() { return stateStorage.getEvents(word_played); }
 
 }

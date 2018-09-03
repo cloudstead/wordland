@@ -91,7 +91,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
 
     protected GameBoardState getGameBoardState(@PathParam("name") String room, @QueryParam("x1") Integer x1, @QueryParam("x2") Integer x2, @QueryParam("y1") Integer y1, @QueryParam("y2") Integer y2) {
         final GameState state = gamesMaster.getGameState(room);
-        if (state == null) throw  notFoundEx(room);
+        if (state == null) throw notFoundEx(room);
 
         if (x1 == null) x1 = 0;
         if (x2 == null) x2 = BLOCK_SIZE-1;
@@ -118,6 +118,14 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (player == null) return notFound(request.getId());
 
         return ok(gamesMaster.playWord(room, request.getApiToken(), player, request.getWord(), request.getTiles()));
+    }
+
+    @GET @Path("/{name}"+EP_PLAYS)
+    public Response play (@Context HttpContext ctx,
+                          @PathParam("name") String room) {
+        final GameState state = gamesMaster.getGameState(room);
+        if (state == null) throw notFoundEx(room);
+        return ok(state.getPlays());
     }
 
     @POST @Path("/{name}"+EP_QUIT)

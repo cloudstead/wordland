@@ -9,6 +9,7 @@ import org.cobbzilla.wizard.model.json.JSONBUserType;
 import wordland.model.*;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
+import static org.cobbzilla.util.time.TimeUtil.parseDuration;
 import static wordland.ApiConstants.STANDARD;
 
 @Accessors(chain=true)
@@ -49,6 +50,13 @@ public class GameRoomSettings {
     @Getter @Setter private BonusPolicy[] bonusPolicies;
     @Getter @Setter private WinCondition[] winConditions;
     public boolean hasWinConditions () { return !empty(getWinConditions()); }
+
+    @Getter @Setter private String maxWaitBeforeBotsJoin;
+    public boolean hasMaxWaitBeforeBotsJoin () { return maxWaitBeforeBotsJoin != null; }
+
+    @JsonIgnore public Long getMillisBeforeBotsJoin () {
+        return hasMaxWaitBeforeBotsJoin() ? parseDuration(maxWaitBeforeBotsJoin) : null;
+    }
 
     public String symbolSetName() {
         return symbolSet != null && symbolSet.getName() != null ? symbolSet.getName() : STANDARD;

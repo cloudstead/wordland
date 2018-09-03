@@ -18,6 +18,7 @@ cat <<EOF
   ],
   "maxPlayers": [2, 3, 4, 5, 6, 7, 8, 9, 10],
   "maxLetterDistances": [2, 5, 10, 20],
+  "maxWaitTimesBeforeBotsJoin": [null, "1m"]
   "turnPolicies": [
     [{
       "name": "round_robin",

@@ -1,0 +1,116 @@
+[
+  {
+    "comment": "login as player 1",
+    "request": { "uri": "auth/login", "method": "post" },
+    "response": {
+      "sessionName": "player1",
+      "session": "apiToken"
+    }
+  },
+
+  {
+    "comment": "join room as player1, fast-forward system clock",
+    "request": {
+      "uri": "rooms/metapress/join",
+      "entity": {}
+    },
+    "response": {
+      "store": "p1room"
+    },
+    "after": "set-system-clock +2m"
+  },
+
+  {
+    "comment": "player1 requests board state",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/board"
+    },
+    "response": {
+      "store": "board"
+    }
+  },
+
+  {
+    "comment": "player1 plays word",
+    "before": "find-word-and-tiles board word1",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/play",
+      "entity": {
+        "room": "{{p1room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p1room.player.id}}",
+        "clientId": "{{p1room.player.id}}",
+        "apiToken": "{{p1room.player.apiToken}}",
+        "word": "{{word1.word}}",
+        "tilesJson": "{{escaped_json word1.tiles}}"
+      }
+    },
+    "response": {
+      "store": "p1play1",
+      "check": [
+        {"condition": "json.stateChange == 'word_played'"},
+        {"condition": "json.object.get('id').textValue() == '{{p1room.player.id}}'"},
+        {"condition": "json.object.get('score').get('total').intValue() > 0"},
+        {"condition": "json.object.get('score').get('total').intValue() < 20"}
+      ]
+    }
+  },
+
+  {
+    "comment": "check play history, verify bot has played",
+    "delay": "5s",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/plays"
+    },
+    "response": {
+      "store": "playHistory1",
+      "check": [
+        {"condition": "json.length == 2"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player1 plays another word",
+    "before": "find-word-and-tiles board word2",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/play",
+      "entity": {
+        "room": "{{p1room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p1room.player.id}}",
+        "clientId": "{{p1room.player.id}}",
+        "apiToken": "{{p1room.player.apiToken}}",
+        "word": "{{word2.word}}",
+        "tilesJson": "{{escaped_json word2.tiles}}"
+      }
+    },
+    "response": {
+      "store": "p1play2",
+      "check": [
+        {"condition": "json.stateChange == 'word_played'"}
+      ]
+    }
+  },
+
+  // wait a few seconds, verify bot has played
+  {
+    "comment": "check play history, verify bot has played again",
+    "delay": "5s",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/plays"
+    },
+    "response": {
+      "store": "playHistory2",
+      "check": [
+        {"condition": "json.length == 4"}
+      ]
+    }
+  }
+
+]

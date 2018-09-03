@@ -2,14 +2,19 @@ package wordland;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.cobbzilla.util.daemon.ZillaRuntime;
 import org.cobbzilla.util.handlebars.HandlebarsUtil;
 import org.cobbzilla.util.javascript.StandardJsEngine;
+import org.cobbzilla.util.string.StringUtil;
+import org.cobbzilla.util.time.TimeUtil;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.client.script.*;
 import org.cobbzilla.wizard.model.entityconfig.ModelSetup;
 import org.cobbzilla.wizard.server.RestServer;
 import org.cobbzilla.wizard.util.RestResponse;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import wordland.bot.Pianola;
 import wordland.bot.PianolaPlay;
@@ -24,13 +29,13 @@ import java.util.*;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static junit.framework.TestCase.assertTrue;
-import static org.cobbzilla.util.daemon.ZillaRuntime.die;
-import static org.cobbzilla.util.daemon.ZillaRuntime.now;
+import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.io.FileUtil.mkdirOrDie;
 import static org.cobbzilla.util.io.StreamUtil.stream2string;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.string.StringUtil.splitAndTrim;
 import static org.cobbzilla.util.system.Sleep.sleep;
+import static org.cobbzilla.util.time.TimeUtil.parseDuration;
 import static wordland.model.game.GameTileMatcher.MATCH_VOWEL;
 import static wordland.model.support.PlayedTile.claimTiles;
 
@@ -40,6 +45,7 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
     public static final String FIND_WORD_AND_TILES = "find-word-and-tiles";
     public static final String PLAY_ALL_TILES = "play-all-tiles";
     public static final String SAVE_BOARD_VIEW = "save-board-view";
+    public static final String SET_SYSTEM_CLOCK = "set-system-clock";
     public static final String RESTART_API = "restart-api";
 
     public static final StandardJsEngine JS = new StandardJsEngine();
@@ -161,7 +167,18 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                 super.afterCall(script, ctx, response);
                 if (script.hasAfter()) {
                     final String after = script.getAfter();
-                    if (after.startsWith(SAVE_BOARD_VIEW)) {
+                    if (after.startsWith(SET_SYSTEM_CLOCK)) {
+                        final List<String> parts = StringUtil.splitAndTrim(after, " ");
+                        final String arg = parts.get(1);
+                        if (arg.startsWith("+")) {
+                            final long duration = parseDuration(arg);
+                            setSystemTimeOffset(duration);
+                        } else {
+                            final long time = (long) TimeUtil.parse(arg);
+                            setSystemTimeOffset(time - ZillaRuntime.realNow());
+                        }
+
+                    } else if (after.startsWith(SAVE_BOARD_VIEW)) {
                         final String outFilePath = HandlebarsUtil.apply(getConfiguration().getHandlebars(), after.substring(SAVE_BOARD_VIEW.length()+1), ctx);
                         final File outFile = new File(outFilePath.trim());
                         final GameBoardView boardView = json(response.json, GameBoardView.class);
@@ -180,5 +197,8 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
         new ApiRunnerWithEnv(api, new StandardJsEngine(), listener, includeHandler, getServerEnvironment())
                 .run(stream2string(getModelPrefix()+"/tests/"+scriptName+".json"));
     }
+
+    @After public void resetClock () { setSystemTimeOffset(0); }
+    @AfterClass public static void finalResetClock () { setSystemTimeOffset(0); }
 
 }
