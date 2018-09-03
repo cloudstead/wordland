@@ -75,6 +75,14 @@ function str_index {
   [[ "$x" = "$1" ]] && echo -1 || echo "${#x}"
 }
 
+function image_viewer {
+   for prog in feh eog ; do
+     if [[ ! -z "$(which ${prog})" ]] ; then
+       echo -n "$(which ${prog})"
+     fi
+   done
+}
+
 function json_node {
   if [[ ! -z "${WL_VERBOSE_ERRORS}" && "${WL_VERBOSE_ERRORS}" == "Y" ]] ; then
     echo "${1}" | jq .${2}

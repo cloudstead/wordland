@@ -11,10 +11,10 @@ function default_room_combos {
 cat <<EOF
 {
   "symbolSets": [
-    { "name": "standard", "children": {"SymbolSetDistribution": [{"name": "easy"}]} },
-    { "name": "standard", "children": {"SymbolSetDistribution": [{"name": "standard"}]} },
-    { "name": "standard", "children": {"SymbolSetDistribution": [{"name": "hard"}]} },
-    { "name": "standard", "children": {"SymbolSetDistribution": [{"name": "insane"}]} }
+    { "name": "standard", "children": {"SymbolDistribution": [{"name": "easy"}]} },
+    { "name": "standard", "children": {"SymbolDistribution": [{"name": "standard"}]} },
+    { "name": "standard", "children": {"SymbolDistribution": [{"name": "hard"}]} },
+    { "name": "standard", "children": {"SymbolDistribution": [{"name": "insane"}]} }
   ],
   "maxPlayers": [2, 3, 4, 5, 6, 7, 8, 9, 10],
   "maxLetterDistances": [2, 5, 10, 20],

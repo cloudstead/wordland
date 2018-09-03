@@ -1,22 +1,22 @@
 
 
-===========================================================
-======================= wordland.io =======================
-===========================================================
+=================================================================
+========================== wordland.io ==========================
+=================================================================
 
 # Keyboard Commands:
 
     A-Z          :  add a letter to the tray
     
-    < >          :  change tile location of current letter
+    < >          :  change board location of current letter
     
-    [ ]          :  move current letter in the tray
+    { }          :  move the ^ marker, changes the current letter
     
-    { }          :  change the current letter in the tray
+    [ ]          :  move the current letter in the tray
     
     -            :  remove current letter from the tray
     
-    ~            :  move board view  
+    ~            :  shift board view up/down/left/right
     
     (space)      :  clear the tray
     
@@ -24,9 +24,11 @@
     
     /            :  list all games, switch to another game
     
+    @            :  show image of larger board view
+    
     (Control-C)  :  quit game
 
-===========================================================
-======================= have fun!!! =======================
-===========================================================
+=================================================================
+========================== have fun!!! ==========================
+=================================================================
 

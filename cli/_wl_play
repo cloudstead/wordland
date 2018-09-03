@@ -125,10 +125,10 @@ function save_room_state {
   if [[ ! -z "${PALETTE}" ]] ; then
     echo "${PALETTE}" > ${ROOM_PALETTE}
   fi
-  X1="$(json_node "$(cat ${BOARD_JSON})" x1 | tr -d '"')"
-  X2="$(json_node "$(cat ${BOARD_JSON})" x2 | tr -d '"')"
-  Y1="$(json_node "$(cat ${BOARD_JSON})" y1 | tr -d '"')"
-  Y2="$(json_node "$(cat ${BOARD_JSON})" y2 | tr -d '"')"
+  X1="$(json_val "$(cat ${BOARD_JSON})" x1)"
+  X2="$(json_val "$(cat ${BOARD_JSON})" x2)"
+  Y1="$(json_val "$(cat ${BOARD_JSON})" y1)"
+  Y2="$(json_val "$(cat ${BOARD_JSON})" y2)"
   if [[ ! -z "${X1}" ]] ; then echo "${X1}" > ${WL_DIR}/rooms/${ROOM_NAME}/x1 ; fi
   if [[ ! -z "${X2}" ]] ; then echo "${X2}" > ${WL_DIR}/rooms/${ROOM_NAME}/x2 ; fi
   if [[ ! -z "${Y1}" ]] ; then echo "${Y1}" > ${WL_DIR}/rooms/${ROOM_NAME}/y1 ; fi
@@ -164,7 +164,7 @@ function show_board {
       board="$(json_node "$(cat ${BOARD_JSON})" grid)"
       if [[ ! -z "${board}" ]] ; then
         save_room_state
-        roomState="$(json_node "$(cat ${BOARD_JSON})" roomState | tr -d '"')"
+        roomState="$(json_val "$(cat ${BOARD_JSON})" roomState)"
         if [[ ! -z "${roomState}" && "${roomState}" == "ended" ]] ; then
           echo "$(translate_message msg_game_over)"
           winners="$(cat ${BOARD_JSON} | jq -c '.scoreboard[] | select(.winner) | .name' | tr -d '"')"
@@ -303,6 +303,19 @@ function move_board {
       fresh_board_view "$(move_board_prompt)"
     done
   done
+}
+
+function board_image {
+  board_view_png="$(wl_get ${WL_API}/rooms/${ROOM_NAME}/board/view.png)"
+  png_file="$(mktemp /tmp/$(basename ${0}).XXXXXXXX.png)"
+  json_val "${board_view_png}" base64image | base64 -d > ${png_file}
+  IMAGE_VIEWER="$(image_viewer)"
+  if [[ -z "${IMAGE_VIEWER}" ]] ; then
+    error "$(translate_message err_imageViewer_notFound): ${png_file}"
+  else
+    set -m
+    ${IMAGE_VIEWER} ${png_file} &
+  fi
 }
 
 fresh_board_view
@@ -568,6 +581,11 @@ while [ 1 ] ; do
     '~')
       echo ; echo
       move_board
+    ;;
+
+    '@')
+      echo ; echo
+      board_image
     ;;
 
     # Didn't understand that, skip it

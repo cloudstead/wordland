@@ -9,9 +9,12 @@
     "request": {
       "uri": "boards/3x3/generateRooms",
       "entity": {
-        "symbolSets": [{
-          "name": "standard"
-        }],
+        "symbolSets": [
+          {"name": "standard", "children": {"SymbolDistribution": [{"name": "easy"}]}},
+          {"name": "standard", "children": {"SymbolDistribution": [{"name": "standard"}]}},
+          {"name": "standard", "children": {"SymbolDistribution": [{"name": "hard"}]}},
+          {"name": "standard", "children": {"SymbolDistribution": [{"name": "insane"}]}}
+        ],
         "maxPlayers": [2, 3, 4, 5],
         "maxLetterDistances": [2, 5, 20]
       }
@@ -26,7 +29,8 @@
     "response": {
       "store": "rooms",
       "check": [
-        {"condition": "rooms.length >= 4"}
+        {"condition": "rooms.length >= 48"},
+        {"condition": "find(rooms, 'settings.symbolDistribution.name', 'insane') != null"}
       ]
     }
   }
