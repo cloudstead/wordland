@@ -6,4 +6,4 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 
 MODEL="${1:?$(translate_message err_model_required)}"
 
-unquote "$(wl_post "${WL_API}/entityConfigs/populate/${MODEL}")"
+unquote "$(wl_post "${WL_API}/entityConfigs/${MODEL}")"

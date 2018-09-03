@@ -162,6 +162,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         final Collection<GamePlayer> players = state.getPlayers();
         final Map<String, String> scoreboard = state.getScoreboard();
         final List<ScoreboardEntry> scoreboardList = new ArrayList<>();
+        final Collection<String> winners = state.getWinners();
         for (Map.Entry<String, String> entry : scoreboard.entrySet()) {
             final Optional<GamePlayer> player = players.stream().filter(p -> p.getId().equals(entry.getKey())).findFirst();
             if (player.isPresent()) {
@@ -169,12 +170,14 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                 scoreboardList.add(new ScoreboardEntry()
                         .setId(p.getId())
                         .setName(p.getName())
-                        .setScore(Integer.parseInt(entry.getValue())));
+                        .setScore(Integer.parseInt(entry.getValue()))
+                        .checkWinner(winners));
             } else {
                 scoreboardList.add(new ScoreboardEntry()
                         .setId(entry.getKey())
                         .setName(entry.getKey())
-                        .setScore(Integer.parseInt(entry.getValue())));
+                        .setScore(Integer.parseInt(entry.getValue()))
+                        .checkWinner(winners));
             }
         }
         Collections.sort(scoreboardList);
@@ -291,7 +294,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         final TextGridResponse text = board.grid(request.getPalette(), request.getTiles())
                 .setPalette(request.getPalette())
                 .setRoomState(board.getRoomState())
-                .setWinners(board.getWinners());
+                .setScoreboard(getScoreboard(room).toArray(new ScoreboardEntry[0]));
         return ok(text);
     }
 

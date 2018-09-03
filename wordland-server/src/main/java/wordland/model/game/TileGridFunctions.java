@@ -74,8 +74,9 @@ public class TileGridFunctions {
                                 .append(scoreboardEntry.getName()).append(" : ") // write player name and colon
                                 .append(StringUtil.repeat(" ", spaceCount))   // correct spacing
                                 .append(scoreboardEntry.getScore())              // write score
-                                .append(ANSI_RESET)                              // reset colors
-                                .append("\n");
+                                ;
+                        if (scoreboardEntry.winner()) withScores.append(" *** ");// mark winner, if it is one
+                        withScores.append(ANSI_RESET).append("\n");              // reset colors
                     } else {
                         withScores.append(lines[i]).append("\n");
                     }

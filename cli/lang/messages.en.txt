@@ -62,3 +62,5 @@ msg_room_prompt_rooms=rooms
 msg_choose_room_prompt="$(session_name)/rooms>>>"
 msg_move_board_prompt="Move Board (use WASD controls, press ? for help)"
 msg_game_over="Game Over"
+label_winner="Winner"
+label_winners="Winners"

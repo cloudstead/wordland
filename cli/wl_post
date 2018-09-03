@@ -9,6 +9,10 @@ ENTITY="${2:-/dev/null}"
 ENTITY="$(cat ${ENTITY})"
 OUTFILE="${3:-/dev/null}"
 
+if [[ -z "${ENTITY}" ]] ; then
+  ENTITY="{}"
+fi
+
 TMP_FILE=$(mktemp /tmp/$(basename $0).XXXXXXX)
 echo "POST ${URI}"
 echo "HTTP Status: $(wl_post "${WL_API}/${URI}" "${ENTITY}" "${TMP_FILE}")"

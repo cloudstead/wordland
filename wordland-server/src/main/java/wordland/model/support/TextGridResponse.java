@@ -14,6 +14,6 @@ public class TextGridResponse {
     @Getter @Setter private PlayedTile[] playedTiles;
     @Getter @Setter private Boolean success;
     @Getter @Setter private RoomState roomState;
-    @Getter @Setter private String[] winners;
+    @Getter @Setter private ScoreboardEntry[] scoreboard;
 
 }

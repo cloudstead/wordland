@@ -158,12 +158,14 @@ function show_board {
         save_palette
         roomState="$(json_node "$(cat ${BOARD_JSON})" roomState)"
         if [[ ! -z "${roomState}" && "${roomState}" == "ended" ]] ; then
-          # todo: check winners.length. if zero, some odd "game over" message.
-          # todo: if one, put "player-name won the game"
-          # todo: if two or more, put "player1, player2, and player3 tied as winners for the game"
-          # todo: update API to return GamePlayer info for winners, not just uuid, make it easier on CLI
-          winners="$(json_node "$(cat ${BOARD_JSON})" winners)"
-          error "$(translate_message msg_game_over)"
+          echo "$(translate_message msg_game_over)"
+          winners="$(cat ${BOARD_JSON} | jq -c '.scoreboard.[] | select(.winner == "true") | .name' | tr -d '"')"
+          if [[ $(echo "${winners}" | wc -l) -gt 1 ]] ; then
+            echo "$(translate_message label_winners):"
+            echo "${winners}"
+          else
+            echo "$(translate_message label_winner): ${winners}"
+          fi
         fi
         echo
         printf "$(printf "${board}" | tr -d '"')"
