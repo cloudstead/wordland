@@ -31,9 +31,8 @@
     },
     "response": {
       "check": [
-        {"condition": "json.length == 1"},
-        {"condition": "json[0].name == '5x5'"},
-        {"condition": "json[0].settings.board.name == '5x5'"}
+        {"condition": "json.length >= 1"},
+        {"condition": "find(json, 'name', '5x5').settings.board.name == '5x5'"}
       ]
     }
   }

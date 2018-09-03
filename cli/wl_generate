@@ -1,0 +1,66 @@
+#!/bin/bash
+
+SCRIPT="${0}"
+SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
+. ${SCRIPT_DIR}/_wl_root
+
+BOARD="${1:?$(translate_message err_board_required)}"
+ROOM_COMBOS="${2}"
+
+function default_room_combos {
+cat <<EOF
+{
+  "symbolSets": [
+    { "name": "standard", "children": {"SymbolSetDistribution": [{"name": "easy"}]} },
+    { "name": "standard", "children": {"SymbolSetDistribution": [{"name": "standard"}]} },
+    { "name": "standard", "children": {"SymbolSetDistribution": [{"name": "hard"}]} },
+    { "name": "standard", "children": {"SymbolSetDistribution": [{"name": "insane"}]} }
+  ],
+  "maxPlayers": [2, 3, 4, 5, 6, 7, 8, 9, 10],
+  "maxLetterDistances": [2, 5, 10, 20],
+  "turnPolicies": [
+    [{
+      "name": "round_robin",
+      "type": "round_robin",
+      "params": [{"name": "max_turn_duration", "value": "20s"}]
+    }],
+    [{
+      "name": "round_robin",
+      "type": "round_robin",
+      "params": [{"name": "max_turn_duration", "value": "1m"}]
+    }],
+    [{
+      "name": "round_robin",
+      "type": "round_robin",
+      "params": [{"name": "max_turn_duration", "value": "1h"}]
+    }],
+    [{
+      "name": "round_robin",
+      "type": "round_robin",
+      "params": [{"name": "max_turn_duration", "value": "1d"}]
+    }],
+    [{
+      "name": "round_robin",
+      "type": "round_robin",
+      "params": [{"name": "max_turn_duration", "value": "5d"}]
+    }]
+  ],
+  "winConditions": [
+    [{
+      "name": "controls_board",
+      "defaultMessage": "The winner has the most tiles after all tiles have been played",
+      "endJs": "board.allClaimed",
+      "winnersJs": "board.topPlayersByCount"
+    }]
+  ]
+}
+EOF
+}
+
+if [[ ! -z "${ROOM_COMBOS}" && -f "${ROOM_COMBOS}" ]] ; then
+  ROOM_COMBOS="$(cat ${ROOM_COMBOS})"
+else
+  ROOM_COMBOS="$(default_room_combos)"
+fi
+
+unquote "$(wl_post "${WL_API}/boards/${BOARD}/generateRooms" "${ROOM_COMBOS}")"

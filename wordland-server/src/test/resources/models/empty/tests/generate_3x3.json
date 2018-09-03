@@ -12,7 +12,8 @@
         "symbolSets": [{
           "name": "standard"
         }],
-        "maxPlayerCounts": [2, 3, 4, 5]
+        "maxPlayers": [2, 3, 4, 5],
+        "maxLetterDistances": [2, 5, 20]
       }
     }
   },

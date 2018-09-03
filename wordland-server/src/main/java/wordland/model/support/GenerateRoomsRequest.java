@@ -12,7 +12,7 @@ import static org.cobbzilla.wizard.util.TestNames.safeAnimal;
 public class GenerateRoomsRequest {
 
     public SymbolSet[] symbolSets;
-    public Integer[] maxPlayerCounts;
+    public Integer[] maxPlayers;
     public Integer[] maxLetterDistances;
     public TeamPlayMode[] teamPlayModes;
     public TurnPolicy[][] turnPolicies;
@@ -31,7 +31,7 @@ public class GenerateRoomsRequest {
         private GameRoom next;
         private int index = 0;
         private int max = (empty(symbolSets) ? 1 : symbolSets.length)
-                * (empty(maxPlayerCounts) ? 1 : maxPlayerCounts.length)
+                * (empty(maxPlayers) ? 1 : maxPlayers.length)
                 * (empty(maxLetterDistances) ? 1 : maxLetterDistances.length)
                 * (empty(teamPlayModes) ? 1 : teamPlayModes.length)
                 * (empty(turnPolicies) ? 1 : turnPolicies.length)
@@ -62,7 +62,7 @@ public class GenerateRoomsRequest {
                     .setSymbolDistribution(symbolSet.hasChildren(SymbolDistribution.class) ? symbolSet.getChildren(SymbolDistribution.class).get(0) : defaults.getSymbolDistribution())
                     .setPointSystem(symbolSet.hasChildren(PointSystem.class) ? symbolSet.getChildren(PointSystem.class).get(0) : defaults.getPointSystem())
                     .setDictionary(symbolSet.hasChildren(GameDictionary.class) ? symbolSet.getChildren(GameDictionary.class).get(0) : defaults.getDictionary())
-                    .setMaxPlayers(empty(maxPlayerCounts) ? defaults.getMaxPlayers() : maxPlayerCounts[index % maxPlayerCounts.length])
+                    .setMaxPlayers(empty(maxPlayers) ? defaults.getMaxPlayers() : maxPlayers[index % maxPlayers.length])
                     .setMaxLetterDistance(empty(maxLetterDistances) ? defaults.getMaxLetterDistance() : maxLetterDistances[index % maxLetterDistances.length])
                     .setTeamPlayMode(empty(teamPlayModes) ? defaults.getTeamPlayMode() : teamPlayModes[index % teamPlayModes.length])
                     .setMissedTurnPolicy(empty(missedTurnPolicies) ? defaults.getMissedTurnPolicy() : missedTurnPolicies[index % missedTurnPolicies.length])
