@@ -5,6 +5,7 @@
     "settings": {
       "board": { "name": "5x5" },
       "maxPlayers": 2,
+      "pointSystem": { "name": "tile_count" },
       "turnPolicies": [
         {
           "name": "round_robin",
