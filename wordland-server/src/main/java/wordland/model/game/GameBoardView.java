@@ -25,5 +25,6 @@ public class GameBoardView {
     @Getter @Setter private int y1;
     @Getter @Setter private int y2;
     @Getter @Setter private GameBoardPalette palette;
+    @Getter @Setter private RoomState roomState;
 
 }

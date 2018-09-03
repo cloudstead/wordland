@@ -351,7 +351,7 @@ public class GameState {
                 .setPalette(palette);
 
         final GameBoardView cached = cachedViews.get("" + boardView.hashCode());
-        if (cached != null && cached.youngerThan(SECONDS.toMillis(30))) return cached;
+        if (cached != null && cached.youngerThan(SECONDS.toMillis(30))) return cached.setRoomState(stateStorage.getRoomState());
 
         final BufferedImage bufferedImage = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
         final Graphics2D g2 = bufferedImage.createGraphics();
@@ -407,7 +407,7 @@ public class GameState {
         // cache image
         cachedViews.put(""+boardView.hashCode(), boardView);
 
-        return boardView;
+        return boardView.setRoomState(stateStorage.getRoomState());
     }
 
     private ByteArrayInputStream getBlockImage(GameBoardBlock block, GameBoardPalette palette) {

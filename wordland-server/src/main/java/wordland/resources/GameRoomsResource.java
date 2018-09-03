@@ -285,7 +285,8 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
 
         final GameBoardState board = getGameBoardState(room, x1, x2, y1, y2);
         final TextGridResponse text = board.grid(request.getPalette(), request.getTiles())
-                .setPalette(request.getPalette());
+                .setPalette(request.getPalette())
+                .setRoomState(board.getRoomState());
         return ok(text);
     }
 
