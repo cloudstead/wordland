@@ -14,6 +14,7 @@
         }
       ],
       "missedTurnPolicy": "forfeit_game",
+      "maxWaitBeforeBotsJoin": "10s",
       "winConditions": [{
         "name": "controls_board",
         "defaultMessage": "The winner has the most tiles after all tiles have been played",
