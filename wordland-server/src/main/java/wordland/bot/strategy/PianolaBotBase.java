@@ -71,8 +71,7 @@ public class PianolaBotBase extends SimpleDaemon implements PianolaBotStrategy {
                 final GameRuntimeEvent event = json(change.getObject(), GameRuntimeEvent.class);
                 final PlayedTile playedTile = event.getTiles()[0];
                 board = gameState.getBoard(playedTile.getX(), Math.min(10, boardSettings().getWidth()), playedTile.getY(), Math.min(10, boardSettings().getLength()));
-                final PlayedTile playedOnBoard = board.fromRelativeTile(playedTile);
-                tile = new GameTileStateExtended(board.getTiles()[playedTile.getX()][playedTile.getY()], playedOnBoard.getX(), playedOnBoard.getY());
+                tile = new GameTileStateExtended(board.getTiles()[playedTile.getX()][playedTile.getY()], playedTile.getX(), playedTile.getY());
             }
 
             final GameDictionaryDAO dictionaryDAO = pianolaBot.getConfiguration().getBean(GameDictionaryDAO.class);
