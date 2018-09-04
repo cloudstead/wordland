@@ -13,8 +13,8 @@
           "params": [{"name": "max_turn_duration", "value": "5d"}]
         }
       ],
-      "missedTurnPolicy": "forfeit_game",
       "maxWaitBeforeBotsJoin": "10s",
+      "missedTurnPolicy": "forfeit_game",
       "winConditions": [{
         "name": "controls_board",
         "defaultMessage": "The winner has the most tiles after all tiles have been played",
