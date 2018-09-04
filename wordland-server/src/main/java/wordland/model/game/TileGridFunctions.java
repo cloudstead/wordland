@@ -69,6 +69,7 @@ public class TileGridFunctions {
                     final ScoreboardEntry scoreboardEntry = palette.scoreboard(i);
                     if (scoreboardEntry != null) {
                         final String color = palette.colorForPlayer(scoreboardEntry.getId());
+
                         final int spaceCount = palette.getLongestScoreboardName() - scoreboardEntry.getName().length();
                         withScores.append(lines[i])                              // start with existing line
                                 .append("     ")                                 // move a bit to the right of the board

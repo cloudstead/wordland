@@ -78,16 +78,17 @@ public class GameBoardPalette {
                 .setCurrentPlayerId(currentPlayerId);
     }
 
-    public String colorForPlayer(String playerId) { return NameAndValue.find(playerColors, playerId); }
+    public String colorForPlayer(String playerId) {
+        String color = NameAndValue.find(playerColors, playerId);
+        if (color == null) {
+            color = rgb2hex(useNextPlayerColor(playerId));
+        }
+        return color;
+    }
 
     public int colorFor(GameTileState tile) {
         int color = _colorFor(tile);
         usedColors.add(color);
-        if (tile.hasOwner()) {
-            if (colorForPlayer(tile.getOwner()) == null) {
-                addPlayerColor(tile.getOwner(), rgb2hex(color));
-            }
-        }
         return color;
     }
 
@@ -96,13 +97,19 @@ public class GameBoardPalette {
         if (tile.getOwner().equals(currentPlayerId)) return getCurrentPlayerRgb();
         final String colorString = NameAndValue.find(playerColors, tile.getOwner());
         if (colorString != null) return parseRgb(colorString);
+        return useNextPlayerColor(tile.getOwner());
+    }
+
+    protected int useNextPlayerColor(String playerId) {
         for (NameAndValue c : playerColors) {
             if (c.getName().equals(ANY_UNASSIGNED)) {
-                c.setName(tile.getOwner());
+                c.setName(playerId);
                 return parseRgb(c.getValue());
             }
         }
-        return randomColor(usedColors, mode);
+        final int color = randomColor(usedColors, mode);
+        addPlayerColor(playerId, rgb2hex(color));
+        return color;
     }
 
 }
