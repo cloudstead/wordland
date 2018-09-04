@@ -25,7 +25,7 @@ echo "$(join_obj)" | websocat -n ${DEFAULT_WS_API}/$(session_player) | {
   while read line ; do
   echo "${line}" >> ${WEBSOCKET_PAYLOAD}
     if [[ ! -z "${line}" && "$(echo "${line}" | tr -d ' \n')" != "X" ]] ; then
-      mkdir -p ${WS_MARKER_FILE_DIR} && touch ${WS_MARKER_FILE_DIR}/${WL_PLAY_PID}
+      mkdir -p ${WS_MARKER_FILE_DIR} && echo "${line}" >> ${WS_MARKER_FILE_DIR}/${WL_PLAY_PID}
     fi
   done
 }

@@ -210,7 +210,10 @@ function fresh_board_view {
 }
 
 function async_fresh_board_view {
-  echo ; echo ; echo "<?~~~ !! async update !! ~~~~?>"; fresh_board_view
+  while read line ; do
+    echo ; echo ; echo "async update ~~~~ ${line}"; echo
+  done < ${1}
+  fresh_board_view
 }
 
 function show_rooms {
@@ -615,7 +618,9 @@ while [ 1 ] ; do
  done
 
  if [[ -f ${WS_MARKER_FILE} ]] ; then
-   rm ${WS_MARKER_FILE}
-   async_fresh_board_view
+   MARKER_TEMP=${WS_MARKER_FILE}.$(date +%s).$(uuid | head -c 8).json
+   mv ${WS_MARKER_FILE} ${MARKER_TEMP}
+   async_fresh_board_view ${MARKER_TEMP}
+   rm -f ${MARKER_TEMP}
  fi
 done

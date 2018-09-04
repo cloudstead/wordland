@@ -103,13 +103,15 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     }
 
     private synchronized GameStateChange addPlayer(GamePlayer player, boolean startGame) {
-        final GamePlayer found = getPlayer(player.getId());
+        final String playerId = player.getId();
+        final GamePlayer found = getPlayer(playerId);
         if (found != null) return null;
 
         final int playerCount = getPlayerCount();
-        redis.hset(K_PLAYERS, player.getId(), json(player));
-        if (roomSettings().hasRoundRobinPolicy()) {
-            redis.set(K_JOIN_ORDER + playerCount, player.getId());
+        redis.hset(K_PLAYERS, playerId, json(player));
+            if (roomSettings().hasRoundRobinPolicy()) {
+            redis.set(K_JOIN_ORDER + playerCount, playerId);
+            redis.hset(K_SCOREBOARD, playerId, "0");
         }
         redis.set(K_LAST_JOIN, ""+now());
 

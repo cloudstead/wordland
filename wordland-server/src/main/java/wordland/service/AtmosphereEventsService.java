@@ -32,6 +32,7 @@ import java.util.concurrent.Future;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.util.reflect.ReflectionUtil.scrubStrings;
 
 @SuppressWarnings("SpringJavaAutowiredMembersInspection")
 @Slf4j
@@ -42,6 +43,7 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 public class AtmosphereEventsService {
 
     public static final String URI_PREFIX = "/events/";
+    private static final String[] SCRUB_FIELDS = {"apiToken"};
 
     @Getter(lazy=true) private final GamesMaster gamesMaster = initGamesMaster();
     private GamesMaster initGamesMaster() {
@@ -186,10 +188,19 @@ public class AtmosphereEventsService {
         return null;
     }
 
-    private void send(AtmosphereResourceEntry entry, Object thing) {
+    private String toMessage(Object thing) { return json(scrubStrings(thing, SCRUB_FIELDS)); }
+
+    private void send(Collection<AtmosphereResourceEntry> entries, Object thing) {
+        final String json = toMessage(thing);
+        for (AtmosphereResourceEntry entry : entries) send(entry, json);
+    }
+
+    private void send(AtmosphereResourceEntry entry, Object thing) { sendMessage(entry, toMessage(thing)); }
+
+    private void sendMessage(AtmosphereResourceEntry entry, String message) {
         try {
-            log.info("send("+(entry.hasPlayer() ? entry.getPlayer().getId() : "")+", "+json(thing)+")");
-            entry.getResource().getResponse().write(json(thing));
+            log.info("send("+(entry.hasPlayer() ? entry.getPlayer().getId() : "")+", "+message+")");
+            entry.getResource().getResponse().write(message);
         } catch (Exception e) {
             log.warn("send: "+e, e);
         }
@@ -202,9 +213,7 @@ public class AtmosphereEventsService {
             if (empty(c)) return null;
             entries = new ArrayList<>(c);
         }
-        for (AtmosphereResourceEntry entry : entries) {
-            send(entry, stateChange);
-        }
+        send(entries, stateChange);
         return null;
 //         return getBroadcaster().broadcast(stateChange);
     }

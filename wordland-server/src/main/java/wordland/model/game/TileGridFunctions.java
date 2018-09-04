@@ -25,7 +25,7 @@ public class TileGridFunctions {
     public static final String F_PREVIEW_PLAY_BLOCKED = "preview_play_blocked";
     public static final int F_PREVIEW_PLAY_BG = 0xeeeeee;
     public static final int F_PREVIEW_PLAY_BLOCKED_BG = 0xbbbbbb;
-    public static final String TXT_SPACER = "   ";
+    public static final String TXT_SPACER = " ";
 
     public static String grid (GameTileState[][] tiles) {
         return grid(tiles, null, null).getGrid();

@@ -83,7 +83,7 @@ function str_index {
 }
 
 function image_viewer {
-   for prog in feh eog ; do
+   for prog in ${WL_IMAGE_VIEWER} feh eog ; do
      if [[ ! -z "$(which ${prog})" ]] ; then
        echo -n "$(which ${prog})"
      fi
@@ -327,3 +327,10 @@ status_code=$(echo "${response}" | sed -n '$p')
 if [[ -z "${status_code}" || ${status_code} -ne 200 ]] ; then
   die "$(translate_message err_api_unavailable): ${WL_API}"
 fi
+
+# check for required programs
+for prog in curl jq uuid ; do
+  if [[ -z "$(which ${prog})" ]] ; then
+    die "$(translate_message err_program_notFound): ${prog}"
+  fi
+done
