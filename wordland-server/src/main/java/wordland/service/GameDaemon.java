@@ -58,6 +58,14 @@ public class GameDaemon extends SimpleDaemon {
 
     private final List<PianolaBot> bots = new ArrayList<>();
 
+    @Override public void onStart() {
+        // do we need to reactivate any bots?
+        for (GamePlayer player : getGameStateStorage().getPlayers()) {
+            if (player.bot()) startBot(player);
+        }
+        super.onStart();
+    }
+
     @Override protected void process() {
         // check for players who have timed-out, remove them from the game
         final GameStateStorageService stateStorage = getGameStateStorage();
@@ -75,7 +83,7 @@ public class GameDaemon extends SimpleDaemon {
                     // join bots to room
                     while (playerCount < rs.getMinPlayersToStart()) {
                         log.info("would join " + (rs.getMinPlayersToStart() - playerCount) + " bots to start the game");
-                        bots.add(new PianolaBot(this, configuration).start());
+                        startBot();
                         playerCount = stateStorage.getPlayerCount();
                     }
                 }
@@ -87,6 +95,18 @@ public class GameDaemon extends SimpleDaemon {
                     for (GameStateChange boot : boots) broadcast(boot);
                 }
         }
+    }
+
+    private void startBot() { startBot(null); }
+
+    private void startBot(GamePlayer player) {
+        final PianolaBot bot = new PianolaBot(this, configuration, player);
+        if (player != null) {
+            log.info("startBot: rejoining bot ("+player.getName()+") to room "+getRoom().getName());
+        } else {
+            log.info("startBot: joining new bot ("+bot.getPlayer().getName()+") to room "+getRoom().getName());
+        }
+        bots.add(bot.start());
     }
 
     protected Future<Object> broadcast(GameStateChange stateChange) {

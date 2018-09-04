@@ -20,14 +20,17 @@ public class PianolaBot {
     @Getter private GamePlayer player;
     @Getter private PianolaBotStrategy botStrategy;
 
-    public PianolaBot (GameDaemon daemon, WordlandConfiguration config) {
+    public PianolaBot (GameDaemon daemon, WordlandConfiguration config, GamePlayer player) {
         this.gameDaemon = daemon;
         this.configuration = config;
-        this.player = new GamePlayer()
+        this.player = player != null ? player : new GamePlayer()
                 .setId(newStrongUuid())
+                .setBot(true)
                 .setName("~ "+ TestNames.animal().replace("_", " "));
-        final String apiToken = config.getBean(SessionDAO.class).create(new AccountSession(player.getName()));
-        daemon.addPlayer(player.setApiToken(apiToken));
+        if (player == null) {
+            final String apiToken = config.getBean(SessionDAO.class).create(new AccountSession(this.player.getName()));
+            daemon.addPlayer(this.player.setApiToken(apiToken));
+        }
     }
 
     public PianolaBot start() {

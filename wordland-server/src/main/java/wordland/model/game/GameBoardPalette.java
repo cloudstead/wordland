@@ -79,6 +79,7 @@ public class GameBoardPalette {
     }
 
     public String colorForPlayer(String playerId) {
+        if (playerId.equals(currentPlayerId)) return getCurrentPlayerColor();
         String color = NameAndValue.find(playerColors, playerId);
         if (color == null) {
             color = rgb2hex(useNextPlayerColor(playerId));

@@ -27,6 +27,8 @@ public class GamePlayer {
     @Getter @Setter private String apiToken;
     @Getter @Setter private String name;
     @Getter @Setter private String team;
+    @Getter @Setter private Boolean bot;
+    @JsonIgnore public boolean bot () { return bot != null && bot; }
 
     @Getter @Setter private long ctime = now();
     @JsonIgnore public long getAge () { return now() - ctime; }

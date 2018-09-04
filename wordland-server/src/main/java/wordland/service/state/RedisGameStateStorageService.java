@@ -2,6 +2,7 @@ package wordland.service.state;
 
 import edu.emory.mathcs.backport.java.util.Arrays;
 import edu.emory.mathcs.backport.java.util.Collections;
+import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import wordland.model.GameBoardBlock;
 import wordland.model.GameRoom;
@@ -24,6 +25,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static wordland.model.TurnPolicy.PARAM_MAX_TURN_DURATION;
 import static wordland.model.game.GameStateChange.*;
 
+@Slf4j
 public class RedisGameStateStorageService implements GameStateStorageService {
 
     public static final String K_VERSION       = "version";
@@ -77,10 +79,12 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     }
 
     @Override public synchronized Collection<GamePlayer> getPlayers() {
-        final Map<String, String> map = redis.hgetall(K_PLAYERS);
         final Collection<GamePlayer> players = new ArrayList<>();
-        for (String json : map.values()) {
-            players.add(json(json, GamePlayer.class));
+        final Map<String, String> map = redis.hgetall(K_PLAYERS);
+        if (map != null) {
+            for (String json : map.values()) {
+                players.add(json(json, GamePlayer.class));
+            }
         }
         return players;
     }
@@ -119,7 +123,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
 
     @Override public long getTimeSinceLastJoin() {
         final String val = redis.get(K_LAST_JOIN);
-        return empty(val) ? 0 : Long.parseLong(val);
+        return empty(val) ? 0 : now()-Long.parseLong(val);
     }
 
     @Override public synchronized GameStateChange removePlayer(String id) {
@@ -262,6 +266,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     protected Long nextVersion() { return redis.incr(K_VERSION); }
 
     protected GameStateChange nextState(GamePlayer player, GameStateChange stateChange) {
+        log.info("nextState, player="+(player == null ? "null" : player.getId()+"/"+player.getName())+"\n"+json(stateChange));
         redis.rpush(K_LOG, json(stateChange));
         if (player != null) redis.hset(K_LAST_ACTIVITY, player.getId(), ""+now());
         return stateChange;

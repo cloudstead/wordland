@@ -5,5 +5,8 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 . ${SCRIPT_DIR}/_wl_root
 
 MODEL="${1:?$(translate_message err_model_required)}"
+TMP=$(mktemp /tmp/$(basename $0).XXXXXXX.json)
 
-unquote "$(wl_post "${WL_API}/entityConfigs/models/${MODEL}")"
+wl_post "${WL_API}/entityConfigs/models/${MODEL}" "{}" "${TMP}"
+unquote "$(cat "${TMP}")"
+rm -f "${TMP}"

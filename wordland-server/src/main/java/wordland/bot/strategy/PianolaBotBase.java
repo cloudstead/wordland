@@ -61,17 +61,23 @@ public abstract class PianolaBotBase extends SimpleDaemon implements PianolaBotS
                     .filter(h -> !json(h.getObject(), GameRuntimeEvent.class).getId().equals(myPlayerId()))
                     .map(h -> json(h.getObject(), GameRuntimeEvent.class).getWord())
                     .collect(Collectors.toList());
+
             final GameTileStateExtended tile;
             if (empty(history)) {
                 // we must have first play?
-                board = gameState.getBoard(0, Math.min(10, boardSettings().getWidth()), 0, Math.min(10, boardSettings().getLength()));
-                tile = new GameTileStateExtended(board.getTiles()[0][0], 0, 0);
+                board = gameState.getBoard(0, 10, 0, 10);
+                tile = new GameTileStateExtended(board.getTiles()[0][0], 1, 1);
             } else {
                 final GameStateChange change = history.get(history.size() - 1);
                 final GameRuntimeEvent event = json(change.getObject(), GameRuntimeEvent.class);
                 final PlayedTile playedTile = event.getTiles()[0];
-                board = gameState.getBoard(playedTile.getX(), Math.min(10, boardSettings().getWidth()), playedTile.getY(), Math.min(10, boardSettings().getLength()));
-                tile = new GameTileStateExtended(board.getTiles()[playedTile.getX()][playedTile.getY()], playedTile.getX(), playedTile.getY());
+                board = gameState.getBoard(playedTile.getX()-10, playedTile.getX()+10, playedTile.getY()-10, playedTile.getY()+10);
+                try {
+                    tile = new GameTileStateExtended(board.getTiles()[playedTile.getX()][playedTile.getY()], playedTile.getX(), playedTile.getY());
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    log.warn("AIOOBE: "+e);
+                    return; // skip turn this time
+                }
             }
 
             final GameDictionaryDAO dictionaryDAO = pianolaBot.getConfiguration().getBean(GameDictionaryDAO.class);
