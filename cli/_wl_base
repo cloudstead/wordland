@@ -5,8 +5,6 @@ ENV_FILE="${HOME}/.wordland.env"
 WL_DIR="${HOME}/.wordland"
 SESSION_JSON="${WL_DIR}/session.json"
 CURRENT_ROOM=${WL_DIR}/current_room
-REQUEST_URL=${WL_DIR}/_request.txt
-RESPONSE_JSON=${WL_DIR}/_response.json
 
 DEFAULT_API="http://127.0.0.1:9091/api"
 DEFAULT_WS_API="ws://127.0.0.1:9099/events"
@@ -68,6 +66,15 @@ function maybe_verbose {
 
 function debug {
   echo "${@}" 2> /dev/null >> ${DEBUG_LOGFILE}
+}
+
+function log_http {
+  if [[ -z "${WL_API_LOG}" ]] ; then
+    WL_API_LOG="$(env_val WL_API_LOG)"
+  fi
+  if [[ ! -z "${WL_API_LOG}" ]] ; then
+    echo "$(date +%Y-%m-%d_%H:%M:%S) $(unquote ${1} | tr -d '\n')" >> ${WL_API_LOG}
+  fi
 }
 
 function str_index {
@@ -240,8 +247,10 @@ function session_header {
 
 function wl_exists {
   URL="${1}"
+  log_http "wl_exists ${URL}"
   response=$(curl --silent --write-out "\n%{http_code}\n" --header "$(session_header)" ${URL})
   status_code=$(echo "${response}" | sed -n '$p')
+  log_http "${status_code} $(echo "${response}" | sed '$d' | tr -d '\n')"
   if [[ $(http_code ${status_code}) -ne 200 ]] ; then
     echo "false"
   else
@@ -254,13 +263,14 @@ function wl_get {
   OUTFILE="${2}"
   ALLOWED_CODES="${3:-"200"}"
 
-  echo "${URL}" > ${REQUEST_URL}
+  log_http "wl_get ${URL}"
   response=$(curl --silent --write-out "\n%{http_code}\n" --header "$(session_header)" ${URL})
   status_code=$(echo "${response}" | sed -n '$p')
+  log_http "${status_code} $(echo "${response}" | sed '$d' | tr -d '\n')"
   if [[ ! -z "${OUTFILE}" ]] ; then
-    json=$(echo "${response}" | sed '$d' | tee ${OUTFILE} | ${RESPONSE_JSON})
+    json=$(echo "${response}" | sed '$d' | tee ${OUTFILE})
   else
-    json=$(echo "${response}" | sed '$d' | tee ${RESPONSE_JSON})
+    json=$(echo "${response}" | sed '$d')
   fi
 
   http_code=$(http_code ${status_code})
@@ -283,19 +293,15 @@ function wl_post {
   OUTFILE="${3:-/dev/null}"
   ALLOWED_CODES="${4:-"200"}"
 
-  echo "${URL}" > ${REQUEST_URL}
+  log_http "wl_post ${URL} ${DATA}"
   response=$(echo "${DATA}" | curl --silent --write-out "\n%{http_code}\n" --header "Content-Type: application/json" --header "$(session_header)" -X POST -d @- ${URL})
   status_code=$(echo "${response}" | sed -n '$p')
-  json=$(echo "${response}" | sed '$d' | tee ${RESPONSE_JSON} | tee ${OUTFILE})
-
+  json=$(echo "${response}" | sed '$d' | tee ${OUTFILE})
+  log_http "${status_code} $(echo "${response}" | sed '$d' | tr -d '\n')"
   http_code=$(http_code ${status_code})
   for code in ${ALLOWED_CODES} ; do
     if [[ "${code}" == "${http_code}" ]] ; then
-      if [[ -z "${OUTFILE}" || "${OUTFILE}" == "/dev/null" ]] ; then
-        echo "$(cat ${RESPONSE_JSON})"
-      else
-        echo "${http_code}"
-      fi
+      echo "${http_code}"
       return
     fi
   done

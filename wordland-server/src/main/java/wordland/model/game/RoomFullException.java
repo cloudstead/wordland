@@ -6,7 +6,7 @@ import wordland.model.GameRoom;
 public class RoomFullException extends SimpleViolationException  {
 
     public RoomFullException(GameRoom room) {
-        super("err.maxPlayersInRoom",
+        super("err.game.maxPlayers",
               "maximum "+room.getSettings().getMaxPlayers()+" players already in room "+room.getName(),
               String.valueOf(room.getSettings().getMaxPlayers()));
     }

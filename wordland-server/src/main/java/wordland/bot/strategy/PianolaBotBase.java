@@ -24,16 +24,16 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
 
 @AllArgsConstructor @Slf4j
-public class PianolaBotBase extends SimpleDaemon implements PianolaBotStrategy {
+public abstract class PianolaBotBase extends SimpleDaemon implements PianolaBotStrategy {
 
     private PianolaBot pianolaBot;
 
     @Override protected long getSleepTime() { return SECONDS.toMillis(2); }
 
     @Override protected void process() {
-        final GameDaemon daemon = pianolaBot.getGameDaemon();
-        final GameState gameState = daemon.getGameState();
-        final GameStateStorageService stateStorage = gameState.getStateStorage();
+        final GameDaemon daemon = getGameDaemon();
+        final GameState gameState = getGameState();
+        final GameStateStorageService stateStorage = getStateStorage();
 
         // is the game over?
         final RoomState roomState = stateStorage.getRoomState();
@@ -49,8 +49,8 @@ public class PianolaBotBase extends SimpleDaemon implements PianolaBotStrategy {
         }
 
         // is it our turn?
-        final String currentPlayerId = stateStorage.getCurrentPlayerId();
-        if (myPlayerId().equals(currentPlayerId)) {
+        boolean shouldPlay = shouldPlayTurn();
+        if (shouldPlay) {
             // get a view of the board, where was the most recent play?
             final GameBoardState board;
             final List<GameStateChange> history = stateStorage.getHistory(GameStateChangeType.word_played);
@@ -86,6 +86,8 @@ public class PianolaBotBase extends SimpleDaemon implements PianolaBotStrategy {
         }
     }
 
+    protected abstract boolean shouldPlayTurn();
+
     protected void findWord(GameDaemon daemon,
                             GameBoardState board,
                             List<String> allWords,
@@ -93,15 +95,17 @@ public class PianolaBotBase extends SimpleDaemon implements PianolaBotStrategy {
                             GameTileStateExtended tile,
                             GameDictionary dictionary) {
         tile.findWord(board, dictionary, new HashSet<>(allWords),
-                event -> daemon.playWord(pianolaBot.getPlayer(), event.getWord(), event.getTiles()));
+                event -> daemon.playWord(getPlayer(), event.getWord(), event.getTiles()));
     }
 
-    private String myPlayerId() { return pianolaBot.getPlayer().getId(); }
+    protected GamePlayer getPlayer () { return pianolaBot.getPlayer(); }
+    protected String     myPlayerId() { return getPlayer().getId(); }
 
-    private GameRoom getRoom() { return pianolaBot.getGameDaemon().getRoom(); }
-
-    private GameRoomSettings roomSettings() { return getRoom().getSettings(); }
-
-    private GameBoardSettings boardSettings() { return roomSettings().getBoard().getSettings(); }
+    protected GameDaemon              getGameDaemon  () { return pianolaBot.getGameDaemon(); }
+    protected GameState               getGameState   () { return getGameDaemon().getGameState(); }
+    protected GameStateStorageService getStateStorage() { return getGameState().getStateStorage(); }
+    protected GameRoom                getRoom        () { return getGameDaemon().getRoom(); }
+    protected GameRoomSettings        roomSettings   () { return getRoom().getSettings(); }
+    protected GameBoardSettings       boardSettings  () { return roomSettings().getBoard().getSettings(); }
 
 }

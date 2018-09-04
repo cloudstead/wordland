@@ -8,4 +8,9 @@ public class PianolaTimedTurnStrategy extends PianolaBotBase {
 
     public PianolaTimedTurnStrategy(PianolaBot pianolaBot) { super(pianolaBot); }
 
+    @Override protected boolean shouldPlayTurn() {
+        // todo
+        return false;
+    }
+
 }

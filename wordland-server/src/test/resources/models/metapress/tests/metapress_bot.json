@@ -60,7 +60,7 @@
 
   {
     "comment": "check play history, verify bot has played",
-    "delay": "5s",
+    "delay": "10s",
     "request": {
       "session": "player1",
       "uri": "rooms/{{p1room.room}}/plays"
@@ -100,7 +100,7 @@
   // wait a few seconds, verify bot has played
   {
     "comment": "check play history, verify bot has played again",
-    "delay": "5s",
+    "delay": "10s",
     "request": {
       "session": "player1",
       "uri": "rooms/{{p1room.room}}/plays"
