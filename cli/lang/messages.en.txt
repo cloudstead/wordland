@@ -64,6 +64,7 @@ msg_room_prompt_rooms=rooms
 msg_choose_room_prompt="$(session_name)/rooms>>>"
 msg_move_board_prompt="Move Board (use WASD controls, press ? for help)"
 msg_game_over="Game Over"
+msg_game_abandoned="game abandoned"
 label_winner="Winner"
 label_winners="Winners"
 err_imageViewer_notFound="no image viewer program found; set WL_IMAGE_VIEWER in your ~/.wordland.env file"

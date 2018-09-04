@@ -145,12 +145,13 @@ public class GameDaemon extends SimpleDaemon {
         return gameState.get().getPlayer(uuid);
     }
 
-    public void removePlayer(String id) {
+    public GameStateChange removePlayer(String id) {
         final GameStateChange stateChange;
         synchronized (gameState) {
             stateChange = gameState.get().removePlayer(id);
         }
         broadcast(stateChange);
+        return stateChange;
     }
 
     public GameStateChange playWord(GamePlayer player, String word, PlayedTile[] tiles) {

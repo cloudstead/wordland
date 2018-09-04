@@ -18,4 +18,6 @@ public class GameRoomTest extends ApiModelTestBase {
 
     @Test public void testRegisterAccount () throws Exception { runScript("register_account"); }
 
+    @Test public void testAbandonGame () throws Exception { runScript("abandon_game"); }
+
 }

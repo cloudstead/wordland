@@ -241,11 +241,16 @@ public class GamesMaster {
         return daemon == null ? null : daemon.findPlayer(uuid);
     }
 
-    public void removePlayer(String roomName, String apiKey, String uuid) {
+    public GameStateChange removePlayer(String roomName, String apiKey, String uuid) {
         getSessionPlayer(apiKey, uuid);
 
         final GameDaemon daemon = getGameDaemon(roomName, false);
-        if (daemon != null) daemon.removePlayer(uuid);
+        final GameStateChange change;
+        if (daemon != null) {
+            change = daemon.removePlayer(uuid);
+        } else {
+            change = null;
+        }
 
         final String roomSessionKey = getRoomSessionKey(roomName, uuid);
         String key = getSessions().spop(roomSessionKey);
@@ -254,6 +259,7 @@ public class GamesMaster {
             key = getSessions().spop(roomSessionKey);
         }
         getSessions().del(apiKey); // just in case
+        return change;
     }
 
     public GameState getGameState(String roomName) {

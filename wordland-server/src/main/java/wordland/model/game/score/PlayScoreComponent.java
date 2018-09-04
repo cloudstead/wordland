@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import wordland.model.game.GamePlayer;
 import wordland.model.json.BoardScore;
 import wordland.model.support.PlayedTile;
 
@@ -34,12 +33,12 @@ public class PlayScoreComponent {
                 .setInfo(word);
     }
 
-    public static PlayScoreComponent board(BoardScore b, int picas, boolean absolute, GamePlayer player) {
+    public static PlayScoreComponent board(BoardScore b, int picas, boolean absolute, String playerId) {
         return new PlayScoreComponent()
                 .setType(PlayScoreComponentType.board)
                 .setPicas(picas)
                 .setInfo(json(b))
                 .setAbsolute(absolute)
-                .setPlayer(player == null ? null : player.getId());
+                .setPlayer(playerId);
     }
 }

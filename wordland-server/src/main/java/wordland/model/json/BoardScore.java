@@ -16,6 +16,7 @@ import java.util.Map;
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static wordland.model.game.GameState.CTX_PLAYER;
 import static wordland.model.game.GameState.CTX_PLAYERS;
+import static wordland.model.game.GameState.CTX_SCOREBOARD;
 
 @Slf4j
 public class BoardScore {
@@ -32,13 +33,29 @@ public class BoardScore {
         final List<PlayScoreComponent> components = new ArrayList<>();
         try {
             if (allPlayers) {
-                final Collection<GamePlayer> players = (Collection<GamePlayer>) ctx.get(CTX_PLAYERS);
-                for (GamePlayer player : players) {
-                    ctx.put(CTX_PLAYER, player);
-                    components.add(evalForPlayer(player, ctx));
+                final Object savedPlayer = ctx.get(CTX_PLAYER);
+                try {
+                    final Map<String, String> scoreboard = (Map<String, String>) ctx.get(CTX_SCOREBOARD);
+                    final Map<String, GamePlayer> players = (Map<String, GamePlayer>) ctx.get(CTX_PLAYERS);
+                    for (String playerId : scoreboard.keySet()) {
+
+                        final GamePlayer player = players.containsKey(playerId)
+                                // try to use real GamePlayer for "player" variable
+                                ? players.get(playerId)
+                                // but if the player left the game, this will be null, so use a dummy GamePlayer with proper id
+                                : new GamePlayer().setId(playerId).setName(playerId);
+                        ctx.put(CTX_PLAYER, player);
+
+                        final PlayScoreComponent component = evalForPlayer(playerId, ctx);
+                        if (component != null) components.add(component);
+                    }
+                } finally {
+                    // restore
+                    ctx.put(CTX_PLAYER, savedPlayer);
                 }
             } else {
-                components.add(evalForPlayer(null, ctx));
+                final PlayScoreComponent component = evalForPlayer(null, ctx);
+                if (component != null) components.add(component);
             }
         } catch (Exception e) {
             return die("score("+getName()+"): "+e.getClass().getSimpleName()+": "+e);
@@ -46,10 +63,10 @@ public class BoardScore {
         return components;
     }
 
-    protected PlayScoreComponent evalForPlayer(GamePlayer player, Map<String, Object> ctx) {
+    protected PlayScoreComponent evalForPlayer(String playerId, Map<String, Object> ctx) {
         if (JS.evaluateBoolean(getCondition(), ctx, false)) {
             int picas = JS.evaluateInt(getPicas(), ctx);
-            return PlayScoreComponent.board(this, picas, isAbsolute(), player);
+            return PlayScoreComponent.board(this, picas, isAbsolute(), playerId);
         }
         return null;
     }

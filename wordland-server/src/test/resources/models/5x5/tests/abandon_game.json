@@ -1,0 +1,37 @@
+[
+  {
+    "include": "parts/start_2player_game",
+    "params": { "room": "5x5" }
+  },
+
+  {
+    "comment": "player2 abandons",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/{{p2room.room}}/abandon",
+      "method": "post"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.stateChange == 'player_left_game_ended'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "check scoreboard, verify total score is zero and player1 is winner",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/scoreboard"
+    },
+    "response": {
+      "store": "scoreboard",
+      "check": [
+        {"condition": "json.length == 2"},
+        {"condition": "json[0].score + json[1].score == 0"},
+        {"condition": "find(json, 'winner', true).id == p1room.player.id"}
+      ]
+    }
+  }
+
+]

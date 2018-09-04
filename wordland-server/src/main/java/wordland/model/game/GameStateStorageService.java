@@ -28,13 +28,13 @@ public interface GameStateStorageService {
 
     GamePlayer getPlayer(String id);
     Collection<GamePlayer> getPlayers();
+    Map<String, GamePlayer> getCurrentAndFormerPlayers();
     int getPlayerCount();
 
     GameStateChange addPlayer(GamePlayer player);
     GameStateChange addPlayerStartGame(GamePlayer player);
 
     GameStateChange removePlayer(String id);
-    GameStateChange removePlayerEndGame(String id);
 
     GameBoardBlock getBlock(String blockKey);
     GameBoardBlock getBlockOrCreate(String blockKey, SymbolDistribution distribution);
@@ -48,7 +48,7 @@ public interface GameStateStorageService {
 
     String getCurrentPlayerId();
 
-    Map<String, String> getScoreboard();
+    Map<String, Integer> getScoreboard();
     Collection<String> getWinners();
 
     long getTimeSinceLastJoin();
@@ -77,4 +77,5 @@ public interface GameStateStorageService {
     }
 
     Collection<GameStateChange> timeoutInactivePlayers();
+
 }

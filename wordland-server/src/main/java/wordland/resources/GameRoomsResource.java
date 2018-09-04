@@ -79,6 +79,18 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         return ok(gamesMaster.addPlayer(gameRoom, player));
     }
 
+    @POST @Path("/{room}"+EP_ABANDON)
+    public Response abandon (@Context HttpContext ctx,
+                             @PathParam("room") String room) {
+        final AccountSession session = userPrincipal(ctx);
+
+        final GameRoom gameRoom = dao.findByName(room);
+        if (gameRoom == null) return notFound(room);
+
+        final GameStateChange change = gamesMaster.removePlayer(gameRoom.getName(), session.getApiToken(), session.getId());
+        return change == null ? ok() : ok(change);
+    }
+
     @GET @Path("/{name}"+EP_BOARD)
     public Response board (@Context HttpContext ctx,
                            @PathParam("name") String room,
@@ -153,24 +165,24 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
 
     protected List<ScoreboardEntry> getScoreboard(@PathParam("name") String room) {
         final GameState state = gamesMaster.getGameState(room);
-        final Collection<GamePlayer> players = state.getPlayers();
-        final Map<String, String> scoreboard = state.getScoreboard();
+        final Map<String, GamePlayer> players = state.getCurrentAndFormerPlayers();
+        final Map<String, Integer> scoreboard = state.getScoreboard();
         final List<ScoreboardEntry> scoreboardList = new ArrayList<>();
         final Collection<String> winners = state.getWinners();
-        for (Map.Entry<String, String> entry : scoreboard.entrySet()) {
-            final Optional<GamePlayer> player = players.stream().filter(p -> p.getId().equals(entry.getKey())).findFirst();
-            if (player.isPresent()) {
-                final GamePlayer p = player.get();
+        for (Map.Entry<String, Integer> entry : scoreboard.entrySet()) {
+            final GamePlayer player = players.get(entry.getKey());
+            if (player != null) {
                 scoreboardList.add(new ScoreboardEntry()
-                        .setId(p.getId())
-                        .setName(p.getName())
-                        .setScore(Integer.parseInt(entry.getValue()))
+                        .setId(player.getId())
+                        .setName(player.getName())
+                        .setScore(entry.getValue())
                         .checkWinner(winners));
             } else {
+                // should never happen
                 scoreboardList.add(new ScoreboardEntry()
                         .setId(entry.getKey())
                         .setName(entry.getKey())
-                        .setScore(Integer.parseInt(entry.getValue()))
+                        .setScore(entry.getValue())
                         .checkWinner(winners));
             }
         }

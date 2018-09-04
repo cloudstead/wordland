@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.DaemonThreadFactory.fixedPool;
@@ -54,8 +56,12 @@ public class GameState {
     public static final int TILE_PIXEL_SIZE = 10;
     public static final double TILE_PIXEL_SIZE_DOUBLE = (double) TILE_PIXEL_SIZE;
     public static final long BOARD_RENDER_TIMEOUT = 20 * TimeUtil.SECOND;
+
     public static final String CTX_PLAYER = "player";
     public static final String CTX_PLAYERS = "players";
+    public static final String CTX_WORD = "word";
+    public static final String CTX_TILES = "tiles";
+    public static final String CTX_SCOREBOARD = "scoreboard";
 
     private final GameRoom room;
     @Getter private final GameStateStorageService stateStorage;
@@ -70,7 +76,8 @@ public class GameState {
     public GamePlayer getPlayer(String id) { return stateStorage.getPlayer(id); }
 
     public Collection<GamePlayer> getPlayers() { return stateStorage.getPlayers(); }
-    public Map<String, String> getScoreboard() { return stateStorage.getScoreboard(); }
+    public Map<String, GamePlayer> getCurrentAndFormerPlayers() { return stateStorage.getCurrentAndFormerPlayers(); }
+    public Map<String, Integer> getScoreboard() { return stateStorage.getScoreboard(); }
     public RoomState getRoomState() { return stateStorage.getRoomState(); }
 
     public Collection<String> getWinners() { return stateStorage.getWinners(); }
@@ -260,6 +267,8 @@ public class GameState {
                                 return die("playWord: invalid winner: "+winner);
                             }
                         }
+                        // we have winners, end the game
+                        stateStorage.endGame();
                     }
                 }
             }
@@ -276,10 +285,10 @@ public class GameState {
                                                List<PlayedTile> claimableTiles) {
         final Map<String, Object> ctx = new HashMap<>();
         ctx.put(CTX_PLAYER, player);
-        ctx.put(CTX_PLAYERS, players);
-        ctx.put("word", word);
-        ctx.put("tiles", tiles);
-        ctx.put("scoreboard", getScoreboard());
+        ctx.put(CTX_PLAYERS, players.stream().collect(Collectors.toMap(GamePlayer::getId, Function.identity())));
+        ctx.put(CTX_WORD, word);
+        ctx.put(CTX_TILES, tiles);
+        ctx.put(CTX_SCOREBOARD, getScoreboard());
         if (!rs.getBoard().infinite()) {
             final GameBoardSettings bs = rs.getBoard().getSettings();
             final GameBoardState board = getBoard(0, bs.getWidth()-1, 0, bs.getLength()-1);

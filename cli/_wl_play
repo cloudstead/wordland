@@ -200,6 +200,27 @@ function show_board {
   fi
 }
 
+function abandon_game {
+
+  LEAVE_JSON=$(mktemp /tmp/$(basename $0).abandon_game.json)
+  leave_status="$(wl_post "${WL_API}/rooms/${ROOM_NAME}/abandon" "{}" "${LEAVE_JSON}" "200 422")"
+  LEAVE_JSON="$(cat "${LEAVE_JSON}")"
+  rm -f ${LEAVE_JSON}
+
+  case $(http_code ${leave_status}) in
+    200)
+      echo ; echo ; echo "$(translate_message msg_game_abandoned)" ; echo
+      exec ${SCRIPT_DIR}/wl_rooms
+    ;;
+    422)
+      echo ; echo ; die $(validation_errors "${LEAVE_JSON}")
+    ;;
+    *)
+      echo ; echo ; die "$(translate_message err_api_play)"
+    ;;
+  esac
+}
+
 function fresh_board_view {
   show_board ; echo ; show_tray
   if [[ ! -z "${1}" ]] ; then
@@ -592,6 +613,9 @@ while [ 1 ] ; do
     ;;
 
     # Didn't understand that, skip it
+    '^')
+      abandon_game
+      ;;
     *)
       continue
     ;;

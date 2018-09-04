@@ -26,7 +26,9 @@
     
     @            :  show image of larger board view
     
-    (Control-C)  :  quit game
+    ^            :  abandon game
+    
+    (Control-C)  :  quit to console
 
 =================================================================
 ========================== have fun!!! ==========================

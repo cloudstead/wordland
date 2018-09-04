@@ -14,10 +14,7 @@ import wordland.model.game.score.PlayScoreComponent;
 import wordland.model.json.GameRoomSettings;
 import wordland.model.support.PlayedTile;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -31,6 +28,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     public static final String K_VERSION       = "version";
     public static final String K_STATE         = "state";
     public static final String K_PLAYERS       = "players";
+    public static final String K_ALL_PLAYERS   = "allPlayers";
     public static final String K_LOG           = "log";
     public static final String K_BLOCKS        = "blocks";
     public static final String K_JOIN_ORDER    = "joinOrder";
@@ -78,6 +76,20 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         return json == null ? null : json(json, GamePlayer.class);
     }
 
+    @Override public synchronized Map<String, GamePlayer> getCurrentAndFormerPlayers() {
+        final Map<String, String> allPlayers = redis.hgetall(K_ALL_PLAYERS);
+        final Map<String, GamePlayer> map = new HashMap<>();
+        for (Map.Entry<String, String> entry : allPlayers.entrySet()) {
+            map.put(entry.getKey(), json(entry.getValue(), GamePlayer.class));
+        }
+        return map;
+    }
+
+    public synchronized GamePlayer getCurrentOrFormerPlayer(String id) {
+        final String json = redis.hget(K_ALL_PLAYERS, id);
+        return json == null ? null : json(json, GamePlayer.class);
+    }
+
     @Override public synchronized Collection<GamePlayer> getPlayers() {
         final Collection<GamePlayer> players = new ArrayList<>();
         final Map<String, String> map = redis.hgetall(K_PLAYERS);
@@ -109,10 +121,11 @@ public class RedisGameStateStorageService implements GameStateStorageService {
 
         final int playerCount = getPlayerCount();
         redis.hset(K_PLAYERS, playerId, json(player));
-            if (roomSettings().hasRoundRobinPolicy()) {
+        redis.hset(K_ALL_PLAYERS, playerId, json(player));
+        if (roomSettings().hasRoundRobinPolicy()) {
             redis.set(K_JOIN_ORDER + playerCount, playerId);
-            redis.hset(K_SCOREBOARD, playerId, "0");
         }
+        redis.hset(K_SCOREBOARD, playerId, "0");
         redis.set(K_LAST_JOIN, ""+now());
 
         if (startGame) {
@@ -129,18 +142,10 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     }
 
     @Override public synchronized GameStateChange removePlayer(String id) {
-        return removePlayer(id, false);
-    }
-
-    @Override public synchronized GameStateChange removePlayerEndGame(String id) {
-        return removePlayer(id, true);
-    }
-
-    private synchronized GameStateChange removePlayer(String id, boolean endGame) {
         final GamePlayer found = getPlayer(id);
         if (found == null) return null;
         redis.hdel(K_PLAYERS, id);
-        if (endGame) {
+        if (redis.hlen(K_PLAYERS) <= 1) {
             endGame();
             return nextState(null, playerLeftGameEnded(nextVersion(), id));
         } else {
@@ -249,11 +254,37 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         redis.hset(K_SCOREBOARD, playerId, "" + (playScore.isAbsolute() ? playScore.getTotal(playerId) : score + playScore.getTotal(playerId)));
     }
 
-    @Override public Map<String, String> getScoreboard() { return redis.hgetall(K_SCOREBOARD); }
+    @Override public synchronized Map<String, Integer> getScoreboard() {
+        final Map<String, String> scoreboard = redis.hgetall(K_SCOREBOARD);
+        if (empty(scoreboard)) return null;
+        final Map<String, Integer> scores = new HashMap<>();
+        for (Map.Entry<String, String> score : scoreboard.entrySet()) scores.put(score.getKey(), Integer.parseInt(score.getValue()));
+        return scores;
+    }
 
-    @Override public Collection<String> getWinners() {
+    @Override public synchronized Collection<String> getWinners() {
         final String[] winners = json(redis.get(K_WINNERS), String[].class);
-        return empty(winners) ? null : new ArrayList<>(Arrays.asList(winners)); }
+        if (empty(winners)) {
+            if (getRoomState() == RoomState.ended) {
+                // highest scores are winners
+                int highScore = -1;
+                for (Map.Entry<String, Integer> entry : getScoreboard().entrySet()) {
+                    if (entry.getValue() > highScore) highScore = entry.getValue();
+                }
+                final List<String> realWinners = new ArrayList<>();
+                for (Map.Entry<String, Integer> entry : getScoreboard().entrySet()) {
+                    if (entry.getValue() == highScore) {
+                        // they must still be in the game to win
+                        final GamePlayer player = getPlayer(entry.getKey());
+                        if (player != null) realWinners.add(entry.getKey());
+                    }
+                }
+                redis.set(K_WINNERS, json(realWinners));
+                return realWinners;
+            }
+        }
+        return empty(winners) ? null : new ArrayList<>(Arrays.asList(winners));
+    }
 
     @Override public synchronized GameBoardBlock getBlock(String blockKey) {
         final String json = redis.get(K_BLOCKS + "/" + blockKey);
