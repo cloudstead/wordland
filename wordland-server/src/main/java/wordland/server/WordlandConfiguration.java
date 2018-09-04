@@ -20,10 +20,12 @@ import org.cobbzilla.wizard.asset.AssetStorageService;
 import org.cobbzilla.wizard.cache.redis.HasRedisConfiguration;
 import org.cobbzilla.wizard.cache.redis.RedisConfiguration;
 import org.cobbzilla.wizard.cache.redis.RedisService;
+import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.dao.DAO;
 import org.cobbzilla.wizard.server.config.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import wordland.WordlandApiClient;
 import wordland.model.GameRoom;
 import wordland.model.game.GameStateStorageService;
 import wordland.service.state.RedisGameStateStorageService;
@@ -138,4 +140,7 @@ public class WordlandConfiguration extends RestServerConfiguration
         final String secret = this.secrets.get(skipCaptchaKey);
         return !empty(secret) && secret.equals(NameAndValue.find(secrets, skipCaptchaKey));
     }
+
+    public ApiClientBase getApi() { return new WordlandApiClient(this); }
+
 }

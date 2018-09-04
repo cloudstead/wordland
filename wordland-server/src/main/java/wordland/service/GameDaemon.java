@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.daemon.SimpleDaemon;
 import org.springframework.beans.factory.annotation.Autowired;
+import wordland.bot.PianolaBot;
 import wordland.model.GameRoom;
 import wordland.model.game.GamePlayer;
 import wordland.model.game.GameState;
@@ -13,7 +14,9 @@ import wordland.model.json.GameRoomSettings;
 import wordland.model.support.PlayedTile;
 import wordland.server.WordlandConfiguration;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -53,6 +56,8 @@ public class GameDaemon extends SimpleDaemon {
 
     @Override protected long getSleepTime() { return SLEEP_TIME; }
 
+    private final List<PianolaBot> bots = new ArrayList<>();
+
     @Override protected void process() {
         // check for players who have timed-out, remove them from the game
         final GameStateStorageService stateStorage = getGameStateStorage();
@@ -62,11 +67,17 @@ public class GameDaemon extends SimpleDaemon {
 
             case waiting:
                 final GameRoomSettings rs = getRoom().getSettings();
-                if (stateStorage.getPlayerCount() > 0
+                int playerCount = stateStorage.getPlayerCount();
+                if (playerCount > 0
+                        && playerCount < rs.getMinPlayersToStart() // ?wha? why is this room not active?
                         && rs.hasMaxWaitBeforeBotsJoin()
                         && stateStorage.getTimeSinceLastJoin() > rs.getMillisBeforeBotsJoin()) {
                     // join bots to room
-                    log.info("would join "+(rs.getMinPlayersToStart()-stateStorage.getPlayerCount())+" bots to start the game");
+                    while (playerCount < rs.getMinPlayersToStart()) {
+                        log.info("would join " + (rs.getMinPlayersToStart() - playerCount) + " bots to start the game");
+                        bots.add(new PianolaBot(this, configuration).start());
+                        playerCount = stateStorage.getPlayerCount();
+                    }
                 }
                 break;
 

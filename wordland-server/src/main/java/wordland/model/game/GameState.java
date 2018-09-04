@@ -1,6 +1,7 @@
 package wordland.model.game;
 
 import lombok.Cleanup;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.daemon.Await;
 import org.cobbzilla.util.daemon.AwaitResult;
@@ -57,7 +58,7 @@ public class GameState {
     public static final String CTX_PLAYERS = "players";
 
     private final GameRoom room;
-    private final GameStateStorageService stateStorage;
+    @Getter private final GameStateStorageService stateStorage;
 
     public GameState(GameRoom room, GameStateStorageService storage) {
         this.room = room;

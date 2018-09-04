@@ -5,6 +5,7 @@ import lombok.Setter;
 import org.cobbzilla.util.collection.NameAndValue;
 
 import static org.cobbzilla.util.string.StringUtil.ellipsis;
+import static org.cobbzilla.util.time.TimeUtil.parseDuration;
 
 public class TurnPolicy {
 
@@ -14,7 +15,7 @@ public class TurnPolicy {
 
     @Getter @Setter private NameAndValue[] params;
     public String param(String name) { return NameAndValue.find(params, name); }
-    public long longParam(String name) { return Long.parseLong(param(name)); }
+    public long durationParam(String name) { return parseDuration(param(name)); }
 
     @Getter private String message;
     public TurnPolicy setMessage (String m) { message = ellipsis(m, 200); return this; }

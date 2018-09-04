@@ -21,6 +21,7 @@ import java.util.Map;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static wordland.model.TurnPolicy.PARAM_MAX_TURN_DURATION;
 import static wordland.model.game.GameStateChange.*;
 
 public class RedisGameStateStorageService implements GameStateStorageService {
@@ -215,7 +216,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
             // advance to next player that has already joined (and is still playing), with wraparound
             for (int i=1; i<playerCount; i++) {
                 index = (index + i) % playerCount;
-                String nextPlayer = getPlayerWithJoinOrder(index);
+                final String nextPlayer = getPlayerWithJoinOrder(index);
                 if (nextPlayer != null && getPlayer(nextPlayer) != null) {
                     redis.set(K_NEXT_PLAYER, ""+index);
                 }
@@ -302,9 +303,10 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         for (Map.Entry<String, String> entry : allPlayers.entrySet()) {
             final String playerId = entry.getKey();
             final long lastActive = Long.parseLong(entry.getValue());
-            if (roomSettings().hasRoundRobinPolicy()) {
+            final TurnPolicy rrp = roomSettings().getRoundRobinPolicy();
+            if (rrp != null) {
                 if (!getCurrentPlayerId().equals(playerId)) continue;
-                if (now() - lastActive > roomSettings().getRoundRobinPolicy().longParam(TurnPolicy.PARAM_MAX_TURN_DURATION)) {
+                if (now() - lastActive > rrp.durationParam(PARAM_MAX_TURN_DURATION)) {
                     playersToBoot.add(playerId);
                 }
             }

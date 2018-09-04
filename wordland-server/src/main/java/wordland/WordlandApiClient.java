@@ -5,6 +5,8 @@ import lombok.Setter;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import wordland.server.WordlandConfiguration;
 
+import static wordland.ApiConstants.API_TOKEN;
+
 public class WordlandApiClient extends ApiClientBase {
 
     @Getter @Setter private WordlandConfiguration configuration;
@@ -14,5 +16,6 @@ public class WordlandApiClient extends ApiClientBase {
         this.configuration = configuration;
     }
 
-    @Override public String getTokenHeader() { return ApiConstants.API_TOKEN; }
+    @Override public String getTokenHeader() { return API_TOKEN; }
+
 }
