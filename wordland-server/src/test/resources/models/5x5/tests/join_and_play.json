@@ -131,7 +131,7 @@
       "store": "p1play1",
       "check": [
         {"condition": "json.stateChange == 'word_played'"},
-        {"condition": "json.object.get('id').textValue() == '{{p1room.player.id}}'"},
+        {"condition": "json.object.get('id').textValue() == p1room.player.id"},
         {"condition": "json.object.get('score').get('total').intValue() > 0"},
         {"condition": "json.object.get('score').get('total').intValue() < 20"}
       ]
@@ -171,7 +171,7 @@
     "response": {
       "store": "board",
       "check": [
-        {"condition": "json.claimedWord('{{word1.word}}')"}
+        {"condition": "json.claimedWord(word1.word)"}
       ]
     }
   },
@@ -199,10 +199,9 @@
     "response": {
       "store": "scoreboard1",
       "check": [
-        {"condition": "json.length == 1"},
-        {"condition": "json[0].id == p1room.player.id"},
-        {"condition": "json[0].name == p1room.player.name"},
-        {"condition": "json[0].score == p1play1.object.get('score').get('total')"}
+        {"condition": "json.length == 2"},
+        {"condition": "find(json, 'id', p1room.player.id).name == p1room.player.name"},
+        {"condition": "find(json, 'id', p1room.player.id).score == p1play1.object.get('score').get('total')"}
       ]
     }
   },
@@ -227,7 +226,7 @@
       "store": "p2play1",
       "check": [
         {"condition": "json.stateChange == 'word_played'"},
-        {"condition": "json.object.get('id').textValue() == '{{p2room.player.id}}'"},
+        {"condition": "json.object.get('id').textValue() == p2room.player.id"},
         {"condition": "json.object.get('score').get('total').intValue() > 0"},
         {"condition": "json.object.get('score').get('total').intValue() < 20"}
       ]
@@ -262,10 +261,10 @@
       "store": "scoreboard2",
       "check": [
         {"condition": "json.length == 2"},
-        {"condition": "find(json, 'id', '{{p1room.player.id}}') != null"},
-        {"condition": "find(json, 'id', '{{p2room.player.id}}') != null"},
-        {"condition": "find(scoreboard2, 'id', '{{p1room.player.id}}').score > find(scoreboard1, 'id', '{{p1room.player.id}}').score"},
-        {"condition": "find(scoreboard2, 'id', '{{p2room.player.id}}').score == {{json p2play1.object}}.score.total"}
+        {"condition": "find(json, 'id', p1room.player.id) != null"},
+        {"condition": "find(json, 'id', p2room.player.id) != null"},
+        {"condition": "find(scoreboard2, 'id', p1room.player.id).score > find(scoreboard1, 'id', p1room.player.id).score"},
+        {"condition": "find(scoreboard2, 'id', p2room.player.id).score == {{json p2play1.object}}.score.total"}
       ]
     }
   },
@@ -315,7 +314,7 @@
     "response": {
       "store": "board",
       "check": [
-        {"condition": "json.claimedWord('{{word1.word}}')"}
+        {"condition": "json.claimedWord(word1.word)"}
       ]
     }
   }

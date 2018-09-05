@@ -4,12 +4,15 @@ import lombok.Getter;
 import lombok.Setter;
 import org.cobbzilla.wizard.client.ApiClientBase;
 import org.cobbzilla.wizard.util.RestResponse;
+import org.cobbzilla.wizard.validation.ConstraintViolationBean;
+import org.cobbzilla.wizard.validation.ValidationErrors;
 import wordland.model.game.*;
 import wordland.model.support.GameRuntimeEvent;
 
 import java.util.List;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.http.HttpStatusCodes.UNPROCESSABLE_ENTITY;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static wordland.ApiConstants.EP_PLAY;
 import static wordland.ApiConstants.GAME_ROOMS_ENDPOINT;
@@ -50,6 +53,12 @@ public class Pianola implements GameTileReducer<PianolaPlay>, GameTileAccumulato
             api.pushToken(play.getPlayer().getApiToken());
             final RestResponse restResponse = api.doPost(GAME_ROOMS_ENDPOINT + "/" + roomName + "/" + EP_PLAY, json(event));
             if (!restResponse.isSuccess()) {
+                if (restResponse.status == UNPROCESSABLE_ENTITY) {
+                    final ValidationErrors result = new ValidationErrors(json(restResponse.json, ConstraintViolationBean[].class));
+                    if (result.has("err.game.gameOver")) {
+                        throw new PianolaGameOverException();
+                    }
+                }
                 die("add: error playing word, request=" + json(event) + ", response=" + restResponse);
             }
         } finally {

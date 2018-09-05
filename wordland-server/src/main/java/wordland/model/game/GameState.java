@@ -267,8 +267,6 @@ public class GameState {
                                 return die("playWord: invalid winner: "+winner);
                             }
                         }
-                        // we have winners, end the game
-                        stateStorage.endGame();
                     }
                 }
             }

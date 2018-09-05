@@ -206,7 +206,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
 
         if (stateChange.getStateChange().endsGame()) {
             redis.set(K_STATE, RoomState.ended.name());
-            if (!empty(getWinners())) {
+            if (!empty(redis.get(K_WINNERS))) {
                 return die("playWord: winners provided but game already ended, room: "+room.getName());
             }
             redis.set(K_WINNERS, json(winners));

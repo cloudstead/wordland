@@ -6,9 +6,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static wordland.model.game.GameTileMatcher.MATCH_ALL_TILES;
 import static wordland.model.game.GameTileMatcher.MATCH_CLAIMED;
 import static wordland.model.game.GameTileMatcher.MATCH_UNCLAIMED;
-import static wordland.model.game.GameTileReducer.REDUCE_FIRST;
-import static wordland.model.game.GameTileReducer.REDUCE_UNIT;
-import static wordland.model.game.GameTileReducer.functionReducer;
+import static wordland.model.game.GameTileReducer.*;
 
 public class TileFunctions {
 
@@ -41,7 +39,7 @@ public class TileFunctions {
             }
             return hasAccumulator ? accumulator.getTotal() : null;
 
-        } catch (FirstMatchFoundException e) {
+        } catch (TileFunctionException e) {
             throw e;
 
         } catch (Exception e) {
@@ -56,10 +54,10 @@ public class TileFunctions {
     public static int count (GameTileState[][] tiles,
                              GameTileMatcher matcher) {
         try {
-            return forEachTile(tiles, new TileMapReduce<Integer, Integer>()
+            return forEachTile(tiles, new TileMapReduce<Boolean, Integer>()
                     .setMatch(matcher)
-                    .setReducer(REDUCE_UNIT)
-                    .setAccumulator(GameTileAccumulator.intCounter()));
+                    .setReducer(REDUCE_TRUE)
+                    .setAccumulator(GameTileAccumulator.booleanCounter()));
         } catch (Exception e) {
             return die("count: "+e, e);
         }

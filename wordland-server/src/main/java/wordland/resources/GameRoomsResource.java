@@ -129,7 +129,12 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         final GamePlayer player = gamesMaster.findPlayer(room, request.getId());
         if (player == null) return notFound(request.getId());
 
-        return ok(gamesMaster.playWord(room, request.getApiToken(), player, request.getWord(), request.getTiles()));
+        final GameBoardState board = getGamesMaster().getGameState(room).getBoard(0, 4, 0, 4);
+        int unclaimed = board.unclaimed();
+        log.info("unclaimed="+ unclaimed);
+
+        final GameStateChange played = gamesMaster.playWord(room, request.getApiToken(), player, request.getWord(), request.getTiles());
+        return ok(played);
     }
 
     @GET @Path("/{name}"+EP_PLAYS)

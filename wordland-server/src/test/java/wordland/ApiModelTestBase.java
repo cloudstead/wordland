@@ -17,6 +17,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import wordland.bot.Pianola;
+import wordland.bot.PianolaGameOverException;
 import wordland.bot.PianolaPlay;
 import wordland.dao.GameDictionaryDAO;
 import wordland.model.GameDictionary;
@@ -133,9 +134,13 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                                     return new PianolaPlay().setPlayer(player).setRoomName(roomName).setEvent(event);
                                 }));
 
-                        pianola.play(tiles);
-                        int unclaimed = boardState.unclaimed();
-                        assertTrue("Expected game to have been completed, unclaimed="+unclaimed, pianola.gameOver());
+                        try {
+                            pianola.play(tiles);
+                        } catch (PianolaGameOverException gameOver) {
+                            log.info("OK, game over");
+                        }
+                        assertTrue("Expected all tile to have been claimed", boardState.allClaimed());
+                        assertTrue("Expected game to be completed", pianola.gameOver());
                         api.setToken(stashedSession);
 
                     } else if (before.equals(RESTART_API)) {
