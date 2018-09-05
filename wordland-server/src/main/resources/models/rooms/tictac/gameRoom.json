@@ -3,7 +3,9 @@
     "name": "tictac",
     "template": true,
     "settings": {
+      "symbolSet": { "name": "standard", "children": {"SymbolDistribution": [{"name": "easy"}]} },
       "board": { "name": "3x3" },
+      "pointSystem": { "name": "tile_count" },
       "maxPlayers": 2,
       "turnPolicies": [
         {

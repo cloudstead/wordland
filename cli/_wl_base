@@ -9,7 +9,6 @@ CURRENT_ROOM=${WL_DIR}/current_room
 DEFAULT_API="http://127.0.0.1:9091/api"
 DEFAULT_WS_API="ws://127.0.0.1:9099/events"
 WL_API_KEY="x-wordland-api-key"
-WS_MARKER_FILE_DIR="${WL_DIR}/_ws"
 DEBUG_LOGFILE=/tmp/wordland-debug.log
 
 function die {
@@ -146,6 +145,13 @@ function current_room {
   if [[ -f ${CURRENT_ROOM} && "$(cat ${CURRENT_ROOM}) | tr -d ' \n'" != "null" ]] ; then
     cat ${CURRENT_ROOM}
   fi
+}
+
+function room_dir {
+  echo "${WL_DIR}/rooms/${1}"
+}
+function room_web_socket {
+  echo "$(room_dir ${1})/_websocket"
 }
 
 function lang {

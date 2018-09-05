@@ -37,7 +37,7 @@ if [[ -z "${ROOM_NAME}" ]] ; then
   die "$(translate_message err_api_join): $(cat ${TEMP_SESSION})"
 fi
 
-ROOM_DIR="${WL_DIR}/rooms/${ROOM_NAME}"
+ROOM_DIR=$(room_dir ${ROOM_NAME})
 mkdir -p ${ROOM_DIR}
 
 if [[ -z "${CURRENT_ROOM}" ]] ; then

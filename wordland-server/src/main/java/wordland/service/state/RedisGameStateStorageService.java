@@ -194,6 +194,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
               if (!rs.hasRoundRobinPolicy()) {
                   throw invalidEx("err.game.waiting");
               } else {
+                  // allow new players to play once after joining a round-robin game that still needs more players to officially start
                   final String currentPlayerId = getCurrentPlayerId();
                   if (currentPlayerId == null || !currentPlayerId.equals(player.getId())) {
                       throw invalidEx("err.game.notYourTurn");
@@ -345,6 +346,11 @@ public class RedisGameStateStorageService implements GameStateStorageService {
 
     @Override public synchronized Collection<GameStateChange> timeoutInactivePlayers() {
 
+        final RoomState roomState = getRoomState();
+        if (roomState != RoomState.active) {
+            log.warn("timeoutInactivePlayers: ignoring for room "+room.getName()+" with state "+ roomState);
+            return Collections.emptySet();
+        }
         final Map<String, String> allPlayers = redis.hgetall(K_LAST_ACTIVITY);
         if (allPlayers.size() <= 1) return Collections.emptySet();
 

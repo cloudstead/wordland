@@ -6,7 +6,6 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 
 WL_PLAY_PID=${1:?$(translate_message err_websocket_no_wl_play_pid)}
 WL_SOCKET_PID=$$
-WEBSOCKET_PAYLOAD=${WL_DIR}/_websocket
 
 function join_obj {
   cat | tr -d '\n' <<EOF
@@ -21,11 +20,37 @@ EOF
 }
 
 echo "$(join_obj)" | websocat -n ${DEFAULT_WS_API}/$(session_player) | {
-  cat /dev/null > ${WEBSOCKET_PAYLOAD}
-  while read line ; do
-  echo "${line}" >> ${WEBSOCKET_PAYLOAD}
-    if [[ ! -z "${line}" && "$(echo "${line}" | tr -d ' \n')" != "X" ]] ; then
-      mkdir -p ${WS_MARKER_FILE_DIR} && echo "${line}" >> ${WS_MARKER_FILE_DIR}/${WL_PLAY_PID}
+  while read -r line ; do
+    # skip empty lines
+    if [[ -z "${line}" ]] ; then
+      continue
     fi
+
+    # unquote, strip leading/trailing quotation marks
+    json="$(sed -e 's/^"//' -e 's/"$//' <<<"$(unquote "${line}")")"
+
+    # the 'X' message is a websocket heartbeat, ignore it
+    if [[ "$(echo "${json}" | tr -d ' \n')" == "X" ]] ; then
+      continue
+    fi
+
+    # determine room
+    room="$(json_val "${json}" room)"
+    if [[ -z "${room}" ]] ; then
+      # not sure, keep message in unknown_room
+      room="unknown_room"
+      mkdir -p "$(room_dir ${room})"
+    fi
+
+    # do we have room locally?
+    ROOM_DIR="$(room_dir ${room})"
+    if [[ ! -d ${ROOM_DIR} ]] ; then
+      # room no longer exists locally, ignore message
+      continue
+    fi
+
+    # write to room's websocket file
+    WEBSOCKET_FILE="$(room_web_socket ${room})"
+    echo "$(echo ${json} | tr -d '\n')" | tee -a ${WEBSOCKET_FILE} > /dev/null
   done
 }

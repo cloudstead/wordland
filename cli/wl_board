@@ -20,9 +20,11 @@ case ${1} in
     ;;
 esac
 
-X1=${1:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)}
-Y1=${2:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)}
-VIEW_SIZE=${3:-$(cat ${WL_DIR}/rooms/${ROOM_NAME}/view_size)}
+ROOM_DIR=$(room_dir ${ROOM_NAME})
+
+X1=${1:-$(cat ${ROOM_DIR}/x1)}
+Y1=${2:-$(cat ${ROOM_DIR}/x1)}
+VIEW_SIZE=${3:-$(cat ${ROOM_DIR}/view_size)}
 
 board="$(wl_get "${WL_API}/rooms/${ROOM_NAME}/board/view.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})")" \
   || die "$(translate_message err_api_boardView)"

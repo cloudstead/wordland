@@ -20,4 +20,6 @@ function room_obj () {
 EOF
 }
 
-curl --header "Content-Type: application/json" -X PUT -d "$(room_obj)" ${WL_API}/rooms/${ROOM_NAME}
+ROOM_DIR=$(room_dir ${ROOM_NAME})
+curl --header "Content-Type: application/json" -X PUT -d "$(room_obj)" "${ROOM_DIR}"
+

@@ -39,7 +39,7 @@ public class SymbolSet extends NamedParentEntity {
     @Column(length=100_000, nullable=false, updatable=false)
     @JsonIgnore @Getter @Setter private String syms;
 
-    @Transient public List<String> getSymbols () { return Arrays.asList(syms.split("[-\\[, _\t\n]+")); }
+    @Transient public List<String> getSymbols () { return syms == null ? null : Arrays.asList(syms.split("[-\\[, _\t\n]+")); }
     public SymbolSet setSymbols (List<String> symbols) { syms = StringUtil.toString(symbols, ", "); return this; }
 
 }

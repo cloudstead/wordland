@@ -46,7 +46,7 @@ if [[ -z "${ROOM}" ]] ; then
       done
       error "1 $(translate_message err_room_notFound): ${line}"
     else
-      if [[ "$(wl_exists ${WL_API}/rooms/${ROOM})" != "true" ]] ; then
+      if [[ "$(wl_exists "$(room_dir ${ROOM})")" != "true" ]] ; then
         error "2 $(translate_message err_room_notFound): ${line}"
       else
         # Re-run this command with room name
@@ -62,7 +62,7 @@ else
     exit $?
   fi
 
-  if [[ "$(wl_exists "${WL_API}/rooms/${ROOM}")" != "true" ]] ; then
+  if [[ "$(wl_exists "$(room_dir ${ROOM})")" != "true" ]] ; then
     error "$(translate_message err_room_notFound): ${ROOM}"
     exec ${SCRIPT_DIR}/wl_rooms
   fi

@@ -7,13 +7,15 @@ SCRIPT_DIR=$(cd $(dirname ${SCRIPT}) && pwd)
 ROOM_NAME="${1:?$(translate_message err_room_required)}"
 WEBSOCKET_PID="${2:?$(translate_message err_websocket_wl_play_pid_required)}"
 
+ROOM_DIR=$(room_dir ${ROOM_NAME})
+WEBSOCKET_FILE="$(room_web_socket "${ROOM_NAME}")"
+
 ACTIVE_CHAR=""
 ACTIVE_CHAR_INDEX=1
 ACTIVE_TRAY_INDEX=1
 TILES=()
 LETTERS=()
 INDEXES=()
-WS_MARKER_FILE="${WS_MARKER_FILE_DIR}/$$"
 
 function reset_play {
   unset TILES
@@ -83,12 +85,12 @@ EOF
   fi
 }
 
-X1=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/x1)
-Y1=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/y1)
-VIEW_SIZE=$(cat ${WL_DIR}/rooms/${ROOM_NAME}/view_size)
-ROOM_PALETTE=${WL_DIR}/rooms/${ROOM_NAME}/palette.json
-BOARD_JSON=${WL_DIR}/rooms/${ROOM_NAME}/board.json
-PLAY_JSON=${WL_DIR}/rooms/${ROOM_NAME}/play.json
+X1=$(cat ${ROOM_DIR}/x1)
+Y1=$(cat ${ROOM_DIR}/y1)
+VIEW_SIZE=$(cat ${ROOM_DIR}/view_size)
+ROOM_PALETTE=${ROOM_DIR}/palette.json
+BOARD_JSON=${ROOM_DIR}/board.json
+PLAY_JSON=${ROOM_DIR}/play.json
 
 BOARD_REQUEST_PREFIX="{ \"palette\": "
 BOARD_REQUEST_TILES_JSON_PREFIX=", \"tiles\": [ "
@@ -129,10 +131,10 @@ function save_room_state {
   X2="$(json_val "$(cat ${BOARD_JSON})" x2)"
   Y1="$(json_val "$(cat ${BOARD_JSON})" y1)"
   Y2="$(json_val "$(cat ${BOARD_JSON})" y2)"
-  if [[ ! -z "${X1}" ]] ; then echo "${X1}" > ${WL_DIR}/rooms/${ROOM_NAME}/x1 ; fi
-  if [[ ! -z "${X2}" ]] ; then echo "${X2}" > ${WL_DIR}/rooms/${ROOM_NAME}/x2 ; fi
-  if [[ ! -z "${Y1}" ]] ; then echo "${Y1}" > ${WL_DIR}/rooms/${ROOM_NAME}/y1 ; fi
-  if [[ ! -z "${Y2}" ]] ; then echo "${Y2}" > ${WL_DIR}/rooms/${ROOM_NAME}/y2 ; fi
+  if [[ ! -z "${X1}" ]] ; then echo "${X1}" > ${ROOM_DIR}/x1 ; fi
+  if [[ ! -z "${X2}" ]] ; then echo "${X2}" > ${ROOM_DIR}/x2 ; fi
+  if [[ ! -z "${Y1}" ]] ; then echo "${Y1}" > ${ROOM_DIR}/y1 ; fi
+  if [[ ! -z "${Y2}" ]] ; then echo "${Y2}" > ${ROOM_DIR}/y2 ; fi
 }
 
 function show_tray {
@@ -237,9 +239,28 @@ function fresh_board_view {
 }
 
 function async_fresh_board_view {
+  echo ; echo
   while read line ; do
-    echo ; echo ; echo "async update ~~~~ ${line}"; echo
+    change="$(json_val "${line}" stateChange)"
+    case ${change} in
+      player_joined|player_joined_game_started)
+        echo "$(json_val "${line}" object.name) $(translate_message msg_has_joined_the_game)"
+        ;;
+      player_left|player_left_game_ended)
+        echo "$(json_val "${line}" object.name) $(translate_message msg_has_abandoned_the_game)"
+        ;;
+      word_played|word_played_game_ended)
+        echo "$(json_val "${line}" object.name) $(translate_message msg_played_word) $(json_val "${line}" object.word)"
+        ;;
+      *)
+        echo "unrecognized async update (${change}) ~~~~  : ${line}"
+        ;;
+    esac
+    if [[ ${change} =~ /_game_ended/ ]] ; then
+      echo "Game Over"
+    fi
   done < ${1}
+  echo
   fresh_board_view
 }
 
@@ -327,8 +348,8 @@ function move_board {
         ;;
       esac
       # debug "move_board: ending with x1=${X1}, y1=${Y1}"
-      echo "${X1}" > ${WL_DIR}/rooms/${ROOM_NAME}/x1
-      echo "${Y1}" > ${WL_DIR}/rooms/${ROOM_NAME}/y1
+      echo "${X1}" > ${ROOM_DIR}/x1
+      echo "${Y1}" > ${ROOM_DIR}/y1
       reset_play
       fresh_board_view "$(move_board_prompt)"
     done
@@ -648,10 +669,10 @@ while [ 1 ] ; do
 
  done
 
- if [[ -f ${WS_MARKER_FILE} ]] ; then
-   MARKER_TEMP=${WS_MARKER_FILE}.$(date +%s).$(uuid | head -c 8).json
-   mv ${WS_MARKER_FILE} ${MARKER_TEMP}
-   async_fresh_board_view ${MARKER_TEMP}
-   rm -f ${MARKER_TEMP}
+ if [[ -f ${WEBSOCKET_FILE} ]] ; then
+   WS_TEMP=${WEBSOCKET_FILE}.$(date +%s).$(uuid | head -c 8).json
+   mv ${WEBSOCKET_FILE} ${WS_TEMP}
+   async_fresh_board_view ${WS_TEMP}
+   rm -f ${WS_TEMP}
  fi
 done
