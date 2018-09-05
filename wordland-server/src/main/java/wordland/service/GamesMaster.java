@@ -10,10 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import wordland.dao.*;
 import wordland.model.*;
-import wordland.model.game.GamePlayer;
-import wordland.model.game.GameState;
-import wordland.model.game.GameStateChange;
-import wordland.model.game.RoomState;
+import wordland.model.game.*;
 import wordland.model.json.GameRoomSettings;
 import wordland.model.support.GameRoomJoinResponse;
 import wordland.model.support.PlayedTile;
@@ -239,6 +236,11 @@ public class GamesMaster {
     public GamePlayer findPlayer(String roomName, String uuid) {
         final GameDaemon daemon = getGameDaemon(roomName, false);
         return daemon == null ? null : daemon.findPlayer(uuid);
+    }
+
+    public GamePlayerExitStatus findPlayerStatus(String roomName, String uuid) {
+        final GameDaemon daemon = getGameDaemon(roomName, false);
+        return daemon == null ? null : daemon.getPlayerExitStatus(uuid);
     }
 
     public GameStateChange removePlayer(String roomName, String apiKey, String uuid) {

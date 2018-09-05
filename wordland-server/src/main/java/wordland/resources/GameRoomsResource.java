@@ -127,7 +127,11 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (!request.hasWord()) return invalid("err.word.required");
 
         final GamePlayer player = gamesMaster.findPlayer(room, request.getId());
-        if (player == null) return notFound(request.getId());
+        if (player == null) {
+            final GamePlayerExitStatus exitStatus = gamesMaster.findPlayerStatus(room, request.getId());
+            if (exitStatus == null) return notFound(request.getId());
+            return invalid("err.game."+exitStatus.name());
+        }
 
         final GameBoardState board = getGamesMaster().getGameState(room).getBoard(0, 4, 0, 4);
         int unclaimed = board.unclaimed();

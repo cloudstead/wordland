@@ -1,9 +1,82 @@
 [
-  // login as player1
-  // join room as player1
-  // login as player2
-  // join room as player2
-  // play as player1
-  // play as player2, fast-forward clock
-  // trigger game daemon, check scoreboard. verify winner since game started and only 1 player remains
+  {
+    "include": "parts/start_2player_game",
+    "params": { "room": "5x5" }
+  },
+
+  {
+    "comment": "player1 plays a word, then fast-forward clock",
+    "before": "find-word-and-tiles board word1",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/play",
+      "entity": {
+        "room": "{{p1room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p1room.player.id}}",
+        "clientId": "{{p1room.player.id}}",
+        "apiToken": "{{p1room.player.apiToken}}",
+        "word": "{{word1.word}}",
+        "tilesJson": "{{escaped_json word1.tiles}}"
+      }
+    },
+    "after": "set-system-clock +6d"
+  },
+
+  {
+    "comment": "player2 plays a word",
+    "before": "find-word-and-tiles board word2",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/{{p1room.room}}/play",
+      "entity": {
+        "room": "{{p2room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p2room.player.id}}",
+        "clientId": "{{p2room.player.id}}",
+        "apiToken": "{{p2room.player.apiToken}}",
+        "word": "{{word2.word}}",
+        "tilesJson": "{{escaped_json word2.tiles}}"
+      }
+    }
+  },
+
+  {
+    "comment": "wait for player1 to timeout, then try to play a word, fails",
+    "delay": "10s",
+    "before": "find-word-and-tiles board word3",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/play",
+      "entity": {
+        "room": "{{p1room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p1room.player.id}}",
+        "clientId": "{{p1room.player.id}}",
+        "apiToken": "{{p1room.player.apiToken}}",
+        "word": "{{word3.word}}",
+        "tilesJson": "{{escaped_json word3.tiles}}"
+      }
+    },
+    "response": {
+      "status": 422,
+      "check": [{"condition": "json.has('err.game.abandoned')"}]
+    }
+  },
+
+  {
+    "comment": "check scoreboard, player1 has timed out",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/scoreboard"
+    },
+    "response": {
+      "store": "scoreboard",
+      "check": [
+        {"condition": "json.length == 2"},
+        {"condition": "json[0].score + json[1].score > 0"},
+        {"condition": "find(json, 'winner', true).id == p2room.player.id"}
+      ]
+    }
+  }
 ]

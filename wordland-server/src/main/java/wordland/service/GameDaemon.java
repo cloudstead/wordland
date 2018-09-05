@@ -6,10 +6,7 @@ import org.cobbzilla.util.daemon.SimpleDaemon;
 import org.springframework.beans.factory.annotation.Autowired;
 import wordland.bot.PianolaBot;
 import wordland.model.GameRoom;
-import wordland.model.game.GamePlayer;
-import wordland.model.game.GameState;
-import wordland.model.game.GameStateChange;
-import wordland.model.game.GameStateStorageService;
+import wordland.model.game.*;
 import wordland.model.json.GameRoomSettings;
 import wordland.model.support.PlayedTile;
 import wordland.server.WordlandConfiguration;
@@ -144,6 +141,8 @@ public class GameDaemon extends SimpleDaemon {
     public GamePlayer findPlayer(String uuid) {
         return gameState.get().getPlayer(uuid);
     }
+
+    public GamePlayerExitStatus getPlayerExitStatus(String uuid) { return gameState.get().getPlayerExitStatus(uuid); }
 
     public GameStateChange removePlayer(String id) {
         final GameStateChange stateChange;

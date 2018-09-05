@@ -74,6 +74,7 @@ public class GameState {
     private GameRoomSettings roomSettings() { return room.getSettings(); }
 
     public GamePlayer getPlayer(String id) { return stateStorage.getPlayer(id); }
+    public GamePlayerExitStatus getPlayerExitStatus(String uuid) { return stateStorage.getPlayerExitStatus(uuid); }
 
     public Collection<GamePlayer> getPlayers() { return stateStorage.getPlayers(); }
     public Map<String, GamePlayer> getCurrentAndFormerPlayers() { return stateStorage.getCurrentAndFormerPlayers(); }

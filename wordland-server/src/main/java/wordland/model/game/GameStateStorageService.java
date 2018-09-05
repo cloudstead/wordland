@@ -27,6 +27,7 @@ public interface GameStateStorageService {
     void endGame();
 
     GamePlayer getPlayer(String id);
+    GamePlayerExitStatus getPlayerExitStatus(String uuid);
     Collection<GamePlayer> getPlayers();
     Map<String, GamePlayer> getCurrentAndFormerPlayers();
     int getPlayerCount();

@@ -29,6 +29,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     public static final String K_STATE         = "state";
     public static final String K_PLAYERS       = "players";
     public static final String K_ALL_PLAYERS   = "allPlayers";
+    public static final String K_PLAYER_EXITS  = "playerExits";
     public static final String K_LOG           = "log";
     public static final String K_BLOCKS        = "blocks";
     public static final String K_JOIN_ORDER    = "joinOrder";
@@ -85,9 +86,9 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         return map;
     }
 
-    public synchronized GamePlayer getCurrentOrFormerPlayer(String id) {
-        final String json = redis.hget(K_ALL_PLAYERS, id);
-        return json == null ? null : json(json, GamePlayer.class);
+    @Override public synchronized GamePlayerExitStatus getPlayerExitStatus(String id) {
+        final String json = redis.hget(K_PLAYER_EXITS, id);
+        return json == null ? null : GamePlayerExitStatus.fromString(json);
     }
 
     @Override public synchronized Collection<GamePlayer> getPlayers() {
@@ -145,6 +146,9 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         final GamePlayer found = getPlayer(id);
         if (found == null) return null;
         redis.hdel(K_PLAYERS, id);
+        if (redis.hget(K_PLAYER_EXITS, id) == null) {
+            redis.hset(K_PLAYER_EXITS, id, GamePlayerExitStatus.abandoned.name());
+        }
         if (redis.hlen(K_PLAYERS) <= 1) {
             endGame();
             return nextState(null, playerLeftGameEnded(nextVersion(), id));
@@ -208,6 +212,13 @@ public class RedisGameStateStorageService implements GameStateStorageService {
             redis.set(K_STATE, RoomState.ended.name());
             if (!empty(redis.get(K_WINNERS))) {
                 return die("playWord: winners provided but game already ended, room: "+room.getName());
+            }
+            for (GamePlayer p : getPlayers()) {
+                if (winners.contains(p.getId())) {
+                    redis.hset(K_PLAYER_EXITS, p.getId(), GamePlayerExitStatus.won.name());
+                } else if (redis.hget(K_PLAYER_EXITS, p.getId()) == null) {
+                    redis.hset(K_PLAYER_EXITS, p.getId(), GamePlayerExitStatus.lost.name());
+                }
             }
             redis.set(K_WINNERS, json(winners));
 
