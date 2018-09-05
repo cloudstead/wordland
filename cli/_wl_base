@@ -25,6 +25,22 @@ function unquote {
   echo "${@}" | sed -e 's/\\n/\n/g' | sed -e 's/\\"/\"/g' | sed -e 's/]"/]/g' | sed -e 's/"\[/\[/g'
 }
 
+function is_yes {
+  if [[ ! -z "${1}" && ( "${1}" == "$(translate_message Y | tr '[:lower:]' '[:upper:]')" || "${1}" == "$(translate_message Y | tr '[:upper:]' '[:lower:]')" ) ]] ; then
+    echo "true"
+  else
+    echo "false"
+  fi
+}
+
+function is_no {
+  if [[ ! -z "${1}" && ( "${1}" == "$(translate_message N | tr '[:lower:]' '[:upper:]')" || "${1}" == "$(translate_message N | tr '[:upper:]' '[:lower:]')" ) ]] ; then
+    echo "true"
+  else
+    echo "false"
+  fi
+}
+
 function error {
   NO_NEWLINE=""
   if [[ ${1} == "-n" ]] ; then

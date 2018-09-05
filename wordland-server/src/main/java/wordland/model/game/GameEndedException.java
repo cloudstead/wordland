@@ -6,7 +6,7 @@ import wordland.model.GameRoom;
 public class GameEndedException extends SimpleViolationException {
 
     public GameEndedException(GameRoom room) {
-        super("err.game.ended", "Game has ended in room "+room.getName());
+        super("err.game.gameOver", "Game has ended in room "+room.getName());
     }
 
 }

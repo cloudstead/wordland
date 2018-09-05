@@ -202,7 +202,13 @@ function show_board {
 
 function abandon_game {
 
-  LEAVE_JSON=$(mktemp /tmp/$(basename $0).abandon_game.json)
+  echo ; echo ; echo -n "$(translate_message msg_confirm_abandon_game) "
+  IFS= read -s -r -n1 char 2> /dev/null
+  if [[ $(is_yes "${char}") != "true" ]] ; then
+    return
+  fi
+
+  LEAVE_JSON=$(mktemp /tmp/$(basename $0).abandon_game.XXXXXXXX.json)
   leave_status="$(wl_post "${WL_API}/rooms/${ROOM_NAME}/abandon" "{}" "${LEAVE_JSON}" "200 422")"
   LEAVE_JSON="$(cat "${LEAVE_JSON}")"
   rm -f ${LEAVE_JSON}

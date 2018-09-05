@@ -48,7 +48,7 @@ function wl_auth {
     else
       SIGN_UP="$(translate_message Y)"
     fi
-    if [[ ! -z "${SIGN_UP}" && ( "${SIGN_UP}" == "$(translate_message Y | tr '[:lower:]' '[:upper:]')" || "${SIGN_UP}" == "$(translate_message Y | tr '[:upper:]' '[:lower:]')" ) ]] ; then
+    if [[ $(is_yes "${SIGN_UP}") == "true" ]] ; then
       # Yes, sign up for an account with email
       echo -n "$(translate_message label_password): "
       read -s PASSWORD
