@@ -1,0 +1,24 @@
+[
+  {
+    "name": "fast",
+    "template": true,
+    "settings": {
+      "board": { "name": "3x3" },
+      "maxPlayers": 2,
+      "turnPolicies": [
+        {
+          "name": "round_robin",
+          "type": "round_robin",
+          "params": [{"name": "max_turn_duration", "value": "30s"}]
+        }
+      ],
+      "missedTurnPolicy": "forfeit_game",
+      "winConditions": [{
+        "name": "controls_board",
+        "defaultMessage": "The winner has the most tiles after all tiles have been played",
+        "endJs": "board.allClaimed",
+        "winnersJs": "board.topPlayersByCount"
+      }]
+    }
+  }
+]
