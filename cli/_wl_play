@@ -336,6 +336,7 @@ function move_board {
 }
 
 function board_image {
+  # todo: send X1/X2/Y1/Y2 that are all equally larger than the current screen view
   board_view_png="$(wl_get ${WL_API}/rooms/${ROOM_NAME}/board/view.png)"
   png_file="$(mktemp /tmp/$(basename ${0}).XXXXXXXX.png)"
   json_val "${board_view_png}" base64image | base64 -d > ${png_file}

@@ -24,9 +24,9 @@
     
     /            :  list all games, switch to another game
     
-    @            :  show image of larger board view
+    @            :  display image of large board view
     
-    ^            :  abandon game
+    ^            :  abandon the current game
     
     (Control-C)  :  quit to console
 
