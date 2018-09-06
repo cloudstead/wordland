@@ -27,6 +27,7 @@ import static wordland.ApiConstants.*;
 import static wordland.model.GameBoardBlock.BLOCK_SIZE;
 import static wordland.model.game.GameBoardPalette.defaultPalette;
 import static wordland.model.game.GamePlayer.UNKNOWN_PLAYER;
+import static wordland.model.support.GameRuntimeEvent.disableTilesJson;
 
 @Path(GAME_ROOMS_ENDPOINT)
 @Service @Slf4j
@@ -159,7 +160,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                           @PathParam("name") String room) {
         final GameState state = gamesMaster.getGameState(room);
         if (state == null) throw notFoundEx(room);
-        return ok(state.getPlays());
+        return ok(disableTilesJson(state.getPlays()));
     }
 
     @POST @Path("/{name}"+EP_QUIT)

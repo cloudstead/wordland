@@ -13,6 +13,8 @@ import wordland.model.game.score.PlayScore;
 
 import javax.validation.constraints.Size;
 
+import java.util.Collection;
+
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
 
@@ -47,6 +49,11 @@ public class GameRuntimeEvent {
 
     public String getTilesJson () { return disableTilesJson ? null : json(tiles); }
     public GameRuntimeEvent setTilesJson(String json) { return setTiles(json(json, PlayedTile[].class)); }
+
+    public static <T extends Collection<GameRuntimeEvent>> T disableTilesJson(T events) {
+        for (GameRuntimeEvent e : events) e.setDisableTilesJson(true);
+        return events;
+    }
 
     public String tileCoordinates() {
         final StringBuilder b = new StringBuilder();

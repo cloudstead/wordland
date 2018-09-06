@@ -9,6 +9,7 @@ WEBSOCKET_PID="${2:?$(translate_message err_websocket_wl_play_pid_required)}"
 
 ROOM_DIR=$(room_dir ${ROOM_NAME})
 WEBSOCKET_FILE="$(room_web_socket "${ROOM_NAME}")"
+ROOM_API="${WL_API}/rooms/${ROOM_NAME}"
 
 ACTIVE_CHAR=""
 ACTIVE_CHAR_INDEX=1
@@ -159,7 +160,7 @@ function show_board {
     cp ${BOARD_JSON} ${BOARD_JSON}.bak
   fi
   # debug $(echo "> end: BPO: $(board_preview_obj)" | grep tiles)
-  board_status="$(wl_post "${WL_API}/rooms/${ROOM_NAME}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "$(board_preview_obj)" "${BOARD_JSON}" "200 422")" \
+  board_status="$(wl_post "${ROOM_API}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "$(board_preview_obj)" "${BOARD_JSON}" "200 422")" \
     || die "$(translate_message err_api_boardView)"
   case $(http_code ${board_status}) in
     200)
@@ -203,7 +204,7 @@ function show_board {
 }
 
 function player_name {
-  player_info=$(wl_get ${WL_API}/rooms/${ROOM_NAME}/players/${1})
+  player_info=$(wl_get "${ROOM_API}/players/${1}")
   if [[ ! -z "${player_info}" ]] ; then
     echo -n "$(json_val "${player_info}" name)"
   fi
@@ -218,7 +219,7 @@ function abandon_game {
   fi
 
   LEAVE_JSON=$(mktemp /tmp/$(basename $0).abandon_game.XXXXXXXX.json)
-  leave_status="$(wl_post "${WL_API}/rooms/${ROOM_NAME}/abandon" "{}" "${LEAVE_JSON}" "200 422")"
+  leave_status="$(wl_post "${ROOM_API}/abandon" "{}" "${LEAVE_JSON}" "200 422")"
   LEAVE_JSON="$(cat "${LEAVE_JSON}")"
   rm -f ${LEAVE_JSON}
 
@@ -262,15 +263,11 @@ function async_fresh_board_view {
         ;;
       word_played|word_played_game_ended)
         playerId="$(json_val "${line}" object.id)"
-        if [[ -z "${playerId}" ]] ; then
-          if [[ ${ANY_PRINTOUTS} -eq 0 ]] ; then echo ; echo ; fi
-          echo "?? $(translate_message msg_played_word) $(json_val "${line}" object.word)"
-          ANY_PRINTOUTS=1
-        elif [[ "${playerId}" == "$(session_player)" ]] ; then
+        if [[ ! -z "${playerId}" && "${playerId}" == "$(session_player)" ]] ; then
           : # if this was ourselves, don't print anything
         else
           if [[ ${ANY_PRINTOUTS} -eq 0 ]] ; then echo ; echo ; fi
-          echo "$(player_name ${playerId}) $(translate_message msg_played_word) $(json_val "${line}" object.word)"
+          echo "$(json_val "${line}" player.name) $(translate_message msg_played_word) $(json_val "${line}" object.word)"
           ANY_PRINTOUTS=1
         fi
         ;;
@@ -334,6 +331,40 @@ function show_rooms {
   echo "end of script" >> /tmp/roomlog
 }
 
+function show_plays {
+  plays_json=$(wl_get "${ROOM_API}/plays")
+  if [[ ! -z "${plays_json}" ]] ; then
+    while read play ; do
+#      echo "saw this play: ${play}, by $(echo "${play}" | jq .player.name)"
+      echo "$(json_val "${play}" player.name) $(translate_message msg_played_word) $(json_val "${play}" word)"
+      if [[ ! -z "${1}" && "${1}" == "in_detail" ]] ; then
+        while read score ; do
+          scoreType="$(json_val "${score}" type)"
+          if [[ -z "${scoreType}" ]] ; then
+            continue
+          fi
+          echo -n "  $(translate_message msg_play_detail_score_${scoreType})"
+          case ${scoreType} in
+            symbol)
+              echo "$(json_val ${score} info.symbol) @ $(json_val ${score} info.x)x$(json_val ${score} info.y): $(json_val ${score} picas) $(translate_message label_picas)"
+            ;;
+            word)
+              echo "$(json_val ${score} info.word): $(json_val ${score} picas) $(translate_message label_picas)"
+            ;;
+            board)
+              echo "$(json_val ${score} info.name): $(json_val ${score} picas) $(translate_message label_picas)"
+            ;;
+          esac
+
+        done <<<"$(echo "${play}" | jq -c '.score.scores[]')"
+      fi
+      if [[ ! -z "${1}" && "${1}" == "in_detail" ]] ; then
+        echo
+      fi
+    done <<<"$(echo "${plays_json}" | jq -c '.[]')"
+  fi
+}
+
 function move_board_prompt {
   echo -n "$(translate_message msg_move_board_prompt)>>> "
 }
@@ -383,7 +414,7 @@ function move_board {
 
 function board_image {
   # todo: send X1/X2/Y1/Y2 that are all equally larger than the current screen view
-  board_view_png="$(wl_get ${WL_API}/rooms/${ROOM_NAME}/board/view.png)"
+  board_view_png="$(wl_get ${ROOM_API}/board/view.png)"
   png_file="$(mktemp /tmp/$(basename ${0}).XXXXXXXX.png)"
   json_val "${board_view_png}" base64image | base64 -d > ${png_file}
   IMAGE_VIEWER="$(image_viewer)"
@@ -617,7 +648,7 @@ while [ 1 ] ; do
       if [[ -z "${CURRENT_PLAY}" ]] ; then
         error "$(translate_message err_game_noCurrentPlay)"
       else
-        play_status="$(wl_post "${WL_API}/rooms/${ROOM_NAME}/play" "$(play_obj)" "${PLAY_JSON}" "200 422")"
+        play_status="$(wl_post "${ROOM_API}/play" "$(play_obj)" "${PLAY_JSON}" "200 422")"
         case $(http_code ${play_status}) in
           200)
             reset_play
@@ -650,9 +681,14 @@ while [ 1 ] ; do
       lang_file "help"
     ;;
 
-    '/')
+    '1')
       echo ; echo
-      show_rooms
+      show_plays
+    ;;
+
+    '!')
+      echo ; echo
+      show_plays in_detail
     ;;
 
     '~')

@@ -14,7 +14,9 @@ import static org.cobbzilla.util.json.JsonUtil.json;
 @Accessors(chain=true) @Slf4j
 public class PlayScore {
 
-    @Getter @Setter private GamePlayer player;
+    @Getter private GamePlayer player;
+    public PlayScore setPlayer (GamePlayer player) { this.player = player.publicView(); return this; }
+
     @Getter @Setter private List<PlayScoreComponent> scores;
 
     @Getter @Setter private Boolean absolute;

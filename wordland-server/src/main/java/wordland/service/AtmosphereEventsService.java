@@ -196,7 +196,7 @@ public class AtmosphereEventsService {
         return null;
     }
 
-    private String toMessage(Object thing) {
+    public static String toMessage(Object thing) {
         return thing instanceof String
                 ? (String) thing
                 : json(scrubStrings(thing, SCRUB_FIELDS), WEBSOCKET_MESSAGE_MAPPER);
