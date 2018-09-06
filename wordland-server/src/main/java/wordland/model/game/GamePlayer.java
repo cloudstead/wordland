@@ -10,17 +10,29 @@ import wordland.model.support.GameRoomJoinRequest;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.daemon.ZillaRuntime.pickRandom;
+import static org.cobbzilla.util.reflect.ReflectionUtil.copy;
 import static wordland.WordConstants.ADJECTIVES;
 import static wordland.WordConstants.FRUITS;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class GamePlayer {
 
+    public static final GamePlayer UNKNOWN_PLAYER = new GamePlayer().setName("??");
+
     public GamePlayer(AccountSession session, GameRoomJoinRequest request) {
         this.id = session.getId();
         this.apiToken = session.getApiToken();
         this.name = request.hasName() ? request.getName() : session.getName();
         this.team = request.getTeam();
+    }
+
+    public static final String[] PUBLIC_FIELDS = {"id", "name", "team", "bot"};
+
+    public GamePlayer publicView() {
+        // only the fields we choose here are visible
+        final GamePlayer player = new GamePlayer();
+        copy(player, this, PUBLIC_FIELDS);
+        return player;
     }
 
     @Getter @Setter private String id;

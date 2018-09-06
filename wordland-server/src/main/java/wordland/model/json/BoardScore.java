@@ -26,13 +26,17 @@ public class BoardScore {
     @Getter @Setter private String name;
     @Getter @Setter private String condition;
     @Getter @Setter private String picas;
-    @Getter @Setter private boolean absolute;
-    @Getter @Setter private boolean allPlayers;
+
+    @Getter @Setter private Boolean absolute;
+    private boolean absolute() { return absolute != null && absolute; }
+
+    @Getter @Setter private Boolean allPlayers;
+    private boolean allPlayers() { return allPlayers != null && allPlayers; }
 
     public Collection<PlayScoreComponent> score(Map<String, Object> ctx) {
         final List<PlayScoreComponent> components = new ArrayList<>();
         try {
-            if (allPlayers) {
+            if (allPlayers()) {
                 final Object savedPlayer = ctx.get(CTX_PLAYER);
                 try {
                     final Map<String, String> scoreboard = (Map<String, String>) ctx.get(CTX_SCOREBOARD);
@@ -66,7 +70,7 @@ public class BoardScore {
     protected PlayScoreComponent evalForPlayer(String playerId, Map<String, Object> ctx) {
         if (JS.evaluateBoolean(getCondition(), ctx, false)) {
             int picas = JS.evaluateInt(getPicas(), ctx);
-            return PlayScoreComponent.board(this, picas, isAbsolute(), playerId);
+            return PlayScoreComponent.board(this, picas, absolute(), playerId);
         }
         return null;
     }

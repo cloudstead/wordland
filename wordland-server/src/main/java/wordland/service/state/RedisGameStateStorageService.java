@@ -250,7 +250,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     }
 
     private void incrementPlayerScore(PlayScore playScore) {
-        if (playScore.isAbsolute()) {
+        if (playScore.absolute()) {
             for (PlayScoreComponent c : playScore.getScores()) {
                 final String playerId = c.getPlayer();
                 incrPlayerScore(playScore, playerId);
@@ -263,7 +263,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     private void incrPlayerScore(PlayScore playScore, String playerId) {
         final String playerScore = redis.hget(K_SCOREBOARD, playerId);
         final int score = playerScore == null ? 0 : Integer.parseInt(playerScore);
-        redis.hset(K_SCOREBOARD, playerId, "" + (playScore.isAbsolute() ? playScore.getTotal(playerId) : score + playScore.getTotal(playerId)));
+        redis.hset(K_SCOREBOARD, playerId, "" + (playScore.absolute() ? playScore.getTotal(playerId) : score + playScore.getTotal(playerId)));
     }
 
     @Override public synchronized Map<String, Integer> getScoreboard() {

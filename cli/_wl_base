@@ -14,8 +14,10 @@ DEBUG_LOGFILE=/tmp/wordland-debug.log
 function die {
   if [[ -z "${SCRIPT}" ]] ; then
     echo 1>&2 "${1}"
-  else
+  elif [[ ! -z "${WL_VERBOSE_ERRORS}" && "${WL_VERBOSE_ERRORS}" == "Y" ]] ; then
     echo 1>&2 "${SCRIPT}: ${1}"
+  else
+    echo 1>&2 "$(basename ${SCRIPT}): ${1}"
   fi
   exit 1
 }

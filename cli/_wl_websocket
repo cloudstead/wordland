@@ -21,13 +21,18 @@ EOF
 
 echo "$(join_obj)" | websocat -n ${DEFAULT_WS_API}/$(session_player) | {
   while read -r line ; do
+    if [[ ! -z "${WL_SOCKET_LOG}" ]] ; then
+      echo "${line}" >> "${WL_SOCKET_LOG}"
+    fi
+
     # skip empty lines
     if [[ -z "${line}" ]] ; then
       continue
     fi
 
     # unquote, strip leading/trailing quotation marks
-    json="$(sed -e 's/^"//' -e 's/"$//' <<<"$(unquote "${line}")")"
+    json="$(echo -n "${line}")"
+    echo "${json}" >> /tmp/websocket
 
     # the 'X' message is a websocket heartbeat, ignore it
     if [[ "$(echo "${json}" | tr -d ' \n')" == "X" ]] ; then

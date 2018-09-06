@@ -202,6 +202,13 @@ function show_board {
   fi
 }
 
+function player_name {
+  player_info=$(wl_get ${WL_API}/rooms/${ROOM_NAME}/players/${1})
+  if [[ ! -z "${player_info}" ]] ; then
+    echo -n "$(json_val "${player_info}" name)"
+  fi
+}
+
 function abandon_game {
 
   echo ; echo ; echo -n "$(translate_message msg_confirm_abandon_game) "
@@ -239,29 +246,47 @@ function fresh_board_view {
 }
 
 function async_fresh_board_view {
-  echo ; echo
+  ANY_PRINTOUTS=0
   while read line ; do
     change="$(json_val "${line}" stateChange)"
     case ${change} in
       player_joined|player_joined_game_started)
+        if [[ ${ANY_PRINTOUTS} -eq 0 ]] ; then echo ; echo ; fi
         echo "$(json_val "${line}" object.name) $(translate_message msg_has_joined_the_game)"
+        ANY_PRINTOUTS=1
         ;;
       player_left|player_left_game_ended)
-        echo "$(json_val "${line}" object.name) $(translate_message msg_has_abandoned_the_game)"
+      if [[ ${ANY_PRINTOUTS} -eq 0 ]] ; then echo ; echo ; fi
+        echo "$(player_name $(json_val "${line}" object)) $(translate_message msg_has_abandoned_the_game)"
+        ANY_PRINTOUTS=1
         ;;
       word_played|word_played_game_ended)
-        echo "$(json_val "${line}" object.name) $(translate_message msg_played_word) $(json_val "${line}" object.word)"
+        playerId="$(json_val "${line}" object.id)"
+        if [[ -z "${playerId}" ]] ; then
+          if [[ ${ANY_PRINTOUTS} -eq 0 ]] ; then echo ; echo ; fi
+          echo "?? $(translate_message msg_played_word) $(json_val "${line}" object.word)"
+          ANY_PRINTOUTS=1
+        elif [[ "${playerId}" == "$(session_player)" ]] ; then
+          : # if this was ourselves, don't print anything
+        else
+          if [[ ${ANY_PRINTOUTS} -eq 0 ]] ; then echo ; echo ; fi
+          echo "$(player_name ${playerId}) $(translate_message msg_played_word) $(json_val "${line}" object.word)"
+          ANY_PRINTOUTS=1
+        fi
         ;;
       *)
         echo "unrecognized async update (${change}) ~~~~  : ${line}"
         ;;
     esac
     if [[ ${change} =~ /_game_ended/ ]] ; then
+      if [[ ${ANY_PRINTOUTS} -eq 0 ]] ; then echo ; echo ; fi
       echo "Game Over"
+      ANY_PRINTOUTS=1
     fi
   done < ${1}
-  echo
-  fresh_board_view
+  if [[ ${ANY_PRINTOUTS} -eq 1 ]] ; then
+    echo ; fresh_board_view
+  fi
 }
 
 function show_rooms {

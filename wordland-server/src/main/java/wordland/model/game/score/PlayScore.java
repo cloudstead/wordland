@@ -16,7 +16,9 @@ public class PlayScore {
 
     @Getter @Setter private GamePlayer player;
     @Getter @Setter private List<PlayScoreComponent> scores;
-    @Getter @Setter private boolean absolute;
+
+    @Getter @Setter private Boolean absolute;
+    public boolean absolute() { return absolute != null && absolute; }
 
     public int getTotal () { return getTotals().getOrDefault(player.getId(), 0); }
     public void setTotal (Integer v) {} // noop
@@ -33,7 +35,7 @@ public class PlayScore {
             final String player = scoreComponent.getPlayer();
             final int picas = scoreComponent.getPicas();
 
-            if (scoreComponent.isAbsolute()) {
+            if (scoreComponent.absolute()) {
                 if (absTotals == null) {
                     absTotals = new HashMap<>();
 
@@ -60,7 +62,7 @@ public class PlayScore {
     public void addScore(PlayScoreComponent c) {
         if (c == null) return;
         if (scores == null) scores = new ArrayList<>();
-        if (c.isAbsolute()) setAbsolute(true);
+        if (c.absolute()) setAbsolute(true);
         if (!c.hasPlayer()) c.setPlayer(getPlayer().getId());
         scores.add(c);
     }

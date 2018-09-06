@@ -1,11 +1,13 @@
 package wordland.model.support;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.cobbzilla.wizard.model.Identifiable;
 import org.cobbzilla.wizard.validation.HasValue;
+import wordland.model.game.GamePlayer;
 import wordland.model.game.GameStateChangeType;
 import wordland.model.game.score.PlayScore;
 
@@ -43,7 +45,7 @@ public class GameRuntimeEvent {
     @Getter @Setter private PlayedTile[] tiles;
     public boolean hasTiles () { return tiles != null && tiles.length > 0; }
 
-    public String getTilesJson () { return json(tiles); }
+    public String getTilesJson () { return disableTilesJson ? null : json(tiles); }
     public GameRuntimeEvent setTilesJson(String json) { return setTiles(json(json, PlayedTile[].class)); }
 
     public String tileCoordinates() {
@@ -57,10 +59,14 @@ public class GameRuntimeEvent {
         return b.toString();
     }
 
+    @Getter private GamePlayer player;
+    public GameRuntimeEvent setPlayer (GamePlayer p) { this.player = p.publicView(); return this; }
+
     @Getter @Setter private PlayScore score;
     public boolean hasScore () { return score != null && score.getTotal(id) > 0; }
 
     @Getter @Setter private String[] winners;
     public boolean hasWinners () { return !empty(winners); }
 
+    @JsonIgnore @Getter @Setter private boolean disableTilesJson = false;
 }

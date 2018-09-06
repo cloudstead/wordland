@@ -22,7 +22,6 @@ public class ApiConstants {
     public static final String ACCOUNTS_ENDPOINT = "/me";
     public static final String EP_REMOVE = "/remove";
 
-
     public static final String ENTITY_CONFIGS_ENDPOINT = "/entityConfigs";
 
     public static final String SYMBOL_SETS_ENDPOINT = "/alphabets";
@@ -36,6 +35,7 @@ public class ApiConstants {
     public static final String EP_ABANDON = "/abandon";
     public static final String EP_PLAY = "/play";
     public static final String EP_PLAYS = "/plays";
+    public static final String EP_PLAYERS = "/players";
     public static final String EP_QUIT = "/quit";
     public static final String EP_BOARD = "/board";
     public static final String EP_SCOREBOARD = "/scoreboard";

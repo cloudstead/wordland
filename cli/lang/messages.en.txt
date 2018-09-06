@@ -75,4 +75,4 @@ err_program_notFound="a required program was not found, please ensure it is on y
 msg_confirm_abandon_game="Are you sure you want to abandon this game? [Y/N]"
 msg_has_joined_the_game="has joined the game"
 msg_has_abandoned_the_game="has left the game"
-msg_played_word="played word"
+msg_played_word="played: "

@@ -237,6 +237,10 @@ public class GamesMaster {
         final GameDaemon daemon = getGameDaemon(roomName, false);
         return daemon == null ? null : daemon.findPlayer(uuid);
     }
+    public GamePlayer findCurrentOrFormerPlayer(String roomName, String uuid) {
+        final GameDaemon daemon = getGameDaemon(roomName, false);
+        return daemon == null ? null : daemon.findCurrentOrFormerPlayer(uuid);
+    }
 
     public GamePlayerExitStatus findPlayerStatus(String roomName, String uuid) {
         final GameDaemon daemon = getGameDaemon(roomName, false);

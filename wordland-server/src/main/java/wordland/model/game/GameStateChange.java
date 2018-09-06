@@ -18,6 +18,7 @@ public class GameStateChange {
     public GameStateChange (long version, GameStateChangeType stateChange, Object object) {
         this.version = version;
         this.stateChange = stateChange;
+        if (object instanceof GamePlayer) object = ((GamePlayer) object).publicView();
         this.object = stateChange.adjustJson(JsonUtil.FULL_MAPPER.valueToTree(object));
     }
 
@@ -45,6 +46,7 @@ public class GameStateChange {
     public static GameStateChange wordPlayed(long version, GamePlayer player, String word, PlayedTile[] tiles, PlayScore score) {
         final GameRuntimeEvent event = new GameRuntimeEvent()
                 .setId(player.getId())
+                .setPlayer(player)
                 .setWord(word)
                 .setTiles(tiles)
                 .setScore(score);
@@ -54,6 +56,7 @@ public class GameStateChange {
     public static GameStateChange wordPlayedGameEnded(long version, GamePlayer player, String word, PlayedTile[] tiles, PlayScore score, Collection<String> winners) {
         final GameRuntimeEvent event = new GameRuntimeEvent()
                 .setId(player.getId())
+                .setPlayer(player)
                 .setWord(word)
                 .setTiles(tiles)
                 .setScore(score)

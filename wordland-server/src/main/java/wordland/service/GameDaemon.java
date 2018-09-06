@@ -142,6 +142,10 @@ public class GameDaemon extends SimpleDaemon {
         return gameState.get().getPlayer(uuid);
     }
 
+    public GamePlayer findCurrentOrFormerPlayer(String uuid) {
+        return gameState.get().getCurrentAndFormerPlayers().get(uuid);
+    }
+
     public GamePlayerExitStatus getPlayerExitStatus(String uuid) { return gameState.get().getPlayerExitStatus(uuid); }
 
     public GameStateChange removePlayer(String id) {

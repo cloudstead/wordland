@@ -1,5 +1,8 @@
 package wordland.service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +46,12 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.scrubStrings;
 public class AtmosphereEventsService {
 
     public static final String URI_PREFIX = "/events/";
-    private static final String[] SCRUB_FIELDS = {"apiToken"};
+    private static final String[] SCRUB_FIELDS = {"apiToken", "tilesJson"};
+    private static final ObjectMapper WEBSOCKET_MESSAGE_MAPPER = new ObjectMapper()
+            .configure(SerializationFeature.INDENT_OUTPUT, false)
+            .configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false)
+            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     @Getter(lazy=true) private final GamesMaster gamesMaster = initGamesMaster();
     private GamesMaster initGamesMaster() {
@@ -188,11 +196,15 @@ public class AtmosphereEventsService {
         return null;
     }
 
-    private String toMessage(Object thing) { return json(scrubStrings(thing, SCRUB_FIELDS)); }
+    private String toMessage(Object thing) {
+        return thing instanceof String
+                ? (String) thing
+                : json(scrubStrings(thing, SCRUB_FIELDS), WEBSOCKET_MESSAGE_MAPPER);
+    }
 
     private void send(Collection<AtmosphereResourceEntry> entries, Object thing) {
         final String json = toMessage(thing);
-        for (AtmosphereResourceEntry entry : entries) send(entry, json);
+        for (AtmosphereResourceEntry entry : entries) sendMessage(entry, json);
     }
 
     private void send(AtmosphereResourceEntry entry, Object thing) { sendMessage(entry, toMessage(thing)); }

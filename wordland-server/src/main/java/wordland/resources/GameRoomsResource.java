@@ -26,6 +26,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.*;
 import static wordland.ApiConstants.*;
 import static wordland.model.GameBoardBlock.BLOCK_SIZE;
 import static wordland.model.game.GameBoardPalette.defaultPalette;
+import static wordland.model.game.GamePlayer.UNKNOWN_PLAYER;
 
 @Path(GAME_ROOMS_ENDPOINT)
 @Service @Slf4j
@@ -77,6 +78,18 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (gameRoom == null) return notFound(room);
 
         return ok(gamesMaster.addPlayer(gameRoom, player));
+    }
+
+    @GET @Path("/{name}"+EP_PLAYERS+"/{id}")
+    public Response playerInfo (@Context HttpContext ctx,
+                                @PathParam("name") String room,
+                                @PathParam("id") String playerId) {
+        final AccountSession session = userPrincipal(ctx);
+        final GameRoom gameRoom = dao.findByName(room);
+        if (gameRoom == null) return notFound(room);
+
+        final GamePlayer player = gamesMaster.findCurrentOrFormerPlayer(room, playerId);
+        return player == null ? ok(UNKNOWN_PLAYER) : ok(player);
     }
 
     @POST @Path("/{room}"+EP_ABANDON)
