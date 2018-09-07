@@ -285,10 +285,16 @@ while [ 1 ] ; do
       board_image
     ;;
 
-    # Didn't understand that, skip it
+    '/')
+      echo ; echo
+      show_rooms
+    ;;
+
     '^')
       abandon_game
       ;;
+
+    # Didn't understand that, skip it
     *)
       continue
     ;;

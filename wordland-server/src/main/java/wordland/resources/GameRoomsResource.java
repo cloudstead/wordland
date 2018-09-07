@@ -220,11 +220,12 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                                    @QueryParam("y2") Integer y2,
                                    @QueryParam("width") Integer width,
                                    @QueryParam("height") Integer height,
+                                   @QueryParam("noCache") Boolean noCache,
                                    @QueryParam("palette") String paletteJson) {
         final GameBoardPalette palette = paletteJson != null
                 ? json(paletteJson, GameBoardPalette.class)
                 : null;
-        return boardImageView(ctx, room, x1, x2, y1, y2, width, height, palette);
+        return boardImageView(ctx, room, x1, x2, y1, y2, width, height, noCache != null && noCache, palette);
     }
 
     @POST @Path("/{name}"+EP_BOARD+EP_VIEW_PNG)
@@ -236,6 +237,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                                    @QueryParam("y2") Integer y2,
                                    @QueryParam("width") Integer width,
                                    @QueryParam("height") Integer height,
+                                   @QueryParam("noCache") Boolean noCache,
                                    GameBoardPalette palette) {
 
         final AccountSession account = userPrincipal(ctx);
@@ -252,7 +254,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (palette == null) palette = defaultPalette(account.getId());
 
         try {
-            return ok(state.getBoardView(x1, x2, y1, y2, width, height, palette));
+            return ok(state.getBoardView(x1, x2, y1, y2, width, height, palette, noCache != null && noCache));
         } catch (IOException e) {
             return invalid("err.boardImageView.rendering");
         }

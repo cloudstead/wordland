@@ -263,9 +263,14 @@ function async_fresh_board_view {
     change="$(json_val "${line}" stateChange)"
     case ${change} in
       player_joined|player_joined_game_started)
-        if [[ ${ANY_PRINTOUTS} -eq 0 ]] ; then echo ; echo ; fi
-        echo "$(json_val "${line}" object.name) $(translate_message msg_has_joined_the_game)"
-        ANY_PRINTOUTS=1
+        playerId="$(json_val "${line}" object.id)"
+        if [[ ! -z "${playerId}" && "${playerId}" == "$(session_player)" ]] ; then
+          : # if this was ourselves, don't print anything
+        else
+          if [[ ${ANY_PRINTOUTS} -eq 0 ]] ; then echo ; echo ; fi
+          echo "$(json_val "${line}" object.name) $(translate_message msg_has_joined_the_game)"
+          ANY_PRINTOUTS=1
+        fi
         ;;
       player_left|player_left_game_ended)
       if [[ ${ANY_PRINTOUTS} -eq 0 ]] ; then echo ; echo ; fi
@@ -278,7 +283,7 @@ function async_fresh_board_view {
           : # if this was ourselves, don't print anything
         else
           if [[ ${ANY_PRINTOUTS} -eq 0 ]] ; then echo ; echo ; fi
-          echo "$(json_val "${line}" player.name) $(translate_message msg_played_word) $(json_val "${line}" object.word)"
+          echo "$(player_name $(json_val "${line}" object.id)) $(translate_message msg_played_word) $(json_val "${line}" object.word)"
           ANY_PRINTOUTS=1
         fi
         ;;
@@ -356,13 +361,13 @@ function show_plays {
           echo -n "  $(translate_message msg_play_detail_score_${scoreType})"
           case ${scoreType} in
             symbol)
-              echo "$(json_val ${score} info.symbol) @ $(json_val ${score} info.x)x$(json_val ${score} info.y): $(json_val ${score} picas) $(translate_message label_picas)"
+              echo "$(json_val "${score}" info.symbol) @ $(json_val "${score}" info.x)x$(json_val "${score}" info.y): $(json_val "${score}" picas) $(translate_message label_picas)"
             ;;
             word)
-              echo "$(json_val ${score} info.word): $(json_val ${score} picas) $(translate_message label_picas)"
+              echo "$(json_val "${score}" info.word): $(json_val "${score}" picas) $(translate_message label_picas)"
             ;;
             board)
-              echo "$(json_val ${score} info.name): $(json_val ${score} picas) $(translate_message label_picas)"
+              echo "$(translate_message label_board_score_$(json_val "${score}" info.name)): $(player_name $(json_val "${score}" player)): $(json_val "${score}" picas) $(translate_message label_picas)"
             ;;
           esac
 
@@ -422,6 +427,8 @@ function move_board {
   done
 }
 
+trap "wait" CHLD
+
 function board_image {
   IMAGE_VIEWER="$(image_viewer)"
   if [[ -z "${IMAGE_VIEWER}" ]] ; then
@@ -460,5 +467,5 @@ function board_image {
 
   set -m
   ${IMAGE_VIEWER} ${png_file} &
-  echo ; echo "$(translate_message msg_boardView_png) (${actualX1}, ${actualY1}) ... (${actualX2}, ${actualY2})" ; echo
+  echo ; echo "$(translate_message msg_boardView_png) (${actualX1}, ${actualY1}) ... (${actualX2}, ${actualY2}) : ${png_file}" ; echo
 }
