@@ -423,15 +423,42 @@ function move_board {
 }
 
 function board_image {
-  # todo: send X1/X2/Y1/Y2 that are all equally larger than the current screen view
-  board_view_png="$(wl_get ${ROOM_API}/board/view.png)"
-  png_file="$(mktemp /tmp/$(basename ${0}).XXXXXXXX.png)"
-  json_val "${board_view_png}" base64image | base64 -d > ${png_file}
   IMAGE_VIEWER="$(image_viewer)"
   if [[ -z "${IMAGE_VIEWER}" ]] ; then
     error "$(translate_message err_imageViewer_notFound): ${png_file}"
-  else
-    set -m
-    ${IMAGE_VIEWER} ${png_file} &
+    return
   fi
+
+  # send X1/X2/Y1/Y2 that are all equally larger than the current screen view
+  viewX1=$(expr ${X1} - 50)
+  viewX2=$(expr ${X1} + 50)
+  viewY1=$(expr ${Y1} - 50)
+  viewY2=$(expr ${Y1} + 50)
+  IMAGE_JSON=${ROOM_DIR}/image.json
+  if [[ -f ${ROOM_PALETTE} ]] ; then
+    board_view_status=$(wl_post "${ROOM_API}/board/view.png?x1=${viewX1}&x2=${viewX2}&y1=${viewY1}&y2=${viewY2}" "$(cat ${ROOM_PALETTE})" ${IMAGE_JSON})
+  else
+    board_view_status=$(wl_post "${ROOM_API}/board/view.png?x1=${viewX1}&x2=${viewX2}&y1=${viewY1}&y2=${viewY2}" "" ${IMAGE_JSON})
+  fi
+  IMAGE_JSON="$(cat ${IMAGE_JSON})"
+  if [[ -z "${board_view_status}" || "${board_view_status}" -ne 200 || -z "${IMAGE_JSON}" ]] ; then
+    error "$(translate_message err_api_boardView_png)"
+    return
+  fi
+
+  actualX1=$(json_val "${IMAGE_JSON}" x1)
+  actualY1=$(json_val "${IMAGE_JSON}" y1)
+  actualX2=$(json_val "${IMAGE_JSON}" x2)
+  actualY2=$(json_val "${IMAGE_JSON}" y2)
+  if [[ -z "${actualX1}" || -z "${actualY1}" || -z "${actualX2}" || -z "${actualY2}" || $(json_val "${IMAGE_JSON}" base64image | wc -c) -lt 100 ]] ; then
+    error "$(translate_message err_api_boardView_png)"
+    return
+  fi
+
+  png_file="$(mktemp /tmp/wl_board_${actualX1}x${actualY1}_${actualX2}x${actualY2}-${ROOM_NAME}.XXXXXXXX.png)"
+  json_val "${IMAGE_JSON}" base64image | base64 -d > ${png_file}
+
+  set -m
+  ${IMAGE_VIEWER} ${png_file} &
+  echo ; echo "$(translate_message msg_boardView_png) (${actualX1}, ${actualY1}) ... (${actualX2}, ${actualY2})" ; echo
 }
