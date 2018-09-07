@@ -32,7 +32,7 @@ echo "$(join_obj)" | websocat -n ${DEFAULT_WS_API}/$(session_player) | {
 
     # unquote, strip leading/trailing quotation marks
     json="$(echo -n "${line}")"
-    echo "${json}" >> /tmp/websocket
+    echo "${json}" >> /tmp/websocket.$(whoami).log
 
     # the 'X' message is a websocket heartbeat, ignore it
     if [[ "$(echo "${json}" | tr -d ' \n')" == "X" ]] ; then

@@ -140,16 +140,14 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (!request.getId().equals(account.getId())) return forbidden();
         if (!request.hasWord()) return invalid("err.word.required");
 
+        // if the player cannot be found, they might have left the game
+        // return an appropriate game exit status
         final GamePlayer player = gamesMaster.findPlayer(room, request.getId());
         if (player == null) {
             final GamePlayerExitStatus exitStatus = gamesMaster.findPlayerStatus(room, request.getId());
             if (exitStatus == null) return notFound(request.getId());
             return invalid("err.game."+exitStatus.name());
         }
-
-        final GameBoardState board = getGamesMaster().getGameState(room).getBoard(0, 4, 0, 4);
-        int unclaimed = board.unclaimed();
-        log.info("unclaimed="+ unclaimed);
 
         final GameStateChange played = gamesMaster.playWord(room, request.getApiToken(), player, request.getWord(), request.getTiles());
         return ok(played);

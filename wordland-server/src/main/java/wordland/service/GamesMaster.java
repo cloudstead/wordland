@@ -274,6 +274,15 @@ public class GamesMaster {
 
     public GameStateChange playWord(String roomName, String apiKey, GamePlayer player, String word, PlayedTile[] tiles) {
 
+        // check to see if the game has ended, return an appropriate exit status
+        final GameState gameState = getGameState(roomName);
+        if (gameState == null) throw notFoundEx(roomName);
+        if (gameState.getRoomState() == RoomState.ended) {
+            final GamePlayerExitStatus exitStatus = findPlayerStatus(roomName, player.getId());
+            if (exitStatus == null) throw invalidEx("err.game.gameOver");
+            throw invalidEx("err.game."+exitStatus.name());
+        }
+
         getSessionPlayer(apiKey, player.getId());
 
         final GameDaemon daemon = getGameDaemon(roomName, false);
