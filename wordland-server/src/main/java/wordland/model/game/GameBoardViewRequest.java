@@ -19,6 +19,9 @@ public class GameBoardViewRequest {
     @Getter @Setter public Integer y1;
     @Getter @Setter public Integer y2;
 
+    public int tilesWidth() { return 1+x2-x1; }
+    public int tilesHeight() { return 1+y2-y1; }
+
     @Getter @Setter public Integer imageWidth;
     public double imageWidthDouble() { return (double) imageWidth; }
 
@@ -85,5 +88,4 @@ public class GameBoardViewRequest {
         if (imageWidth > MAX_BOARD_IMAGE_WIDTH) imageWidth = MAX_BOARD_IMAGE_WIDTH;
         if (imageHeight > MAX_BOARD_IMAGE_HEIGHT) imageHeight = MAX_BOARD_IMAGE_HEIGHT;
     }
-
 }

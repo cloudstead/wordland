@@ -363,16 +363,14 @@ public class GameState {
         }
 
         final long start = now();
-        final int tilesWidth = largestBlock.getX2() - smallestBlock.getX1() + 1;
-        final int tilesHeight = largestBlock.getY2() - smallestBlock.getY1() + 1;
         final int blocksWidth = blockXset.size();
         final int blocksLength = blockYset.size();
         final GameBoardView boardView = new GameBoardView()
                 .setRoom(room.getName())
                 .setX1(r.x1).setX2(r.x2)
                 .setY1(r.y1).setY2(r.y2)
-                .setTilesWidth(tilesWidth)
-                .setTilesHeight(tilesHeight)
+                .setTilesWidth(r.tilesWidth())
+                .setTilesHeight(r.tilesHeight())
                 .setImageWidth(r.imageWidth)
                 .setImageHeight(r.imageHeight)
                 .setPalette(r.palette);
@@ -381,10 +379,10 @@ public class GameState {
         if (cached != null && cached.youngerThan(SECONDS.toMillis(30))) return cached.setRoomState(stateStorage.getRoomState());
 
         // first create an image of all the blocks at standard size
-        final BufferedImage bufferedImage = new BufferedImage(
+        final BufferedImage compositeImage = new BufferedImage(
                 blocksLength*BLOCK_SIZE*TILE_PIXEL_SIZE,
                 blocksWidth*BLOCK_SIZE*TILE_PIXEL_SIZE, BufferedImage.TYPE_INT_ARGB);
-        final Graphics2D g2 = bufferedImage.createGraphics();
+        final Graphics2D g2 = compositeImage.createGraphics();
 
         r.palette.init();
 
@@ -394,11 +392,11 @@ public class GameState {
         for (GameBoardBlock block : blocks) {
             //futures.add(pool.submit(() -> {
                 // X/Y position for this block image on the final image
-                final double blockX = bufferedImage.getHeight() * ((
+                final double blockX = compositeImage.getHeight() * ((
                         ((double) Math.abs(smallestBlock.getBlockX() - block.getBlockX()))
                       / ((double) 1+((largestBlock.getBlockX() - smallestBlock.getBlockX())))
                 ));
-                final double blockY = bufferedImage.getWidth() * ((
+                final double blockY = compositeImage.getWidth() * ((
                         ((double) Math.abs(smallestBlock.getBlockY() - block.getBlockY()))
                       / ((double) 1+((largestBlock.getBlockY() - smallestBlock.getBlockY())))
                 ));
@@ -451,30 +449,43 @@ public class GameState {
         //if (!result.allSucceeded()) return die("getBoardView: timeout creating view");
 
         // write timestamp
-        if (r.includeTimestamp()) {
-            drawString(g2, timestamp(), bufferedImage.getWidth() - 110, bufferedImage.getHeight() - 8, 10);
-        }
-
-        // write to file
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ImageIO.write(bufferedImage, "png", out);
-        boardView.setImage(out.toByteArray());
+        if (r.includeTimestamp()) drawString(g2, timestamp(), compositeImage.getWidth() - 110, compositeImage.getHeight() - 8, 10);
 
 //        final FileOutputStream fileOut = new FileOutputStream("/tmp/views/complete_"+timestamp()+".png");
 //        ImageIO.write(bufferedImage, "png", fileOut);
 
         // cache image
-        cachedViews.put(""+boardView.hashCode(), boardView);
+//        cachedViews.put(""+boardView.hashCode(), boardView);
 
         // determine subimage, if we should
+        final BufferedImage returnImage;
 
-        // if the entire board is one tile, crop to fit
+        // if the entire board is one tile, scale to fit final image
+        if (blocksLength == 1 && blocksWidth == 1) {
+            returnImage = new BufferedImage(r.imageHeight, r.imageWidth, BufferedImage.TYPE_INT_ARGB);
+            final int actualWidth = TILE_PIXEL_SIZE*r.tilesWidth();
+            final int actualHeight = TILE_PIXEL_SIZE*r.tilesHeight();
+            final BufferedImage slice = compositeImage.getSubimage(0, 0, actualHeight, actualWidth);
+            final Graphics2D graphics = returnImage.createGraphics();
+            final AffineTransform affineTransform = new AffineTransform();
+            final double scaleX = r.imageWidthDouble()/((double)returnImage.getWidth());
+            final double scaleY = r.imageHeightDouble()/((double)returnImage.getHeight());
+            affineTransform.setToScale(scaleX, scaleY);
+            graphics.drawImage(slice, new AffineTransformOp(affineTransform, AffineTransformOp.TYPE_BICUBIC), 0, 0);
+        } else {
+            returnImage = compositeImage;
+        }
 
         // if there are blocks whose X2 or Y2 is beyond the limits requested, crop them
 
         // if there are blocks whose X1 or Y1 is beyond the limits requested (could only happen on infinite boards), crop them
 
         // scale image to size requested
+
+        // write to file
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(returnImage, "png", out);
+        boardView.setImage(out.toByteArray());
 
         return boardView.setRoomState(stateStorage.getRoomState());
     }
