@@ -218,10 +218,7 @@ public class GameState {
             if (stateStorage.isGameOver()) throw invalidEx("err.game.gameOver");
 
             // is it our turn?
-            if (rs.hasRoundRobinPolicy()) {
-                final String nextPlayerId = stateStorage.getCurrentPlayerId();
-                if (nextPlayerId == null || !nextPlayerId.equals(player.getId())) throw new NotYourTurnException();
-            }
+            checkIsTurn(player);
 
             // determine applicable board blocks, fromString change set
             for (int i=0; i<tiles.length; i++) {
@@ -271,6 +268,21 @@ public class GameState {
             }
 
             return stateStorage.playWord(player, alteredBlocks.values(), word, tiles, playScore, winners);
+        }
+    }
+
+    protected void checkIsTurn(GamePlayer player) {
+        if (roomSettings().hasRoundRobinPolicy()) {
+            final String nextPlayerId = stateStorage.getCurrentPlayerId();
+            if (nextPlayerId == null || !nextPlayerId.equals(player.getId())) throw new NotYourTurnException();
+        }
+    }
+
+    public GameStateChange passTurn(GamePlayer player) {
+        synchronized (stateStorage) {
+            if (stateStorage.isGameOver()) throw invalidEx("err.game.gameOver");
+            checkIsTurn(player);
+            return stateStorage.passTurn(player);
         }
     }
 

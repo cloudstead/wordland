@@ -14,11 +14,12 @@
     ~           :  shift board view up/down/left/right
     (space)     :  clear the tray
     (enter)     :  play the word currently in the tray
+    *           :  pass a turn
     1           :  show history of words played
     !           :  show detailed history of words played
     /           :  list all games, switch to another game
     @           :  display image of large board view
-    ^           :  abandon the current game
+    ^           :  resign the current game
     (Control-C) :  quit to console
 
 =================================================================

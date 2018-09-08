@@ -184,23 +184,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
                                                            PlayedTile[] tiles,
                                                            PlayScore score,
                                                            Collection<String> winners) {
-        final GameRoomSettings rs = roomSettings();
-        final String roomStateJson = redis.get(K_STATE);
-        if (roomStateJson == null) throw invalidEx("err.game.noState");
-        switch (RoomState.valueOf(roomStateJson)) {
-            case ended:
-                throw invalidEx("err.game.gameOver");
-            case waiting:
-              if (!rs.hasRoundRobinPolicy()) {
-                  throw invalidEx("err.game.waiting");
-              } else {
-                  // allow new players to play once after joining a round-robin game that still needs more players to officially start
-                  final String currentPlayerId = getCurrentPlayerId();
-                  if (currentPlayerId == null || !currentPlayerId.equals(player.getId())) {
-                      throw invalidEx("err.game.notYourTurn");
-                  }
-              }
-        }
+        final GameRoomSettings rs = validatePlayableRoomForPlayer(player);
 
         for (GameBoardBlock block : blocks) setBlock(block);
         incrementPlayerScore(score);
@@ -237,16 +221,41 @@ public class RedisGameStateStorageService implements GameStateStorageService {
             }
 
             // advance to next player that has already joined (and is still playing), with wraparound
-            for (int i=1; i<playerCount; i++) {
-                index = (index + i) % playerCount;
-                final String nextPlayer = getPlayerWithJoinOrder(index);
-                if (nextPlayer != null && getPlayer(nextPlayer) != null) {
-                    redis.set(K_NEXT_PLAYER, ""+index);
-                }
-            }
+            advanceCurrentPlayer(index, playerCount);
         }
 
         return stateChange;
+    }
+
+    protected void advanceCurrentPlayer(int index, int playerCount) {
+        for (int i=1; i<playerCount; i++) {
+            index = (index + i) % playerCount;
+            final String nextPlayer = getPlayerWithJoinOrder(index);
+            if (nextPlayer != null && getPlayer(nextPlayer) != null) {
+                redis.set(K_NEXT_PLAYER, ""+index);
+            }
+        }
+    }
+
+    protected GameRoomSettings validatePlayableRoomForPlayer(GamePlayer player) {
+        final GameRoomSettings rs = roomSettings();
+        final String roomStateJson = redis.get(K_STATE);
+        if (roomStateJson == null) throw invalidEx("err.game.noState");
+        switch (RoomState.valueOf(roomStateJson)) {
+            case ended:
+                throw invalidEx("err.game.gameOver");
+            case waiting:
+              if (!rs.hasRoundRobinPolicy()) {
+                  throw invalidEx("err.game.waiting");
+              } else {
+                  // allow new players to play once after joining a round-robin game that still needs more players to officially start
+                  final String currentPlayerId = getCurrentPlayerId();
+                  if (currentPlayerId == null || !currentPlayerId.equals(player.getId())) {
+                      throw invalidEx("err.game.notYourTurn");
+                  }
+              }
+        }
+        return rs;
     }
 
     private void incrementPlayerScore(PlayScore playScore) {
@@ -264,6 +273,14 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         final String playerScore = redis.hget(K_SCOREBOARD, playerId);
         final int score = playerScore == null ? 0 : Integer.parseInt(playerScore);
         redis.hset(K_SCOREBOARD, playerId, "" + (playScore.absolute() ? playScore.getTotal(playerId) : score + playScore.getTotal(playerId)));
+    }
+
+    @Override public GameStateChange passTurn(GamePlayer player) {
+        final GameRoomSettings rs = validatePlayableRoomForPlayer(player);
+        if (rs.hasRoundRobinPolicy()) {
+            advanceCurrentPlayer(getCurrentPlayerIndex(), getPlayerCount());
+        }
+        return nextState(player, GameStateChange.turnPassed(nextVersion(), player));
     }
 
     @Override public synchronized Map<String, Integer> getScoreboard() {

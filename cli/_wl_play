@@ -248,10 +248,27 @@ while [ 1 ] ; do
             play_output="$(validation_errors "$(cat "${PLAY_JSON}")")"
           ;;
           *)
-            play_output="$(translate_message err_api_play)"
+            play_output="$(translate_message err_api_pass)"
           ;;
         esac
       fi
+    ;;
+
+    '*')
+      pass_status="$(wl_post "${ROOM_API}/pass" "{}" "${PLAY_JSON}" "200 422")"
+      case $(http_code ${pass_status}) in
+          200)
+            reset_play
+            reset=1
+            play_output=""
+          ;;
+          422)
+            play_output="$(validation_errors "$(cat "${PLAY_JSON}")")"
+          ;;
+          *)
+            play_output="$(translate_message err_api_play)"
+          ;;
+        esac
     ;;
 
     # Remove the most recently added letter from the tray

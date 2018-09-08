@@ -168,4 +168,15 @@ public class GameDaemon extends SimpleDaemon {
         return stateChange;
     }
 
+    public GameStateChange passTurn(GamePlayer player) {
+        final GameStateChange stateChange;
+        synchronized (gameState) {
+            stateChange = gameState.get().passTurn(player);
+        }
+        if (stateChange != null) {
+            broadcast(stateChange);
+        }
+        return stateChange;
+    }
+
 }

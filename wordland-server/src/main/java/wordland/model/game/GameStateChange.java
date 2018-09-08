@@ -27,6 +27,11 @@ public class GameStateChange {
     @Getter @Setter private GameStateChangeType stateChange;
     @Getter @Setter private JsonNode object;
 
+    public GameStateChange(long version, GameStateChangeType stateChange) {
+        this.version = version;
+        this.stateChange = stateChange;
+    }
+
     public static GameStateChange playerJoined(long version, GamePlayer player) {
         return new GameStateChange(version, GameStateChangeType.player_joined, player);
     }
@@ -64,4 +69,7 @@ public class GameStateChange {
         return new GameStateChange(version, GameStateChangeType.word_played_game_ended, event);
     }
 
+    public static GameStateChange turnPassed(long version, GamePlayer player) {
+        return new GameStateChange(version, GameStateChangeType.turn_passed);
+    }
 }

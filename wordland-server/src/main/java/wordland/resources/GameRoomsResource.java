@@ -56,13 +56,13 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                             @PathParam("room") String room,
                             @Valid GameRoom gameRoom) {
 
-        final AccountSession account = accountPrincipal(ctx);
+        final AccountSession session = accountPrincipal(ctx);
         final GameRoom existing = dao.findByName(room);
         if (existing != null) return invalid("err.room.exists");
 
         final GameRoomSettings rs = gameRoom.getSettings();
         dao.setDefaults(rs);
-        if (account != null) gameRoom.setAccountOwner(account.getUuid());
+        if (session != null) gameRoom.setAccountOwner(session.getUuid());
 
         return super.create(ctx, gameRoom);
     }
@@ -136,8 +136,8 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                           @PathParam("name") String room,
                           @Valid GameRuntimeEvent request) {
 
-        final AccountSession account = userPrincipal(ctx);
-        if (!request.getId().equals(account.getId())) return forbidden();
+        final AccountSession session = userPrincipal(ctx);
+        if (!request.getId().equals(session.getId())) return forbidden();
         if (!request.hasWord()) return invalid("err.word.required");
 
         // if the player cannot be found, they might have left the game
@@ -153,6 +153,21 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         return ok(played);
     }
 
+    @POST @Path("/{name}"+EP_PASS)
+    public Response pass (@Context HttpContext ctx,
+                          @PathParam("name") String room) {
+
+        final AccountSession session = userPrincipal(ctx);
+
+        // if the player cannot be found, they might have left the game
+        // return an appropriate game exit status
+        final GamePlayer player = gamesMaster.findPlayer(room, session.getId());
+        if (player == null) return notFound(session.getId());
+
+        final GameStateChange pass = gamesMaster.passTurn(room, session.getApiToken(), player);
+        return ok(pass);
+    }
+
     @GET @Path("/{name}"+EP_PLAYS)
     public Response play (@Context HttpContext ctx,
                           @PathParam("name") String room) {
@@ -166,12 +181,12 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                           @PathParam("name") String room,
                           @Valid GameRuntimeEvent request) {
 
-        final AccountSession account = userPrincipal(ctx);
-        if (!request.getId().equals(account.getId())) return forbidden();
+        final AccountSession session = userPrincipal(ctx);
+        if (!request.getId().equals(session.getId())) return forbidden();
         if (request.getStateChange() != GameStateChangeType.player_left) return invalid("err.type.invalid", request.getStateChange().name());
 
         final GamePlayer found = gamesMaster.findPlayer(room, request.getId());
-        if (found == null || !found.getApiToken().equals(account.getApiToken())) return notFound(request.getId());
+        if (found == null || !found.getApiToken().equals(session.getApiToken())) return notFound(request.getId());
 
         gamesMaster.removePlayer(room, request.getApiToken(), found.getId());
         return ok();
@@ -180,7 +195,7 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
     @GET @Path("/{name}"+EP_SCOREBOARD)
     public Response getScoreboard(@Context HttpContext ctx,
                                   @PathParam("name") String room) {
-        final AccountSession account = userPrincipal(ctx);
+        final AccountSession session = userPrincipal(ctx);
         return ok(getScoreboard(room));
     }
 
@@ -240,10 +255,10 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                                    @QueryParam("useCache") Boolean useCache,
                                    GameBoardPalette palette) {
 
-        final AccountSession account = userPrincipal(ctx);
+        final AccountSession session = userPrincipal(ctx);
         final GameState state = gamesMaster.getGameState(room);
         if (state == null) return notFound(room);
-        if (palette == null) palette = defaultPalette(account.getId());
+        if (palette == null) palette = defaultPalette(session.getId());
 
         try {
             // x1, x2, y1, y2, width, height, palette, useCache != null && useCache, true
@@ -286,8 +301,8 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                                    @QueryParam("sb") Boolean includeScoreboard,
                                    GameBoardPalette palette) {
 
-        final AccountSession account = userPrincipal(ctx);
-        if (palette == null) palette = defaultPalette(account.getId());
+        final AccountSession session = userPrincipal(ctx);
+        if (palette == null) palette = defaultPalette(session.getId());
         palette.setAnsi();
         if (includeScoreboard == null || !includeScoreboard) palette.setScoreboard(getScoreboard(room));
 
@@ -305,17 +320,17 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                                       @QueryParam("sb") Boolean includeScoreboard,
                                       TextPreviewRequest request) {
 
-        final AccountSession account = userPrincipal(ctx);
+        final AccountSession session = userPrincipal(ctx);
 
         // prep request, palette and tiles
         if (request == null) request = new TextPreviewRequest();
-        if (!request.hasPalette()) request.setPalette(defaultPalette(account.getId()));
+        if (!request.hasPalette()) request.setPalette(defaultPalette(session.getId()));
         request.getPalette().setAnsi();
         if (includeScoreboard == null || !includeScoreboard) request.getPalette().setScoreboard(getScoreboard(room));
 
         if (request.hasTiles()) {
             if (!request.isValid()) return invalid("err.attempt.invalid");
-            for (AttemptedTile a : request.getTiles()) a.setOwner(account.getUuid());
+            for (AttemptedTile a : request.getTiles()) a.setOwner(session.getUuid());
         }
 
         final GameBoardState board = getGameBoardState(room, x1, x2, y1, y2);

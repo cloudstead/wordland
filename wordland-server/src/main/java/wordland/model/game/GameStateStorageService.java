@@ -47,6 +47,8 @@ public interface GameStateStorageService {
                              PlayScore score,
                              Collection<String> winners);
 
+    GameStateChange passTurn(GamePlayer player);
+
     String getCurrentPlayerId();
 
     Map<String, Integer> getScoreboard();
