@@ -353,7 +353,7 @@ if [[ -z "${status_code}" || ${status_code} -ne 200 ]] ; then
 fi
 
 # check for required programs
-for prog in curl jq uuid ; do
+for prog in curl jq uuid base64 ; do
   if [[ -z "$(which ${prog})" ]] ; then
     die "$(translate_message err_program_notFound): ${prog}"
   fi

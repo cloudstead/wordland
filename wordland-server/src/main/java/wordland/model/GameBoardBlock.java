@@ -46,6 +46,7 @@ public class GameBoardBlock {
     }
 
     @JsonIgnore public String getBlockKey () { return getBlockKey(blockX, blockY); }
+    @JsonIgnore public String getBlockXY () { return blockX+","+blockY; }
 
     public static String getBlockKey (int blockX, int blockY) {
         return (blockX / 1000) + "/" + (blockX % 1000) + "/" +

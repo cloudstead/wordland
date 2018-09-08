@@ -119,6 +119,7 @@ public class GamesMaster {
             if (!roomsByPlayer.sismember(player.getId(), response.getRoom())) {
                 roomsByPlayer.sadd(player.getId(), response.getRoom());
             }
+            response.setRoomSettings(room.getSettings());
         }
         return response;
     }

@@ -3,6 +3,7 @@ package wordland.model.game;
 import lombok.Cleanup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.daemon.AwaitResult;
 import org.cobbzilla.util.javascript.JsEngine;
 import org.cobbzilla.util.javascript.StandardJsEngine;
 import org.cobbzilla.util.string.StringUtil;
@@ -338,7 +339,8 @@ public class GameState {
     public GameBoardView getBoardView(int x1, int x2, int y1, int y2,
                                       int imageWidth, int imageHeight,
                                       GameBoardPalette palette,
-                                      boolean noCache) throws IOException {
+                                      Boolean noCache,
+                                      Boolean includeTimestamp) throws IOException {
 
         final GameBoard board = roomSettings().getBoard();
         final GameBoardSettings settings = board.getSettings();
@@ -411,8 +413,7 @@ public class GameState {
                 .setImageHeight(imageHeight)
                 .setPalette(palette);
 
-        noCache = true;
-        final GameBoardView cached = noCache ? null : cachedViews.get("" + boardView.hashCode());
+        final GameBoardView cached = noCache != null && noCache ? null : cachedViews.get("" + boardView.hashCode());
         if (cached != null && cached.youngerThan(SECONDS.toMillis(30))) return cached.setRoomState(stateStorage.getRoomState());
 
         final BufferedImage bufferedImage = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
@@ -421,6 +422,7 @@ public class GameState {
         final double scaleY = ((double) imageHeight) / ((double) tilesHeight);
         final AffineTransform xform = new AffineTransform();
         xform.setToScale(scaleX/TILE_PIXEL_SIZE_DOUBLE, scaleY/TILE_PIXEL_SIZE_DOUBLE);
+//        xform.setToScale(scaleX/TILE_PIXEL_SIZE_DOUBLE, scaleY/TILE_PIXEL_SIZE_DOUBLE);
 
         final int imHeight = imageHeight;
         final int imWidth = imageWidth;
@@ -429,21 +431,19 @@ public class GameState {
 
         final Collection<Future<?>> futures = new ArrayList<>();
         @Cleanup("shutdownNow") final ExecutorService pool = fixedPool(100);
-        log.info(">>>> imWidth="+imWidth+", imHeight="+imHeight);
+        //log.info(">>>> imWidth="+imWidth+", imHeight="+imHeight);
         for (GameBoardBlock block : blocks) {
-            //futures.add(pool.submit(() -> {
+            futures.add(pool.submit(() -> {
                 // X/Y position for this block image on the final image
-//                final double blockX = ((block.getBlockX() - smallestBlock.getBlockX()) / ((double)largestBlock.getBlockX()+1.0d)) * imWidth;
-//                final double blockY = ((block.getBlockY() - smallestBlock.getBlockY()) / ((double)largestBlock.getBlockX()+1.0d)) * imHeight;
-                final double blockX = imHeight * (
+                final double blockX = imWidth * ((
                         ((double) Math.abs(smallestBlock.getBlockX() - block.getBlockX()))
                       / ((double) 1+((largestBlock.getBlockX() - smallestBlock.getBlockX())))
-                );
-                final double blockY = imHeight * (
+                ));
+                final double blockY = imHeight * ((
                         ((double) Math.abs(smallestBlock.getBlockY() - block.getBlockY()))
                       / ((double) 1+((largestBlock.getBlockY() - smallestBlock.getBlockY())))
-                );
-                log.info(">>>> blockX="+((int)blockX)+", blockY="+((int)blockY));
+                ));
+                //log.info(">>>> blockX="+((int)blockX)+", blockY="+((int)blockY));
 
                 final ByteArrayInputStream blockImage = getBlockImage(block, palette, tilesWidth, tilesHeight);
                 final BufferedImage bim;
@@ -451,7 +451,7 @@ public class GameState {
                     bim = ImageIO.read(blockImage);
                 } catch (IOException e) {
                     die("getBoardView: error reading block ("+block+"): "+e, e);
-                    return null;
+                    return;
                 }
                 synchronized (g2) {
                     g2.drawImage(bim, new AffineTransformOp(xform, AffineTransformOp.TYPE_BICUBIC), (int) blockX, (int) blockY);
@@ -459,32 +459,37 @@ public class GameState {
 //              final FileOutputStream fileOut = new FileOutputStream("/tmp/views/partial_"+block.getBlockX()+"_"+block.getBlockY()+".png");
 //              ImageIO.write(bufferedImage, "png", fileOut);
 //              log.info("done drawing: "+fileOut);
-            //}));
-
+            }));
         }
-        //final AwaitResult<Object> result = awaitAll(futures, 1000*BOARD_RENDER_TIMEOUT);
+        final AwaitResult<Object> result = awaitAll(futures, 1000*BOARD_RENDER_TIMEOUT);
         final String duration = formatDuration(now() - start);
         log.info("mapping of view took "+ duration);
-        //if (!result.allSucceeded()) return die("getBoardView: timeout creating view");
+        if (!result.allSucceeded()) return die("getBoardView: timeout creating view");
 
         // write timestamp
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setFont(new Font(g2.getFont().getName(), Font.PLAIN, 10));
-        g2.setColor(Color.BLACK);
-        g2.drawString(TimeUtil.format(now(), DATE_FORMAT_YYYY_MM_DD_HH_mm_ss), imageWidth-110, imageHeight-8);
+        if (includeTimestamp != null && includeTimestamp) {
+            drawString(g2, TimeUtil.format(now(), DATE_FORMAT_YYYY_MM_DD_HH_mm_ss), imageWidth - 110, imageHeight - 8, 10);
+        }
 
         // write to file
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         ImageIO.write(bufferedImage, "png", out);
         boardView.setImage(out.toByteArray());
 
-        //final FileOutputStream fileOut = new FileOutputStream("/tmp/views/complete_"+timestamp()+".png");
-        //ImageIO.write(bufferedImage, "png", fileOut);
+//        final FileOutputStream fileOut = new FileOutputStream("/tmp/views/complete_"+timestamp()+".png");
+//        ImageIO.write(bufferedImage, "png", fileOut);
 
         // cache image
         cachedViews.put(""+boardView.hashCode(), boardView);
 
         return boardView.setRoomState(stateStorage.getRoomState());
+    }
+
+    protected void drawString(Graphics2D g2, String stamp, int x, int y, int fontSize) {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setFont(new Font(g2.getFont().getName(), Font.PLAIN, fontSize));
+        g2.setColor(Color.BLACK);
+        g2.drawString(stamp, x, y);
     }
 
     protected int xMax(int x2, GameBoardBlock largestBlock) {
@@ -495,7 +500,7 @@ public class GameState {
         return Math.min(y2, largestBlock.getY2());
     }
 
-    private ByteArrayInputStream getBlockImage(GameBoardBlock block, GameBoardPalette palette, int maxX, int maxY) {
+    protected ByteArrayInputStream getBlockImage(GameBoardBlock block, GameBoardPalette palette, int maxX, int maxY) {
 
         final BufferedImage bufferedImage = new BufferedImage(
                 TILE_PIXEL_SIZE*Math.min(block.getWidth(), maxX),
@@ -514,6 +519,7 @@ public class GameState {
                 }
             }
         }
+        drawString(g2, block.getBlockXY(), bufferedImage.getHeight() - 8, bufferedImage.getWidth() - 40, 36);
 
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {

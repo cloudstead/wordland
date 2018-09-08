@@ -85,5 +85,6 @@ msg_play_detail_score_symbol="Letter Score: "
 msg_play_detail_score_word="Word Score: "
 msg_play_detail_score_board="Board Score: "
 label_picas=picas
-msg_boardView_png="Showing image of board from (x1, y1) to (x2, y2)"
+msg_boardView_png="Showing image of board, coordinates"
 label_board_score_score_tiles="tiles claimed"
+msg_move_board_updated="visible board area"

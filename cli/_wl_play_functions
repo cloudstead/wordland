@@ -194,7 +194,25 @@ function show_board {
             echo "$(translate_message label_winner): ${winners}"
           fi
         fi
-        echo
+        boardWidth="$(board_width)"
+        boardHeight="$(cat ${ROOM_DIR}/room.json | jq .roomSettings.board.settings.height)"
+        if [[ -z "${boardWidth}" && -z "${boardHeight}" ]] ; then
+          echo "(${X1}, ${Y1}) - (${X2}, ${Y2})"
+        elif [[ -z "${boardWidth}" ]] ; then
+          if [[ ${boardHeight} -ge ${Y2} ]] ; then
+            echo "(${Y1}) - (${Y2})"
+          else
+            echo
+          fi
+        elif [[ -z "${boardHeight}" ]] ; then
+          if [[ ${boardWidth} -ge ${X2} ]] ; then
+            echo "(${X1}) - (${X2})"
+          else
+            echo
+          fi
+        else
+          echo
+        fi
         printf "$(printf "${board}" | tr -d '"')"
       fi
     ;;
@@ -390,13 +408,37 @@ function move_board_prompt {
   echo -n "$(translate_message msg_move_board_prompt)>>> "
 }
 
+function board_width {
+  if [[ -f "${ROOM_DIR}/room.json" ]] ; then
+    echo "$(cat ${ROOM_DIR}/room.json | jq .roomSettings.board.settings.width)"
+  fi
+}
+
+function board_height {
+  if [[ -f "${ROOM_DIR}/room.json" ]] ; then
+    echo "$(cat ${ROOM_DIR}/room.json | jq .roomSettings.board.settings.height)"
+  fi
+}
+
 function move_board {
+  if [[ ! -z "$(board_width)" || $(board_width) -gt 10 ]] ; then
+    deltaX=$(expr ${VIEW_SIZE} / 4)
+  else
+    deltaX=1
+  fi
+  if [[ ! -z "$(board_height)" || $(board_height) -gt 10 ]] ; then
+    deltaY=$(expr ${VIEW_SIZE} / 4)
+  else
+    deltaY=1
+  fi
   # debug "move_board: starting with x1=${X1}, y1=${Y1}"
   echo ; echo -n "$(move_board_prompt)"
+
   while [ 1 ] ; do
     while IFS= read -s -r -t 2 -n1 char 2> /dev/null ; do
-      case $(echo ${char} | tr [:upper:] [:lower:]) in
+      case $(echo ${char} | tr '[:upper:]' '[:lower:]') in
         q)
+          echo ; echo "$(translate_message msg_move_board_updated) ${X1},${Y1} - ${X2},${Y2}"
           echo ; return
         ;;
         '?')
@@ -406,23 +448,23 @@ function move_board {
         ;;
         $(translate_message label_move_board_up))
           # echo "move_board: moving up (W)"
-          X1=$(expr ${X1} - 1)
-          X2=$(expr ${X2} - 1)
+          X1=$(expr ${X1} - ${deltaX})
+          X2=$(expr ${X2} - ${deltaX})
         ;;
         $(translate_message label_move_board_left))
           # echo "move_board: moving left (A)"
-          Y1=$(expr ${Y1} - 1)
-          Y2=$(expr ${Y2} - 1)
+          Y1=$(expr ${Y1} - ${deltaY})
+          Y2=$(expr ${Y2} - ${deltaY})
         ;;
         $(translate_message label_move_board_down))
           # echo "move_board: moving down (S)"
-          X1=$(expr ${X1} + 1)
-          X2=$(expr ${X2} + 1)
+          X1=$(expr ${X1} + ${deltaX})
+          X2=$(expr ${X2} + ${deltaX})
         ;;
         $(translate_message label_move_board_right))
           # echo "move_board: moving right (D)"
-          Y1=$(expr ${Y1} + 1)
-          Y2=$(expr ${Y2} + 1)
+          Y1=$(expr ${Y1} + ${deltaY})
+          Y2=$(expr ${Y2} + ${deltaY})
         ;;
         *)
           continue
@@ -434,6 +476,7 @@ function move_board {
       echo "${Y1}" > ${ROOM_DIR}/y1
       echo "${Y2}" > ${ROOM_DIR}/y2
       reset_play
+      echo ; echo "$(translate_message msg_move_board_updated): (${X1}, ${Y1}) - (${X2}, ${Y2})"
       fresh_board_view "$(move_board_prompt)"
     done
   done
@@ -474,7 +517,7 @@ function board_image {
     return
   fi
 
-  png_file="$(mktemp /tmp/wl_board_${actualX1}x${actualY1}_${actualX2}x${actualY2}-${ROOM_NAME}.XXXXXXXX.png)"
+  png_file="$(mktemp /tmp/wordland_${actualX1}x${actualY1}_${actualX2}x${actualY2}_${ROOM_NAME}.XXXXXXXX.png)"
   json_val "${IMAGE_JSON}" base64image | base64 -d > ${png_file}
 
   set -m

@@ -248,13 +248,13 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (x2 == null) x2 = x1+(BLOCK_SIZE*4)-1;
         if (y1 == null) y1 = 0;
         if (y2 == null) y2 = y1+(BLOCK_SIZE*4)-1;
-        if (height == null) height = 300;
+        if (height == null) height = 400;
         if (width == null) width = 400;
 
         if (palette == null) palette = defaultPalette(account.getId());
 
         try {
-            return ok(state.getBoardView(x1, x2, y1, y2, width, height, palette, noCache != null && noCache));
+            return ok(state.getBoardView(x1, x2, y1, y2, width, height, palette, noCache != null && noCache, true));
         } catch (IOException e) {
             return invalid("err.boardImageView.rendering");
         }
