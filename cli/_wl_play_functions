@@ -174,8 +174,16 @@ function show_tray {
 
 function show_board {
   if [[ -f ${BOARD_JSON} ]] ; then
-    cp ${BOARD_JSON} ${BOARD_JSON}.bak
+    if [[ ! -z "${USE_CACHED_BOARD}" && USE_CACHED_BOARD -eq 1 ]] ; then
+      board="$(json_node "$(cat ${BOARD_JSON})" grid)"
+      echo ; printf "$(printf "${board}" | tr -d '"')"
+      return
+    else
+      cp ${BOARD_JSON} ${BOARD_JSON}.bak
+    fi
   fi
+  USE_CACHED_BOARD=0
+
   # debug $(echo "> end: BPO: $(board_preview_obj)" | grep tiles)
   board_status="$(wl_post "${ROOM_API}/board/preview.txt?x1=${X1}&x2=$(expr ${X1} + ${VIEW_SIZE})&y1=${Y1}&y2=$(expr ${Y1} + ${VIEW_SIZE})" "$(board_preview_obj)" "${BOARD_JSON}" "200 422")" \
     || die "$(translate_message err_api_boardView)"

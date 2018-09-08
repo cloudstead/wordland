@@ -9,6 +9,7 @@ WEBSOCKET_PID="${2:?$(translate_message err_websocket_wl_play_pid_required)}"
 
 init_play ${ROOM_NAME}
 
+USE_CACHED_BOARD=0
 fresh_board_view
 
 while [ 1 ] ; do
@@ -161,6 +162,7 @@ while [ 1 ] ; do
 
     # Move current letter to the right in the tray, if possible
     ']')
+      USE_CACHED_BOARD=1
       if [[ ${#TILES[@]} -gt 1 && ${ACTIVE_TRAY_INDEX} -lt $(current_word_length) ]] ; then
         ATR_INDEX=$(expr ${ACTIVE_TRAY_INDEX} - 1)
         next=$(expr ${ATR_INDEX} + 1)
@@ -181,6 +183,7 @@ while [ 1 ] ; do
 
     # Move current letter to the left in the tray, if possible
     '[')
+      USE_CACHED_BOARD=1
       if [[ ${#TILES[@]} -gt 1 && ${ACTIVE_TRAY_INDEX} -gt 1 ]] ; then
         ATR_INDEX=$(expr ${ACTIVE_TRAY_INDEX} - 1)
         prev=$(expr ${ATR_INDEX} - 1)
@@ -201,6 +204,7 @@ while [ 1 ] ; do
 
     # Change currently active letter in the tray to the right, if possible
     '}')
+      USE_CACHED_BOARD=1
       if [[ ${#TILES[@]} -gt 1 && ${ACTIVE_TRAY_INDEX} -lt $(current_word_length) ]] ; then
         ATR_INDEX=$(expr ${ACTIVE_TRAY_INDEX})
         next=$(expr ${ATR_INDEX} + 1)
@@ -215,6 +219,7 @@ while [ 1 ] ; do
 
     # Change currently active letter in the tray to the left, if possible
     '{')
+      USE_CACHED_BOARD=1
       if [[ ${#TILES[@]} -gt 1 && ${ACTIVE_TRAY_INDEX} -gt 1 ]] ; then
         ATR_INDEX=$(expr ${ACTIVE_TRAY_INDEX} - 1)
         prev=$(expr ${ATR_INDEX} - 1)
