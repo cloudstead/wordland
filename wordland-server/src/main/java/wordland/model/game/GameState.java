@@ -3,7 +3,6 @@ package wordland.model.game;
 import lombok.Cleanup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.daemon.Await;
 import org.cobbzilla.util.daemon.AwaitResult;
 import org.cobbzilla.util.javascript.JsEngine;
 import org.cobbzilla.util.javascript.StandardJsEngine;
@@ -33,9 +32,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.cobbzilla.util.daemon.Await.awaitAll;
 import static org.cobbzilla.util.daemon.DaemonThreadFactory.fixedPool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.string.ValidationRegexes.UUID_PATTERN;
+import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static wordland.ApiConstants.MAX_BOARD_DETAIL_VIEW;
@@ -169,7 +170,7 @@ public class GameState {
                 }));
             }
         }
-        Await.awaitAll(futures, TILE_PIXEL_SIZE *TimeUtil.SECOND);
+        awaitAll(futures, TILE_PIXEL_SIZE *TimeUtil.SECOND);
         final String duration = formatDuration(now() - start);
         log.info("mapping of blocks took "+ duration);
 
@@ -403,10 +404,8 @@ public class GameState {
         final int rawHeight = yMax - smallestBlock.getY1() + 1;
         final GameBoardView boardView = new GameBoardView()
                 .setRoom(room.getName())
-                .setX1(smallestBlock.getX1())
-                .setX2(xMax) // in case board is smaller than one block
-                .setY1(smallestBlock.getY1())
-                .setY2(yMax) // in case board is smaller than one block
+                .setX1(x1).setX2(x2)
+                .setY1(y1).setY2(y2)
                 .setTilesWidth(rawWidth)
                 .setTilesHeight(rawHeight)
                 .setImageWidth(imageWidth)
@@ -436,6 +435,7 @@ public class GameState {
                 // X/Y position for this block image on the final image
                 final double blockX = ((block.getBlockX() - smallestBlock.getBlockX()) / ((double)xMax+1.0d)) * imWidth;
                 final double blockY = ((block.getBlockY() - smallestBlock.getBlockY()) / ((double)yMax+1.0d)) * imHeight;
+                log.info(">>>> blockX="+((int)blockX)+", blockY="+((int)blockY));
 
                 final ByteArrayInputStream blockImage = getBlockImage(block, palette, rawWidth, rawHeight);
                 final BufferedImage bim;
@@ -454,17 +454,18 @@ public class GameState {
             }));
 
         }
-        final AwaitResult<Object> result = Await.awaitAll(futures, BOARD_RENDER_TIMEOUT);
+        final AwaitResult<Object> result = awaitAll(futures, BOARD_RENDER_TIMEOUT);
         final String duration = formatDuration(now() - start);
         log.info("mapping of view took "+ duration);
         if (!result.allSucceeded()) {
             return die("getBoardView: timeout creating view");
         }
 
-        // rotate 90 degrees counterclockwise
-        final AffineTransform rotation = AffineTransform.getTranslateInstance(bufferedImage.getWidth() / 2.0d, bufferedImage.getHeight() / 2.0d);
-        rotation.rotate(Math.toRadians(-90));
-        g2.transform(rotation);
+        // write timestamp
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setFont(new Font(g2.getFont().getName(), Font.PLAIN, 10));
+        g2.setColor(Color.BLACK);
+        g2.drawString(TimeUtil.format(now(), DATE_FORMAT_YYYY_MM_DD_HH_mm_ss), imageWidth-110, imageHeight-8);
 
         // write to file
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -500,7 +501,7 @@ public class GameState {
             for (int y=0; y<tiles[x].length && y <=maxY; y++) {
                 g2.setColor(new Color(palette.colorFor(tiles[x][y])));
                 try {
-                    g2.fillRect(x*TILE_PIXEL_SIZE, y*TILE_PIXEL_SIZE, TILE_PIXEL_SIZE, TILE_PIXEL_SIZE);
+                    g2.fillRect(y*TILE_PIXEL_SIZE, x*TILE_PIXEL_SIZE, TILE_PIXEL_SIZE, TILE_PIXEL_SIZE);
                     // bufferedImage.setRGB(x, y, palette.rgbColorFor(tiles[x][y]));
                 } catch (ArrayIndexOutOfBoundsException e) {
                     log.warn("wtf: "+e);

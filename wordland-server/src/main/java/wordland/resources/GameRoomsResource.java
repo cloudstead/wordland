@@ -245,9 +245,9 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
         if (state == null) return notFound(room);
 
         if (x1 == null) x1 = 0;
-        if (x2 == null) x2 = (BLOCK_SIZE*10)-1;
+        if (x2 == null) x2 = x1+(BLOCK_SIZE*4)-1;
         if (y1 == null) y1 = 0;
-        if (y2 == null) y2 = (BLOCK_SIZE*10)-1;
+        if (y2 == null) y2 = y1+(BLOCK_SIZE*4)-1;
         if (height == null) height = 300;
         if (width == null) width = 400;
 
