@@ -15,6 +15,7 @@ import java.util.*;
 public class GameBoardBlock {
 
     public static final int BLOCK_SIZE = 32;
+    public static final double BLOCK_SIZE_DOUBLE = (double) BLOCK_SIZE;
 
     public static final Comparator<GameBoardBlock> SORT_POSITION = (b1, b2) -> {
         int diff = b1.getBlockX() - b2.getBlockX();

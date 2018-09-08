@@ -3,7 +3,6 @@ package wordland.model.game;
 import lombok.Cleanup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.cobbzilla.util.daemon.AwaitResult;
 import org.cobbzilla.util.javascript.JsEngine;
 import org.cobbzilla.util.javascript.StandardJsEngine;
 import org.cobbzilla.util.string.StringUtil;
@@ -36,13 +35,10 @@ import static org.cobbzilla.util.daemon.Await.awaitAll;
 import static org.cobbzilla.util.daemon.DaemonThreadFactory.fixedPool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.string.ValidationRegexes.UUID_PATTERN;
-import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static wordland.ApiConstants.MAX_BOARD_DETAIL_VIEW;
-import static wordland.ApiConstants.MAX_BOARD_VIEW;
-import static wordland.model.GameBoardBlock.SORT_POSITION;
-import static wordland.model.GameBoardBlock.getBlockKeyForTile;
+import static wordland.model.GameBoardBlock.*;
 import static wordland.model.game.GameStateChange.playerJoined;
 import static wordland.model.game.GameStateChangeType.word_played;
 import static wordland.model.support.GameNotification.invalidWord;
@@ -336,60 +332,29 @@ public class GameState {
 
     private Map<String, GameBoardView> cachedViews = new ConcurrentHashMap<>();
 
-    public GameBoardView getBoardView(int x1, int x2, int y1, int y2,
-                                      int imageWidth, int imageHeight,
-                                      GameBoardPalette palette,
-                                      Boolean noCache,
-                                      Boolean includeTimestamp) throws IOException {
+    public GameBoardView getBoardView(final GameBoardViewRequest r) throws IOException {
 
         final GameBoard board = roomSettings().getBoard();
         final GameBoardSettings settings = board.getSettings();
 
-        // ensure the bounds we draw are not too large, and certainly not larger than the board view
-        if (settings.hasWidth()) {
-            // if settings has a width, X must always be >= 0
-            if (x1 < 0) x1 = 0;
-
-            // cannot ask for something bigger than MAX_BOARD_VIEW
-            if (x2 - x1 >= MAX_BOARD_VIEW) x2 = x1 + MAX_BOARD_VIEW - 1;
-
-            // cannot ask for something bigger than the board itself
-            if (x2 > settings.getWidth()) x2 = settings.getWidth()-1;
-
-        } else if (x2 - x1 >= MAX_BOARD_VIEW) {
-            // infinite board width, still cannot view more than MAX_BOARD_VIEW
-            x2 = x1 + MAX_BOARD_VIEW - 1;
-        }
-        if (settings.hasLength()) {
-            // if settings has a length, Y must always be >= 0
-            if (y1 < 0) y1 = 0;
-
-            // cannot ask for something bigger than MAX_BOARD_VIEW
-            if (y2 - y1 >= MAX_BOARD_VIEW) y2 = y1 + MAX_BOARD_VIEW - 1;
-
-            // cannot ask for something bigger than the board itself
-            if (y2 > settings.getLength()) y2 = settings.getLength()-1;
-
-        } else if (y2 - y1 >= MAX_BOARD_VIEW) {
-            // infinite board length, still cannot view more than MAX_BOARD_VIEW
-            y2 = y1 + MAX_BOARD_VIEW - 1;
-        }
-
-        // ensure output image is within bounds
-        if (imageWidth > MAX_BOARD_IMAGE_WIDTH) imageWidth = MAX_BOARD_IMAGE_WIDTH;
-        if (imageHeight > MAX_BOARD_IMAGE_HEIGHT) imageHeight = MAX_BOARD_IMAGE_HEIGHT;
+        // set initial defaults if not set
+        r.initDefaults(settings);
 
         // determine applicable board blocks
-        final Collection<String> blockKeys = GameBoardBlock.getBlockKeys(x1, x2, y1, y2);
+        final Collection<String> blockKeys = GameBoardBlock.getBlockKeys(r.x1, r.x2, r.y1, r.y2);
 
         // fetch blocks, initialize as needed
         final Set<GameBoardBlock> blocks = new TreeSet<>(SORT_POSITION);
         final GameBoardBlock largestBlock = new GameBoardBlock(Integer.MIN_VALUE, Integer.MIN_VALUE);
         final GameBoardBlock smallestBlock = new GameBoardBlock(Integer.MAX_VALUE, Integer.MAX_VALUE);
+        final Set<Integer> blockXset = new HashSet<>();
+        final Set<Integer> blockYset = new HashSet<>();
         synchronized (stateStorage) {
             for (String blockKey : blockKeys) {
                 final GameBoardBlock block = stateStorage.getBlockOrCreate(blockKey, roomSettings().getSymbolDistribution());
                 blocks.add(block);
+                blockXset.add(block.getBlockX());
+                blockYset.add(block.getBlockY());
                 if (block.getBlockX() < smallestBlock.getBlockX()) smallestBlock.setBlockX(block.getBlockX());
                 if (block.getBlockX() > largestBlock.getBlockX()) largestBlock.setBlockX(block.getBlockX());
                 if (block.getBlockY() < smallestBlock.getBlockY()) smallestBlock.setBlockY(block.getBlockY());
@@ -398,77 +363,96 @@ public class GameState {
         }
 
         final long start = now();
-
-        final int xMax = xMax(x2, largestBlock);
-        final int yMax = yMax(y2, largestBlock);
-//        final int tilesWidth = xMax - smallestBlock.getX1() + 1;
-//        final int tilesHeight = yMax - smallestBlock.getY1() + 1;
         final int tilesWidth = largestBlock.getX2() - smallestBlock.getX1() + 1;
         final int tilesHeight = largestBlock.getY2() - smallestBlock.getY1() + 1;
+        final int blocksWidth = blockXset.size();
+        final int blocksLength = blockYset.size();
         final GameBoardView boardView = new GameBoardView()
                 .setRoom(room.getName())
-                .setX1(x1).setX2(x2)
-                .setY1(y1).setY2(y2)
+                .setX1(r.x1).setX2(r.x2)
+                .setY1(r.y1).setY2(r.y2)
                 .setTilesWidth(tilesWidth)
                 .setTilesHeight(tilesHeight)
-                .setImageWidth(imageWidth)
-                .setImageHeight(imageHeight)
-                .setPalette(palette);
+                .setImageWidth(r.imageWidth)
+                .setImageHeight(r.imageHeight)
+                .setPalette(r.palette);
 
-        final GameBoardView cached = noCache != null && noCache ? null : cachedViews.get("" + boardView.hashCode());
+        final GameBoardView cached = r.useCache() ? cachedViews.get("" + boardView.hashCode()) : null;
         if (cached != null && cached.youngerThan(SECONDS.toMillis(30))) return cached.setRoomState(stateStorage.getRoomState());
 
-        final BufferedImage bufferedImage = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
+        // first create an image of all the blocks at standard size
+        final BufferedImage bufferedImage = new BufferedImage(
+                blocksLength*BLOCK_SIZE*TILE_PIXEL_SIZE,
+                blocksWidth*BLOCK_SIZE*TILE_PIXEL_SIZE, BufferedImage.TYPE_INT_ARGB);
         final Graphics2D g2 = bufferedImage.createGraphics();
-        final double scaleY = ((double) imageWidth) / ((double) tilesWidth);
-        final double scaleX = ((double) imageHeight) / ((double) tilesHeight);
-        final AffineTransform xform = new AffineTransform();
-        xform.setToScale(scaleX/TILE_PIXEL_SIZE_DOUBLE, scaleY/TILE_PIXEL_SIZE_DOUBLE);
 
-        final int imHeight = imageHeight;
-        final int imWidth = imageWidth;
-
-        palette.init();
+        r.palette.init();
 
         final Collection<Future<?>> futures = new ArrayList<>();
         @Cleanup("shutdownNow") final ExecutorService pool = fixedPool(100);
         //log.info(">>>> imWidth="+imWidth+", imHeight="+imHeight);
         for (GameBoardBlock block : blocks) {
-            futures.add(pool.submit(() -> {
+            //futures.add(pool.submit(() -> {
                 // X/Y position for this block image on the final image
-                final double blockX = imHeight * ((
+                final double blockX = bufferedImage.getHeight() * ((
                         ((double) Math.abs(smallestBlock.getBlockX() - block.getBlockX()))
                       / ((double) 1+((largestBlock.getBlockX() - smallestBlock.getBlockX())))
                 ));
-                final double blockY = imWidth * ((
+                final double blockY = bufferedImage.getWidth() * ((
                         ((double) Math.abs(smallestBlock.getBlockY() - block.getBlockY()))
                       / ((double) 1+((largestBlock.getBlockY() - smallestBlock.getBlockY())))
                 ));
                 //log.info(">>>> blockX="+((int)blockX)+", blockY="+((int)blockY));
 
-                final ByteArrayInputStream blockImage = getBlockImage(block, palette, tilesWidth, tilesHeight);
+                final ByteArrayInputStream blockImage = getBlockImage(block, r.palette, settings);
                 final BufferedImage bim;
                 try {
                     bim = ImageIO.read(blockImage);
                 } catch (IOException e) {
-                    die("getBoardView: error reading block ("+block+"): "+e, e);
-                    return;
+                    return die("getBoardView: error reading block ("+block+"): "+e, e);
+                    //return;
                 }
+
+                int subImageX = 0;
+                int subImageY = 0;
+                int subImageWidth = bim.getWidth();
+                int subImageHeight = bim.getHeight();
+                boolean changed = false;
+                AffineTransform actualXform = new AffineTransform();
+//                AffineTransform actualXform = new AffineTransform(xform);
+                /*
+                if (settings.hasLength() && block.getY2() >= settings.getLength()) {
+                    double extraScale = ((double) (settings.getLength() % BLOCK_SIZE)) / BLOCK_SIZE_DOUBLE;
+                    subImageHeight = (int) (extraScale * bim.getHeight());
+                    actualXform = new AffineTransform(actualXform);
+                    actualXform.setToScale(xform.getScaleX(), xform.getScaleY()/extraScale);
+                    changed = true;
+                }
+                if (settings.hasWidth() && block.getX2() >= settings.getWidth()) {
+                    double extraScale = ((double) (settings.getWidth() % BLOCK_SIZE)) / BLOCK_SIZE_DOUBLE;
+                    subImageHeight = (int) (extraScale * bim.getWidth());
+                    actualXform = new AffineTransform(actualXform);
+                    actualXform.setToScale(xform.getScaleX()/extraScale, xform.getScaleY());
+                    changed = true;
+                }
+                */
+                final BufferedImage bimPart = changed ? bim.getSubimage(subImageX, subImageY, subImageWidth, subImageHeight) : bim;
+
                 synchronized (g2) {
-                    g2.drawImage(bim, new AffineTransformOp(xform, AffineTransformOp.TYPE_BICUBIC), (int) blockY, (int) blockX);
+                    g2.drawImage(bimPart, new AffineTransformOp(actualXform, AffineTransformOp.TYPE_BICUBIC), (int) blockY, (int) blockX);
                 }
 //              final FileOutputStream fileOut = new FileOutputStream("/tmp/views/partial_"+block.getBlockX()+"_"+block.getBlockY()+".png");
 //              ImageIO.write(bufferedImage, "png", fileOut);
 //              log.info("done drawing: "+fileOut);
-            }));
+            //}));
         }
-        final AwaitResult<Object> result = awaitAll(futures, 1000*BOARD_RENDER_TIMEOUT);
+        //final AwaitResult<Object> result = awaitAll(futures, 1000*BOARD_RENDER_TIMEOUT);
         log.info("mapping of view took "+ formatDuration(now() - start));
-        if (!result.allSucceeded()) return die("getBoardView: timeout creating view");
+        //if (!result.allSucceeded()) return die("getBoardView: timeout creating view");
 
         // write timestamp
-        if (includeTimestamp != null && includeTimestamp) {
-            drawString(g2, TimeUtil.format(now(), DATE_FORMAT_YYYY_MM_DD_HH_mm_ss), imageWidth - 110, imageHeight - 8, 10);
+        if (r.includeTimestamp()) {
+            drawString(g2, timestamp(), bufferedImage.getWidth() - 110, bufferedImage.getHeight() - 8, 10);
         }
 
         // write to file
@@ -482,6 +466,16 @@ public class GameState {
         // cache image
         cachedViews.put(""+boardView.hashCode(), boardView);
 
+        // determine subimage, if we should
+
+        // if the entire board is one tile, crop to fit
+
+        // if there are blocks whose X2 or Y2 is beyond the limits requested, crop them
+
+        // if there are blocks whose X1 or Y1 is beyond the limits requested (could only happen on infinite boards), crop them
+
+        // scale image to size requested
+
         return boardView.setRoomState(stateStorage.getRoomState());
     }
 
@@ -492,28 +486,20 @@ public class GameState {
         g2.drawString(stamp, x, y);
     }
 
-    protected int xMax(int x2, GameBoardBlock largestBlock) {
-        return Math.min(x2, largestBlock.getX2());
-    }
-
-    protected int yMax(int y2, GameBoardBlock largestBlock) {
-        return Math.min(y2, largestBlock.getY2());
-    }
-
-    protected ByteArrayInputStream getBlockImage(GameBoardBlock block, GameBoardPalette palette, int maxX, int maxY) {
+    protected ByteArrayInputStream getBlockImage(GameBoardBlock block, GameBoardPalette palette, GameBoardSettings board) {
 
         final BufferedImage bufferedImage = new BufferedImage(
-                TILE_PIXEL_SIZE*Math.min(block.getWidth(), maxX),
-                TILE_PIXEL_SIZE*Math.min(block.getHeight(), maxY),
+                TILE_PIXEL_SIZE*block.getWidth(),
+                TILE_PIXEL_SIZE*block.getHeight(),
                 BufferedImage.TYPE_INT_ARGB);
         final Graphics2D g2 = bufferedImage.createGraphics();
         final GameTileStateExtended[][] tiles = block.getTilesExtended();
-        for (int x=0; x<tiles.length && x<=maxX; x++) {
-            for (int y=0; y<tiles[x].length && y <=maxY; y++) {
+        for (int x=0; x<tiles.length; x++) {
+            if (tiles[x] == null || (board.hasWidth() && (x + block.getX1() >= board.getWidth()))) continue;
+            for (int y=0; y<tiles[x].length && (!board.hasLength() || (y + block.getY1() < board.getLength())); y++) {
                 g2.setColor(new Color(palette.colorFor(tiles[x][y])));
                 try {
                     g2.fillRect(y*TILE_PIXEL_SIZE, x*TILE_PIXEL_SIZE, TILE_PIXEL_SIZE, TILE_PIXEL_SIZE);
-                    // bufferedImage.setRGB(x, y, palette.rgbColorFor(tiles[x][y]));
                 } catch (ArrayIndexOutOfBoundsException e) {
                     log.warn("wtf: "+e);
                 }

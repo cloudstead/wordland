@@ -220,12 +220,12 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                                    @QueryParam("y2") Integer y2,
                                    @QueryParam("width") Integer width,
                                    @QueryParam("height") Integer height,
-                                   @QueryParam("noCache") Boolean noCache,
+                                   @QueryParam("useCache") Boolean useCache,
                                    @QueryParam("palette") String paletteJson) {
         final GameBoardPalette palette = paletteJson != null
                 ? json(paletteJson, GameBoardPalette.class)
                 : null;
-        return boardImageView(ctx, room, x1, x2, y1, y2, width, height, noCache != null && noCache, palette);
+        return boardImageView(ctx, room, x1, x2, y1, y2, width, height, useCache, palette);
     }
 
     @POST @Path("/{name}"+EP_BOARD+EP_VIEW_PNG)
@@ -237,24 +237,23 @@ public class GameRoomsResource extends NamedSystemResource<GameRoom> {
                                    @QueryParam("y2") Integer y2,
                                    @QueryParam("width") Integer width,
                                    @QueryParam("height") Integer height,
-                                   @QueryParam("noCache") Boolean noCache,
+                                   @QueryParam("useCache") Boolean useCache,
                                    GameBoardPalette palette) {
 
         final AccountSession account = userPrincipal(ctx);
         final GameState state = gamesMaster.getGameState(room);
         if (state == null) return notFound(room);
-
-        if (x1 == null) x1 = 0;
-        if (x2 == null) x2 = x1+(BLOCK_SIZE*4)-1;
-        if (y1 == null) y1 = 0;
-        if (y2 == null) y2 = y1+(BLOCK_SIZE*4)-1;
-        if (height == null) height = 400;
-        if (width == null) width = 400;
-
         if (palette == null) palette = defaultPalette(account.getId());
 
         try {
-            return ok(state.getBoardView(x1, x2, y1, y2, width, height, palette, noCache != null && noCache, true));
+            // x1, x2, y1, y2, width, height, palette, useCache != null && useCache, true
+            return ok(state.getBoardView(new GameBoardViewRequest()
+                    .setX1(x1).setX2(x2)
+                    .setY1(y1).setY2(y2)
+                    .setImageWidth(width)
+                    .setImageHeight(height)
+                    .setUseCache(useCache)
+                    .setPalette(palette)));
         } catch (IOException e) {
             return invalid("err.boardImageView.rendering");
         }

@@ -492,10 +492,10 @@ function board_image {
   fi
 
   # send X1/X2/Y1/Y2 that are all equally larger than the current screen view
-  viewX1=$(expr ${X1} - 50)
-  viewX2=$(expr ${X1} + 50)
-  viewY1=$(expr ${Y1} - 50)
-  viewY2=$(expr ${Y1} + 50)
+  viewX1=$(expr ${X1} - 125)
+  viewX2=$(expr ${X1} + 125)
+  viewY1=$(expr ${Y1} - 125)
+  viewY2=$(expr ${Y1} + 125)
   IMAGE_JSON=${ROOM_DIR}/image.json
   if [[ -f ${ROOM_PALETTE} ]] ; then
     board_view_status=$(wl_post "${ROOM_API}/board/view.png?x1=${viewX1}&x2=${viewX2}&y1=${viewY1}&y2=${viewY2}" "$(cat ${ROOM_PALETTE})" ${IMAGE_JSON})
