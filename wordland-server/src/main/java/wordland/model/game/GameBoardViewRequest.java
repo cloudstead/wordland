@@ -34,7 +34,7 @@ public class GameBoardViewRequest {
     public boolean useCache () { return useCache == null || useCache; }
 
     @Getter @Setter public Boolean includeTimestamp;
-    public boolean includeTimestamp () { return includeTimestamp == null || includeTimestamp; }
+    public boolean includeTimestamp () { return includeTimestamp != null && includeTimestamp; }
 
     public void initDefaults(GameBoardSettings settings) {
 

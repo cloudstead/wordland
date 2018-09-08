@@ -35,6 +35,7 @@ import static org.cobbzilla.util.daemon.Await.awaitAll;
 import static org.cobbzilla.util.daemon.DaemonThreadFactory.fixedPool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.string.ValidationRegexes.UUID_PATTERN;
+import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static wordland.ApiConstants.MAX_BOARD_DETAIL_VIEW;
@@ -328,7 +329,7 @@ public class GameState {
         return block.getAbsoluteTile(x, y);
     }
 
-    private String timestamp() { return TimeUtil.format(now(), TimeUtil.DATE_FORMAT_YYYYMMDDHHMMSS); }
+    private String timestamp() { return TimeUtil.format(now(), DATE_FORMAT_YYYY_MM_DD_HH_mm_ss); }
 
     private Map<String, GameBoardView> cachedViews = new ConcurrentHashMap<>();
 
@@ -403,7 +404,7 @@ public class GameState {
                 ));
                 //log.info(">>>> blockX="+((int)blockX)+", blockY="+((int)blockY));
 
-                final ByteArrayInputStream blockImage = getBlockImage(block, r.palette, settings);
+                final ByteArrayInputStream blockImage = getBlockImage(block, r.palette, settings, r.includeTimestamp());
                 final BufferedImage bim;
                 try {
                     bim = ImageIO.read(blockImage);
@@ -425,7 +426,7 @@ public class GameState {
         //if (!result.allSucceeded()) return die("getBoardView: timeout creating view");
 
         // write timestamp
-        if (r.includeTimestamp()) drawString(g2, timestamp(), compositeImage.getWidth() - 110, compositeImage.getHeight() - 8, 10);
+        if (r.includeTimestamp()) drawString(g2, timestamp(), compositeImage.getWidth() - 110, compositeImage.getHeight() - 8, 12);
 
         // determine sub-image, scale image to size requested
         final BufferedImage returnImage = new BufferedImage(r.imageWidth, r.imageHeight, BufferedImage.TYPE_INT_ARGB);
@@ -456,7 +457,7 @@ public class GameState {
         g2.drawString(stamp, x, y);
     }
 
-    protected ByteArrayInputStream getBlockImage(GameBoardBlock block, GameBoardPalette palette, GameBoardSettings board) {
+    protected ByteArrayInputStream getBlockImage(GameBoardBlock block, GameBoardPalette palette, GameBoardSettings board, boolean stamp) {
 
         final BufferedImage bufferedImage = new BufferedImage(
                 TILE_PIXEL_SIZE*block.getWidth(),
@@ -475,7 +476,7 @@ public class GameState {
                 }
             }
         }
-        drawString(g2, block.getBlockXY(), bufferedImage.getHeight() - 60, bufferedImage.getWidth() - 10, 24);
+        if (stamp) drawString(g2, block.getBlockXY(), bufferedImage.getHeight() - 60, bufferedImage.getWidth() - 10, 24);
 
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
