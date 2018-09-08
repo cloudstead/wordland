@@ -194,7 +194,7 @@ function show_board {
         save_room_state
         roomState="$(json_val "$(cat ${BOARD_JSON})" roomState)"
         if [[ ! -z "${roomState}" && "${roomState}" == "ended" ]] ; then
-          echo "$(translate_message msg_game_over)"
+          echo ; echo "$(translate_message msg_game_over)"
           winners="$(cat ${BOARD_JSON} | jq -c '.scoreboard[] | select(.winner) | .name' | tr -d '"')"
           if [[ $(echo "${winners}" | wc -l) -gt 1 ]] ; then
             echo "$(translate_message label_winners): ${winners}"
@@ -310,12 +310,29 @@ function async_fresh_board_view {
         ANY_PRINTOUTS=1
         ;;
       word_played|word_played_game_ended)
-        playerId="$(json_val "${line}" object.id)"
+        playerId="$(json_val "${line}" player.id)"
         if [[ ! -z "${playerId}" && "${playerId}" == "$(session_player)" ]] ; then
           : # if this was ourselves, don't print anything
         else
           if [[ ${ANY_PRINTOUTS} -eq 0 ]] ; then echo ; echo ; fi
-          echo "$(player_name $(json_val "${line}" object.id)) $(translate_message msg_played_word) $(json_val "${line}" object.word)"
+          echo "$(json_val "${line}" player.name) $(translate_message msg_played_word) $(json_val "${line}" object.word)"
+          ANY_PRINTOUTS=1
+        fi
+        ;;
+      turn_passed|turn_passed_player_forfeits|turn_passed_player_forfeits_game_ended)
+        playerId="$(json_val "${line}" player.id)"
+        if [[ ! -z "${playerId}" && "${playerId}" == "$(session_player)" ]] ; then
+          : # if this was ourselves, don't print anything
+        else
+          if [[ ${ANY_PRINTOUTS} -eq 0 ]] ; then echo ; echo ; fi
+          playerName="$(json_val "${line}" player.name)"
+          if [[ "${change}" == "turn_passed_player_forfeits_game_ended" ]] ; then
+            echo "${playerName} $(translate_message msg_passed_turn), $(translate_message msg_player_forfeits_game_ended)"
+          elif [[ "${change}" == "turn_passed_player_forfeits" ]] ; then
+            echo "${playerName} $(translate_message msg_passed_turn), $(translate_message msg_player_forfeits)"
+          else
+            echo "${playerName} $(translate_message msg_passed_turn)"
+          fi
           ANY_PRINTOUTS=1
         fi
         ;;
@@ -325,7 +342,9 @@ function async_fresh_board_view {
     esac
     if [[ ${change} =~ /_game_ended/ ]] ; then
       if [[ ${ANY_PRINTOUTS} -eq 0 ]] ; then echo ; echo ; fi
-      echo "Game Over"
+      echo "
+
+$(translate_message msg_game_over)"
       ANY_PRINTOUTS=1
     fi
   done < ${1}
