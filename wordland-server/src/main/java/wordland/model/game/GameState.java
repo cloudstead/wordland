@@ -468,8 +468,8 @@ public class GameState {
             final BufferedImage slice = compositeImage.getSubimage(0, 0, actualHeight, actualWidth);
             final Graphics2D graphics = returnImage.createGraphics();
             final AffineTransform affineTransform = new AffineTransform();
-            final double scaleX = r.imageWidthDouble()/((double)returnImage.getWidth());
-            final double scaleY = r.imageHeightDouble()/((double)returnImage.getHeight());
+            final double scaleX = ((double)returnImage.getWidth())/((double)slice.getWidth());
+            final double scaleY = ((double)returnImage.getHeight())/((double)slice.getHeight());
             affineTransform.setToScale(scaleX, scaleY);
             graphics.drawImage(slice, new AffineTransformOp(affineTransform, AffineTransformOp.TYPE_BICUBIC), 0, 0);
         } else {
