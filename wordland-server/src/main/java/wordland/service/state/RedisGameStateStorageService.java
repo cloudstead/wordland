@@ -3,6 +3,7 @@ package wordland.service.state;
 import edu.emory.mathcs.backport.java.util.Arrays;
 import edu.emory.mathcs.backport.java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
+import org.cobbzilla.util.collection.SingletonList;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import wordland.model.GameBoardBlock;
 import wordland.model.GameRoom;
@@ -15,6 +16,7 @@ import wordland.model.json.GameRoomSettings;
 import wordland.model.support.PlayedTile;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
@@ -194,18 +196,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
                 : nextState(player, wordPlayed(nextVersion(), player, word, tiles, score));
 
         if (stateChange.getStateChange().endsGame()) {
-            redis.set(K_STATE, RoomState.ended.name());
-            if (!empty(redis.get(K_WINNERS))) {
-                return die("playWord: winners provided but game already ended, room: "+room.getName());
-            }
-            for (GamePlayer p : getPlayers()) {
-                if (winners.contains(p.getId())) {
-                    redis.hset(K_PLAYER_EXITS, p.getId(), GamePlayerExitStatus.won.name());
-                } else if (redis.hget(K_PLAYER_EXITS, p.getId()) == null) {
-                    redis.hset(K_PLAYER_EXITS, p.getId(), GamePlayerExitStatus.lost.name());
-                }
-            }
-            redis.set(K_WINNERS, json(winners));
+            if (!finalizeGame(winners)) return die("playWord: winners provided but game already ended, room: " + room.getName());
 
         } else if (rs.hasRoundRobinPolicy()) {
             // advance to next player ID
@@ -225,6 +216,21 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         }
 
         return stateChange;
+    }
+
+    protected boolean finalizeGame(Collection<String> winners) {
+        redis.set(K_STATE, RoomState.ended.name());
+        if (!empty(redis.get(K_WINNERS))) return false;
+
+        for (GamePlayer p : getPlayers()) {
+            if (winners.contains(p.getId())) {
+                redis.hset(K_PLAYER_EXITS, p.getId(), GamePlayerExitStatus.won.name());
+            } else if (redis.hget(K_PLAYER_EXITS, p.getId()) == null) {
+                redis.hset(K_PLAYER_EXITS, p.getId(), GamePlayerExitStatus.lost.name());
+            }
+        }
+        redis.set(K_WINNERS, json(winners));
+        return true;
     }
 
     protected void advanceCurrentPlayer(int index, int playerCount) {
@@ -275,12 +281,23 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         redis.hset(K_SCOREBOARD, playerId, "" + (playScore.absolute() ? playScore.getTotal(playerId) : score + playScore.getTotal(playerId)));
     }
 
-    @Override public GameStateChange passTurn(GamePlayer player) {
+    @Override public synchronized GameStateChange passTurn(GamePlayer player, GameStateChangeType changeType) {
         final GameRoomSettings rs = validatePlayableRoomForPlayer(player);
-        if (rs.hasRoundRobinPolicy()) {
-            advanceCurrentPlayer(getCurrentPlayerIndex(), getPlayerCount());
+        if (changeType.playerForfeits()) {
+            removePlayer(player.getId());
         }
-        return nextState(player, GameStateChange.turnPassed(nextVersion(), player));
+        final int playerCount = getPlayerCount();
+        if (!changeType.endsGame()) {
+            if (rs.hasRoundRobinPolicy()) {
+                advanceCurrentPlayer(getCurrentPlayerIndex(), playerCount);
+            }
+        } else {
+            // we expect only 1 player remains when this happens. verify
+            final Collection<GamePlayer> players = getPlayers();
+            if (players.size() != 1) return die("passTurn: cannot end game when "+ players.size() +" players remain");
+            finalizeGame(new SingletonList<>(players.iterator().next().getId()));
+        }
+        return nextState(player, GameStateChange.turnPassed(nextVersion(), player, changeType));
     }
 
     @Override public synchronized Map<String, Integer> getScoreboard() {
@@ -338,27 +355,20 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         redis.set(K_BLOCKS + "/" + block.getBlockKey(), json(block.incrementVersion()));
     }
 
-    @Override public synchronized List<GameStateChange> getHistory() {
+    @Override public synchronized List<GameStateChange> getHistory() { return getHistory(p->true); }
+
+    @Override public synchronized List<GameStateChange> getHistory(Predicate<GameStateChange> predicate) {
         final List<String> json = redis.list(K_LOG);
         final List<GameStateChange> events = new ArrayList<>();
         for (String j : json) {
-            events.add(json(j, GameStateChange.class));
+            final GameStateChange change = json(j, GameStateChange.class);
+            if (predicate.test(change)) events.add(change);
         }
         return events;
     }
 
     @Override public synchronized List<GameStateChange> getHistory(GameStateChangeType changeType) {
-        final List<String> json = redis.list(K_LOG);
-        final List<GameStateChange> events = new ArrayList<>();
-        for (String j : json) {
-            if (changeType == null || j.contains(changeType.name())) {
-                final GameStateChange change = json(j, GameStateChange.class);
-                if (changeType == null || changeType.equals(change.getStateChange())) {
-                    events.add(change);
-                }
-            }
-        }
-        return events;
+        return getHistory(p->p.getStateChange() == changeType);
     }
 
     @Override public synchronized Collection<GameStateChange> timeoutInactivePlayers() {

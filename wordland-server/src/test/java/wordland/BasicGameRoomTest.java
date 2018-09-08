@@ -4,8 +4,6 @@ import org.junit.Test;
 
 public class BasicGameRoomTest extends ApiModelTestBase {
 
-    public static final String DOC_TARGET = "Games";
-
     @Override public String getModelPrefix() { return "models/5x5"; }
 
     @Test public void testRegisterAccount () throws Exception { runScript("register_account"); }
@@ -23,5 +21,7 @@ public class BasicGameRoomTest extends ApiModelTestBase {
     @Test public void testAbandonGame () throws Exception { runScript("abandon_game"); }
 
     @Test public void testTimeoutPlayer () throws Exception { runScript("timeout_player"); }
+
+    @Test public void testPassTurn () throws Exception { runScript("pass_turn"); }
 
 }

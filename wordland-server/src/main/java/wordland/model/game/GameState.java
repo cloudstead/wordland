@@ -41,7 +41,7 @@ import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static wordland.ApiConstants.MAX_BOARD_DETAIL_VIEW;
 import static wordland.model.GameBoardBlock.*;
 import static wordland.model.game.GameStateChange.playerJoined;
-import static wordland.model.game.GameStateChangeType.word_played;
+import static wordland.model.game.GameStateChangeType.*;
 import static wordland.model.support.GameNotification.invalidWord;
 import static wordland.model.support.GameNotification.sparseWord;
 import static wordland.model.support.PlayedTile.letterFarFromOthers;
@@ -282,7 +282,40 @@ public class GameState {
         synchronized (stateStorage) {
             if (stateStorage.isGameOver()) throw invalidEx("err.game.gameOver");
             checkIsTurn(player);
-            return stateStorage.passTurn(player);
+
+            // was your last turn a pass, and no one has made a play since then?
+            boolean forfeit = true;
+            final List<GameStateChange> history = stateStorage.getHistory(p -> p.getStateChange().playerTurn());
+            if (history.size() > 1) {
+                for (int i = history.size() - 1; i >= 0; i--) {
+                    final GameStateChange change = history.get(i);
+                    if (change.getStateChange().wordPlayed()) {
+                        // we're ok. we or someone else has played since our last pass
+                        forfeit = false;
+                        break;
+                    }
+                    if (change.getPlayer().getId().equals(player.getId()) && change.getStateChange().turnPassed()) {
+                        // no need to look further, we found another time when we passed, we must forfeit
+                        break;
+                    }
+                }
+            } else {
+                forfeit = false;
+            }
+
+            final GameStateChangeType changeType;
+            if (forfeit) {
+                // if we are the last player, this ends the game
+                if (stateStorage.getPlayerCount() == 2) {
+                    changeType = turn_passed_player_forfeits_game_ended;
+                } else {
+                    changeType = turn_passed_player_forfeits;
+                }
+            } else {
+                changeType = turn_passed;
+            }
+
+            return stateStorage.passTurn(player, changeType);
         }
     }
 

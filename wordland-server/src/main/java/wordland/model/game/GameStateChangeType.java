@@ -8,7 +8,7 @@ public enum GameStateChangeType {
 
     player_joined, player_joined_game_started,
     player_left,   player_left_game_ended,
-    turn_passed,
+    turn_passed,   turn_passed_player_forfeits, turn_passed_player_forfeits_game_ended,
     word_played,   word_played_game_ended;
 
     @JsonCreator public static GameStateChangeType fromString(String val) { return valueOf(val.toLowerCase()); }
@@ -24,5 +24,13 @@ public enum GameStateChangeType {
     }
 
     public boolean endsGame() { return name().endsWith("_game_ended"); }
+
+    public boolean wordPlayed() { return name().startsWith("word_played"); }
+
+    public boolean turnPassed() { return name().startsWith("turn_passed"); }
+
+    public boolean playerTurn() { return wordPlayed() || turnPassed(); }
+
+    public boolean playerForfeits() { return name().contains("player_forfeits"); }
 
 }

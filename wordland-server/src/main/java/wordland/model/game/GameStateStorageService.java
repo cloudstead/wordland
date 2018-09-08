@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static org.cobbzilla.util.json.JsonUtil.json;
 
@@ -47,7 +48,7 @@ public interface GameStateStorageService {
                              PlayScore score,
                              Collection<String> winners);
 
-    GameStateChange passTurn(GamePlayer player);
+    GameStateChange passTurn(GamePlayer player, GameStateChangeType changeType);
 
     String getCurrentPlayerId();
 
@@ -57,6 +58,7 @@ public interface GameStateStorageService {
     long getTimeSinceLastJoin();
 
     List<GameStateChange> getHistory();
+    List<GameStateChange> getHistory(Predicate<GameStateChange> p);
 
     default List<GameStateChange> getHistory(GameStateChangeType changeType) {
         final List<GameStateChange> changes = new ArrayList<>();

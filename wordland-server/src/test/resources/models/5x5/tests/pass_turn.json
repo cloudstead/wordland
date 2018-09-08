@@ -1,0 +1,126 @@
+[
+  {
+    "include": "parts/start_2player_game",
+    "params": { "room": "5x5" }
+  },
+
+  {
+    "comment": "player 2 tries to pass turn, not their turn",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/{{p2room.room}}/pass",
+      "method": "post"
+    },
+    "response": {
+      "status": 422,
+      "check": [
+        {"condition": "json.has('err.game.notYourTurn')"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player 1 passes turn",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/pass",
+      "method": "post"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.stateChange == 'turn_passed'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player 2 passes turn",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/{{p2room.room}}/pass",
+      "method": "post"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.stateChange == 'turn_passed'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player1 plays a word",
+    "before": "find-word-and-tiles board word1",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/play",
+      "entity": {
+        "room": "{{p1room.room}}",
+        "stateChange": "word_played",
+        "id": "{{p1room.player.id}}",
+        "clientId": "{{p1room.player.id}}",
+        "apiToken": "{{p1room.player.apiToken}}",
+        "word": "{{word1.word}}",
+        "tilesJson": "{{escaped_json word1.tiles}}"
+      }
+    }
+  },
+
+  {
+    "comment": "player 2 passes turn after player 1 played",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/{{p2room.room}}/pass",
+      "method": "post"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.stateChange == 'turn_passed'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player 1 passes turn after player 2 passed",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/pass",
+      "method": "post"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.stateChange == 'turn_passed'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player 2 passes turn a second time after no one has played, forfeits game",
+    "request": {
+      "session": "player2",
+      "uri": "rooms/{{p2room.room}}/pass",
+      "method": "post"
+    },
+    "response": {
+      "check": [
+        {"condition": "json.stateChange == 'turn_passed_player_forfeits_game_ended'"}
+      ]
+    }
+  },
+
+  {
+    "comment": "player 1 requests scoreboard, verify player1 is winner",
+    "request": {
+      "session": "player1",
+      "uri": "rooms/{{p1room.room}}/scoreboard"
+    },
+    "response": {
+      "store": "scoreboard",
+      "check": [
+        {"condition": "json.length == 2"},
+        {"condition": "find(json, 'id', p1room.player.id) != null"},
+        {"condition": "find(json, 'id', p2room.player.id) != null"},
+        {"condition": "find(json, 'id', p1room.player.id).winner"}
+      ]
+    }
+  }
+]
