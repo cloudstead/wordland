@@ -412,33 +412,8 @@ public class GameState {
                     //return;
                 }
 
-                int subImageX = 0;
-                int subImageY = 0;
-                int subImageWidth = bim.getWidth();
-                int subImageHeight = bim.getHeight();
-                boolean changed = false;
-                AffineTransform actualXform = new AffineTransform();
-//                AffineTransform actualXform = new AffineTransform(xform);
-                /*
-                if (settings.hasLength() && block.getY2() >= settings.getLength()) {
-                    double extraScale = ((double) (settings.getLength() % BLOCK_SIZE)) / BLOCK_SIZE_DOUBLE;
-                    subImageHeight = (int) (extraScale * bim.getHeight());
-                    actualXform = new AffineTransform(actualXform);
-                    actualXform.setToScale(xform.getScaleX(), xform.getScaleY()/extraScale);
-                    changed = true;
-                }
-                if (settings.hasWidth() && block.getX2() >= settings.getWidth()) {
-                    double extraScale = ((double) (settings.getWidth() % BLOCK_SIZE)) / BLOCK_SIZE_DOUBLE;
-                    subImageHeight = (int) (extraScale * bim.getWidth());
-                    actualXform = new AffineTransform(actualXform);
-                    actualXform.setToScale(xform.getScaleX()/extraScale, xform.getScaleY());
-                    changed = true;
-                }
-                */
-                final BufferedImage bimPart = changed ? bim.getSubimage(subImageX, subImageY, subImageWidth, subImageHeight) : bim;
-
                 synchronized (g2) {
-                    g2.drawImage(bimPart, new AffineTransformOp(actualXform, AffineTransformOp.TYPE_BICUBIC), (int) blockY, (int) blockX);
+                    g2.drawImage(bim, new AffineTransformOp(new AffineTransform(), AffineTransformOp.TYPE_BICUBIC), (int) blockY, (int) blockX);
                 }
 //              final FileOutputStream fileOut = new FileOutputStream("/tmp/views/partial_"+block.getBlockX()+"_"+block.getBlockY()+".png");
 //              ImageIO.write(bufferedImage, "png", fileOut);
@@ -452,51 +427,19 @@ public class GameState {
         // write timestamp
         if (r.includeTimestamp()) drawString(g2, timestamp(), compositeImage.getWidth() - 110, compositeImage.getHeight() - 8, 10);
 
-//        final FileOutputStream fileOut = new FileOutputStream("/tmp/views/complete_"+timestamp()+".png");
-//        ImageIO.write(bufferedImage, "png", fileOut);
-
-        // cache image
-//        cachedViews.put(""+boardView.hashCode(), boardView);
-
-        // determine subimage, if we should
-        final BufferedImage returnImage;
-
-        // if the entire board is one tile, scale to fit final image
-        if (blocksLength == 1 && blocksWidth == 1) {
-            returnImage = new BufferedImage(r.imageWidth, r.imageHeight, BufferedImage.TYPE_INT_ARGB);
-            final int actualWidth = TILE_PIXEL_SIZE * r.tilesWidth();
-            final int actualHeight = TILE_PIXEL_SIZE * r.tilesHeight();
-            final BufferedImage slice = compositeImage.getSubimage(0, 0, actualHeight, actualWidth);
-            final Graphics2D graphics = returnImage.createGraphics();
-            final AffineTransform affineTransform = new AffineTransform();
-            final double scaleX = ((double) returnImage.getWidth()) / ((double) slice.getWidth());
-            final double scaleY = ((double) returnImage.getHeight()) / ((double) slice.getHeight());
-            affineTransform.setToScale(scaleX, scaleY);
-            graphics.drawImage(slice, new AffineTransformOp(affineTransform, AffineTransformOp.TYPE_BICUBIC), 0, 0);
-
-        } else if (blocksLength == 1) {
-            returnImage = compositeImage;
-
-        } else if (blocksWidth == 1) {
-            returnImage = new BufferedImage(r.imageWidth, r.imageHeight, BufferedImage.TYPE_INT_ARGB);
-            final int actualWidth = TILE_PIXEL_SIZE * r.tilesWidth();
-            final int actualHeight = TILE_PIXEL_SIZE * r.tilesHeight();
-            final BufferedImage slice = compositeImage.getSubimage(0, 0, actualHeight, actualWidth);
-            final Graphics2D graphics = returnImage.createGraphics();
-            final AffineTransform affineTransform = new AffineTransform();
-            final double scaleX = ((double) returnImage.getWidth()) / ((double) slice.getWidth());
-            final double scaleY = ((double) returnImage.getHeight()) / ((double) slice.getHeight());
-            affineTransform.setToScale(scaleX, scaleY);
-            graphics.drawImage(slice, new AffineTransformOp(affineTransform, AffineTransformOp.TYPE_BICUBIC), 0, 0);
-
-        } else {
-            returnImage = compositeImage;
-        }
-
-
-        // if there are blocks whose X1 or Y1 is beyond the limits requested (could only happen on infinite boards), crop them
-
-        // scale image to size requested
+        // determine sub-image, scale image to size requested
+        final BufferedImage returnImage = new BufferedImage(r.imageWidth, r.imageHeight, BufferedImage.TYPE_INT_ARGB);
+        final int actualWidth = TILE_PIXEL_SIZE * r.tilesWidth();
+        final int actualHeight = TILE_PIXEL_SIZE * r.tilesHeight();
+        final int xZero = (r.x1 - smallestBlock.getX1()) * TILE_PIXEL_SIZE;
+        final int yZero = (r.y1 - smallestBlock.getY1()) * TILE_PIXEL_SIZE;
+        final BufferedImage slice = compositeImage.getSubimage(yZero, xZero, actualHeight, actualWidth);
+        final Graphics2D graphics = returnImage.createGraphics();
+        final AffineTransform affineTransform = new AffineTransform();
+        final double scaleX = ((double) returnImage.getWidth()) / ((double) slice.getWidth());
+        final double scaleY = ((double) returnImage.getHeight()) / ((double) slice.getHeight());
+        affineTransform.setToScale(scaleX, scaleY);
+        graphics.drawImage(slice, new AffineTransformOp(affineTransform, AffineTransformOp.TYPE_BICUBIC), 0, 0);
 
         // write to file
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
