@@ -2,6 +2,7 @@ package wordland.model.game;
 
 import lombok.Getter;
 import org.cobbzilla.util.string.StringUtil;
+import wordland.ApiConstants;
 import wordland.model.support.AttemptedTile;
 import wordland.model.support.PlayedTile;
 import wordland.model.support.ScoreboardEntry;
@@ -54,7 +55,7 @@ public class TileGridFunctions {
                 final GameTileState tile = row[j];
                 if (rowVal.length() > 0) rowVal.append(TXT_SPACER);              // add spacer if after first element
                 if (palette != null) rowVal.append(tileColors(tile, palette));   // set colors if we have a palette
-                rowVal.append(tile.getSymbol().toUpperCase());                   // write tile symbol
+                rowVal.append(tile == null ? ApiConstants.NULL_TILE_SYMBOL : tile.getSymbol().toUpperCase());// write tile symbol
                 rowVal.append(ANSI_RESET);                                       // reset colors
             }
             if (b.length() > 0) b.append("\n");
@@ -94,10 +95,12 @@ public class TileGridFunctions {
     protected static String tileColors(GameTileState tile, GameBoardPalette palette) {
         int fg = palette.colorFor(tile);
         Integer bg = null;
-        if (tile.hasFeature(F_PREVIEW_PLAY)) {
-            bg = F_PREVIEW_PLAY_BG;
-        } else if (tile.hasFeature(F_PREVIEW_PLAY_BLOCKED)) {
-            bg = F_PREVIEW_PLAY_BLOCKED_BG;
+        if (tile != null) {
+            if (tile.hasFeature(F_PREVIEW_PLAY)) {
+                bg = F_PREVIEW_PLAY_BG;
+            } else if (tile.hasFeature(F_PREVIEW_PLAY_BLOCKED)) {
+                bg = F_PREVIEW_PLAY_BLOCKED_BG;
+            }
         }
         return ansiColor(fg, bg);
     }
@@ -147,7 +150,11 @@ public class TileGridFunctions {
         protected boolean tryPlay(AttemptedTile a, GameTileState[][] tiles, boolean requireIndexMatch) {
             letterCounters.clear();
             for (int x=0; x<tiles.length; x++) {
+                if (tiles[x] == null) continue;
+
                 for (int y=0; y<tiles[x].length; y++) {
+                    if (tiles[x][y] == null) continue;
+
                     final String symbol = tiles[x][y].getSymbol();
                     final int foundCount = getCountAndIncrement(symbol);
                     if (!a.getSymbol().equalsIgnoreCase(symbol)) continue;

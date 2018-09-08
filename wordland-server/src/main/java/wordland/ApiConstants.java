@@ -53,6 +53,9 @@ public class ApiConstants {
     // this is the name of many standard objects.
     public static final String STANDARD = "standard";
 
+    // should never happen, but in case we have a null tile, we show this
+    public static final String NULL_TILE_SYMBOL = "•";
+
     // maximum number of rows/columns in a call to get board state
     public static final int MAX_BOARD_DETAIL_VIEW = 50;
 
