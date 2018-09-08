@@ -1,0 +1,29 @@
+[
+  {
+    "name": "lightning_infinity",
+    "template": true,
+    "settings": {
+      "board": { "name": "infinity" },
+      "maxPlayers": 1000000000,
+      "turnPolicies": [
+        {
+          "name": "daily_turn_limit",
+          "type": "periodic_limit",
+          "params": [
+            {"name": "turn_duration", "value": "1d"},
+            {"name": "max_turns", "value": "5000"}
+          ]
+        },
+        {
+          "name": "rapid_fire_limit",
+          "type": "periodic_limit",
+          "params": [
+            {"name": "turn_duration", "value": "10s"},
+            {"name": "max_turns", "value": "1"}
+          ]
+        }
+      ],
+      "missedTurnPolicy": "forfeit_move"
+    }
+  }
+]

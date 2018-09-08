@@ -47,9 +47,9 @@ fi
 echo "${ROOM_NAME}" > ${CURRENT_ROOM}
 cp ${TEMP_SESSION} ${CURRENT_ROOM}.json
 cp ${TEMP_SESSION} ${ROOM_DIR}/room.json
-echo "0" > ${ROOM_DIR}/x1
-echo "0" > ${ROOM_DIR}/y1
-echo "10" > ${ROOM_DIR}/view_size
+if [[ ! -f "${ROOM_DIR}/x1" ]] ; then echo "0" > ${ROOM_DIR}/x1 ; fi
+if [[ ! -f "${ROOM_DIR}/y1" ]] ; then echo "0" > ${ROOM_DIR}/y1 ; fi
+if [[ ! -f "${ROOM_DIR}/view_size" ]] ; then echo "10" > ${ROOM_DIR}/view_size ; fi
 
 # show board, play game
 exec ${SCRIPT_DIR}/wl_play "${ROOM_NAME}" -n
