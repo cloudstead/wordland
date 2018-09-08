@@ -66,7 +66,7 @@ public class GameBoardBlock {
     }
 
     public static Collection<String> getBlockKeys(int x1, int x2, int y1, int y2) {
-        final Set<String> keys = new HashSet<>();
+        final Set<String> keys = new LinkedHashSet<>();
         int x = x1;
         while (x <= x2) {
             int y = y1;
@@ -77,8 +77,12 @@ public class GameBoardBlock {
             keys.add(getBlockKeyForTile(x, y2));
             x += BLOCK_SIZE;
         }
+        int y = y1;
+        while (y <= y2) {
+            keys.add(getBlockKeyForTile(x2, y));
+            y += BLOCK_SIZE;
+        }
         keys.add(getBlockKeyForTile(x2, y2));
-        keys.add(getBlockKeyForTile(x2, y1));
         return keys;
     }
 
