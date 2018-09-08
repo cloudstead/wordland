@@ -400,9 +400,11 @@ public class GameState {
         final long start = now();
 
         final int xMax = xMax(x2, largestBlock);
-        final int tilesWidth = xMax - smallestBlock.getX1() + 1;
         final int yMax = yMax(y2, largestBlock);
-        final int tilesHeight = yMax - smallestBlock.getY1() + 1;
+//        final int tilesWidth = xMax - smallestBlock.getX1() + 1;
+//        final int tilesHeight = yMax - smallestBlock.getY1() + 1;
+        final int tilesWidth = largestBlock.getX2() - smallestBlock.getX1() + 1;
+        final int tilesHeight = largestBlock.getY2() - smallestBlock.getY1() + 1;
         final GameBoardView boardView = new GameBoardView()
                 .setRoom(room.getName())
                 .setX1(x1).setX2(x2)
@@ -418,11 +420,10 @@ public class GameState {
 
         final BufferedImage bufferedImage = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
         final Graphics2D g2 = bufferedImage.createGraphics();
-        final double scaleX = ((double) imageWidth) / ((double) tilesWidth);
-        final double scaleY = ((double) imageHeight) / ((double) tilesHeight);
+        final double scaleY = ((double) imageWidth) / ((double) tilesWidth);
+        final double scaleX = ((double) imageHeight) / ((double) tilesHeight);
         final AffineTransform xform = new AffineTransform();
         xform.setToScale(scaleX/TILE_PIXEL_SIZE_DOUBLE, scaleY/TILE_PIXEL_SIZE_DOUBLE);
-//        xform.setToScale(scaleX/TILE_PIXEL_SIZE_DOUBLE, scaleY/TILE_PIXEL_SIZE_DOUBLE);
 
         final int imHeight = imageHeight;
         final int imWidth = imageWidth;
@@ -435,11 +436,11 @@ public class GameState {
         for (GameBoardBlock block : blocks) {
             futures.add(pool.submit(() -> {
                 // X/Y position for this block image on the final image
-                final double blockX = imWidth * ((
+                final double blockX = imHeight * ((
                         ((double) Math.abs(smallestBlock.getBlockX() - block.getBlockX()))
                       / ((double) 1+((largestBlock.getBlockX() - smallestBlock.getBlockX())))
                 ));
-                final double blockY = imHeight * ((
+                final double blockY = imWidth * ((
                         ((double) Math.abs(smallestBlock.getBlockY() - block.getBlockY()))
                       / ((double) 1+((largestBlock.getBlockY() - smallestBlock.getBlockY())))
                 ));
@@ -454,7 +455,7 @@ public class GameState {
                     return;
                 }
                 synchronized (g2) {
-                    g2.drawImage(bim, new AffineTransformOp(xform, AffineTransformOp.TYPE_BICUBIC), (int) blockX, (int) blockY);
+                    g2.drawImage(bim, new AffineTransformOp(xform, AffineTransformOp.TYPE_BICUBIC), (int) blockY, (int) blockX);
                 }
 //              final FileOutputStream fileOut = new FileOutputStream("/tmp/views/partial_"+block.getBlockX()+"_"+block.getBlockY()+".png");
 //              ImageIO.write(bufferedImage, "png", fileOut);
@@ -462,8 +463,7 @@ public class GameState {
             }));
         }
         final AwaitResult<Object> result = awaitAll(futures, 1000*BOARD_RENDER_TIMEOUT);
-        final String duration = formatDuration(now() - start);
-        log.info("mapping of view took "+ duration);
+        log.info("mapping of view took "+ formatDuration(now() - start));
         if (!result.allSucceeded()) return die("getBoardView: timeout creating view");
 
         // write timestamp
@@ -519,7 +519,7 @@ public class GameState {
                 }
             }
         }
-        drawString(g2, block.getBlockXY(), bufferedImage.getHeight() - 8, bufferedImage.getWidth() - 40, 36);
+        drawString(g2, block.getBlockXY(), bufferedImage.getHeight() - 60, bufferedImage.getWidth() - 10, 24);
 
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
