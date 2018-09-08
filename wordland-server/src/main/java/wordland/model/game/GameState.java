@@ -332,6 +332,7 @@ public class GameState {
 
     private Map<String, GameBoardView> cachedViews = new ConcurrentHashMap<>();
 
+    @SuppressWarnings("Duplicates")
     public GameBoardView getBoardView(final GameBoardViewRequest r) throws IOException {
 
         final GameBoard board = roomSettings().getBoard();
@@ -462,21 +463,36 @@ public class GameState {
 
         // if the entire board is one tile, scale to fit final image
         if (blocksLength == 1 && blocksWidth == 1) {
-            returnImage = new BufferedImage(r.imageHeight, r.imageWidth, BufferedImage.TYPE_INT_ARGB);
-            final int actualWidth = TILE_PIXEL_SIZE*r.tilesWidth();
-            final int actualHeight = TILE_PIXEL_SIZE*r.tilesHeight();
+            returnImage = new BufferedImage(r.imageWidth, r.imageHeight, BufferedImage.TYPE_INT_ARGB);
+            final int actualWidth = TILE_PIXEL_SIZE * r.tilesWidth();
+            final int actualHeight = TILE_PIXEL_SIZE * r.tilesHeight();
             final BufferedImage slice = compositeImage.getSubimage(0, 0, actualHeight, actualWidth);
             final Graphics2D graphics = returnImage.createGraphics();
             final AffineTransform affineTransform = new AffineTransform();
-            final double scaleX = ((double)returnImage.getWidth())/((double)slice.getWidth());
-            final double scaleY = ((double)returnImage.getHeight())/((double)slice.getHeight());
+            final double scaleX = ((double) returnImage.getWidth()) / ((double) slice.getWidth());
+            final double scaleY = ((double) returnImage.getHeight()) / ((double) slice.getHeight());
             affineTransform.setToScale(scaleX, scaleY);
             graphics.drawImage(slice, new AffineTransformOp(affineTransform, AffineTransformOp.TYPE_BICUBIC), 0, 0);
+
+        } else if (blocksLength == 1) {
+            returnImage = compositeImage;
+
+        } else if (blocksWidth == 1) {
+            returnImage = new BufferedImage(r.imageWidth, r.imageHeight, BufferedImage.TYPE_INT_ARGB);
+            final int actualWidth = TILE_PIXEL_SIZE * r.tilesWidth();
+            final int actualHeight = TILE_PIXEL_SIZE * r.tilesHeight();
+            final BufferedImage slice = compositeImage.getSubimage(0, 0, actualHeight, actualWidth);
+            final Graphics2D graphics = returnImage.createGraphics();
+            final AffineTransform affineTransform = new AffineTransform();
+            final double scaleX = ((double) returnImage.getWidth()) / ((double) slice.getWidth());
+            final double scaleY = ((double) returnImage.getHeight()) / ((double) slice.getHeight());
+            affineTransform.setToScale(scaleX, scaleY);
+            graphics.drawImage(slice, new AffineTransformOp(affineTransform, AffineTransformOp.TYPE_BICUBIC), 0, 0);
+
         } else {
             returnImage = compositeImage;
         }
 
-        // if there are blocks whose X2 or Y2 is beyond the limits requested, crop them
 
         // if there are blocks whose X1 or Y1 is beyond the limits requested (could only happen on infinite boards), crop them
 
