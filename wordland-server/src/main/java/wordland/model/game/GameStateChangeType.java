@@ -23,14 +23,12 @@ public enum GameStateChangeType {
         return node;
     }
 
-    public boolean endsGame() { return name().endsWith("_game_ended"); }
-
-    public boolean wordPlayed() { return name().startsWith("word_played"); }
-
-    public boolean turnPassed() { return name().startsWith("turn_passed"); }
-
-    public boolean playerTurn() { return wordPlayed() || turnPassed(); }
-
-    public boolean playerForfeits() { return name().contains("player_forfeits"); }
+    public boolean playerJoined  () { return name().startsWith("player_joined"); }
+    public boolean playerLeft    () { return name().startsWith("player_left"); }
+    public boolean endsGame      () { return name().endsWith("_game_ended"); }
+    public boolean wordPlayed    () { return name().startsWith("word_played"); }
+    public boolean turnPassed    () { return name().startsWith("turn_passed"); }
+    public boolean playerTurn    () { return wordPlayed() || turnPassed(); }
+    public boolean playerForfeits() { return name().contains("_player_forfeits"); }
 
 }
