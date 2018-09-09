@@ -280,8 +280,7 @@ public class GameState {
             boolean forfeit = true;
             final List<GameStateChange> history = stateStorage.getHistory(p -> p.getStateChange().playerTurn());
             if (history.size() > 1) {
-                for (int i = history.size() - 1; i >= 0; i--) {
-                    final GameStateChange change = history.get(i);
+                for (GameStateChange change : history) {
                     if (change.getStateChange().wordPlayed()) {
                         // we're ok. we or someone else has played since our last pass
                         forfeit = false;
