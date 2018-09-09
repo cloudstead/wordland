@@ -52,9 +52,6 @@ All bonus tiles and power-ups are enabled.
 
 Higher-level players may encounter boss monsters or go on themed quests.
 
-## Lightning Infinity Word
-Same as Infinity Word, but you can play one word every 10 seconds, up to a maximum of 2000 words every 24 hours.
-
 ## More Thoughts on Game Mechanics
 
 ### Capture the Flag
