@@ -3,7 +3,8 @@
     "name": "tictac",
     "template": true,
     "settings": {
-      "symbolSet": { "name": "standard", "children": {"SymbolDistribution": [{"name": "easy"}]} },
+      "symbolSet": { "name": "standard" },
+      "symbolDistribution": { "name": "easy" },
       "board": { "name": "3x3" },
       "pointSystem": { "name": "tile_count" },
       "maxPlayers": 2,
@@ -27,17 +28,25 @@
     "name": "tictac_ffa",
     "template": true,
     "settings": {
-      "symbolSet": { "name": "standard", "children": {"SymbolDistribution": [{"name": "easy"}]} },
+      "symbolSet": { "name": "standard" },
+      "symbolDistribution": { "name": "easy" },
       "board": { "name": "3x3" },
       "pointSystem": { "name": "tile_count" },
       "maxPlayers": 2,
       "minPlayersToStart": 1,
       "turnPolicies": [{
-        "name": "daily_limit",
+        "name": "quick_limit",
         "type": "periodic_limit",
         "params": [
-          {"name": "turn_duration", "value": "1d"},
-          {"name": "max_turns", "value": "3000"}
+          {"name": "turn_duration", "value": "10s"},
+          {"name": "max_turns", "value": "1"}
+        ]
+      },{
+        "name": "medium_limit",
+        "type": "periodic_limit",
+        "params": [
+          {"name": "turn_duration", "value": "1m"},
+          {"name": "max_turns", "value": "4"}
         ]
       }],
       "missedTurnPolicy": "forfeit_game",
