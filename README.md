@@ -115,4 +115,4 @@ Portions of the board can be set aside as challenge areas for special games, or 
 
 Large and infinite-sized boards present a big challenge: it's impossible to visualize the entire board.
 So, we have a "map view" shows some sizable portion of it.
-Players can move the map view around to see big areas of the game.
+Players can move the map view around to see big areas of the game board.
