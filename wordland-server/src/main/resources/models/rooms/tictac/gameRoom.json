@@ -22,5 +22,31 @@
         "winnersJs": "board.topPlayersByCount"
       }]
     }
+  },
+  {
+    "name": "tictac_ffa",
+    "template": true,
+    "settings": {
+      "symbolSet": { "name": "standard", "children": {"SymbolDistribution": [{"name": "easy"}]} },
+      "board": { "name": "3x3" },
+      "pointSystem": { "name": "tile_count" },
+      "maxPlayers": 2,
+      "minPlayersToStart": 1,
+      "turnPolicies": [{
+        "name": "daily_limit",
+        "type": "periodic_limit",
+        "params": [
+          {"name": "turn_duration", "value": "1d"},
+          {"name": "max_turns", "value": "3000"}
+        ]
+      }],
+      "missedTurnPolicy": "forfeit_game",
+      "winConditions": [{
+        "name": "controls_board",
+        "defaultMessage": "The winner has the most tiles after all tiles have been played",
+        "endJs": "board.allClaimed",
+        "winnersJs": "board.topPlayersByCount"
+      }]
+    }
   }
 ]
