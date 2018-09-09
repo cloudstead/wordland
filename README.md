@@ -41,18 +41,18 @@ Move limits are one per hour and 10 moves per day.
 ## Lightning Arena Combat
 Same as Arena Combat, but move limits are one every 5 minutes and 100 per day.
 
-## Wordland: Infinity Word
+## Infinity Word
 The board goes on forever in all directions. Terrain includes swamps, plains, walls and more.
 
 Unlimited players.
 
-Play as fast as you can to claim territory, but you're limited to one move per day.
+Play as fast as you can to claim territory.
 
 All bonus tiles and power-ups are enabled.
 
 Higher-level players may encounter boss monsters or go on themed quests.
 
-## Wordland: Lightning Infinity Word
+## Lightning Infinity Word
 Same as Infinity Word, but you can play one word every 10 seconds, up to a maximum of 2000 words every 24 hours.
 
 ## More Thoughts on Game Mechanics
