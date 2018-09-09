@@ -57,5 +57,40 @@
         "winnersJs": "board.topPlayersByCount"
       }]
     }
+  },
+  {
+    "name": "tictac_ffa_deathmatch",
+    "template": true,
+    "settings": {
+      "symbolSet": { "name": "standard" },
+      "symbolDistribution": { "name": "easy" },
+      "board": { "name": "3x3" },
+      "pointSystem": { "name": "tile_count" },
+      "maxPlayers": 2,
+      "minPlayersToStart": 1,
+      "turnPolicies": [{
+        "name": "quick_limit",
+        "type": "periodic_limit",
+        "params": [
+          {"name": "max_turn_duration", "value": "40s"},
+          {"name": "turn_duration", "value": "10s"},
+          {"name": "max_turns", "value": "1"}
+        ]
+      },{
+        "name": "medium_limit",
+        "type": "periodic_limit",
+        "params": [
+          {"name": "turn_duration", "value": "1m"},
+          {"name": "max_turns", "value": "4"}
+        ]
+      }],
+      "missedTurnPolicy": "forfeit_game",
+      "winConditions": [{
+        "name": "controls_board",
+        "defaultMessage": "The winner has the most tiles after all tiles have been played",
+        "endJs": "board.allClaimed",
+        "winnersJs": "board.topPlayersByCount"
+      }]
+    }
   }
 ]

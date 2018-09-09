@@ -311,12 +311,16 @@ public class RedisGameStateStorageService implements GameStateStorageService {
                 advanceCurrentPlayer(getCurrentPlayerIndex(), playerCount);
             }
         } else {
-            // we expect only 1 player remains when this happens. verify
-            final Collection<GamePlayer> players = getPlayers();
-            if (players.size() != 1) return die("passTurn: cannot end game when "+ players.size() +" players remain");
-            finalizeGame(new SingletonList<>(players.iterator().next().getId()));
+            lastPlayerStandingWins();
         }
         return nextState(player, GameStateChange.turnPassed(nextVersion(), player, changeType));
+    }
+
+    protected void lastPlayerStandingWins() {
+        // we expect only 1 player remains when this happens. verify
+        final Collection<GamePlayer> players = getPlayers();
+        if (players.size() != 1) die("passTurn: cannot end game when "+ players.size() +" players remain");
+        finalizeGame(new SingletonList<>(players.iterator().next().getId()));
     }
 
     @Override public synchronized Map<String, Integer> getScoreboard() {
@@ -412,6 +416,8 @@ public class RedisGameStateStorageService implements GameStateStorageService {
 
         if (rs.hasTurnPolicies()) {
             final Map<String, String> lastWords = redis.hgetall(K_LAST_WORD_PLAY);
+
+            // if only one person has ever played (or no one), they can't have missed their turn
             if (lastWords.size() <= 1) return Collections.emptySet();
 
             long minDuration = Long.MAX_VALUE;
@@ -437,10 +443,15 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         for (String playerId : missedTurnPlayers) {
             changes.add(nextState(null, removePlayer(playerId)));
         }
+        final int numPlayers = getPlayerCount();
+        if (changes.size() >= numPlayers-1) { // the game might be ending
+            changes.get(changes.size()-1).setStateChange(GameStateChangeType.player_left_game_ended);
+            lastPlayerStandingWins();
+        }
         return changes;
     }
 
-    protected void checkForMissedTurn(Map<String, String> lastWords, String currentPlayerId, long minDuration, List<String> missedTurnPlayers) {
+    private void checkForMissedTurn(Map<String, String> lastWords, String currentPlayerId, long minDuration, List<String> missedTurnPlayers) {
         final long lastPlay = Long.valueOf(lastWords.get(currentPlayerId));
         if (now() - lastPlay > minDuration) missedTurnPlayers.add(currentPlayerId);
     }
