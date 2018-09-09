@@ -78,6 +78,9 @@ In a round-robin-turn game, age is based on the number of turns that have passed
 
 In a time-based-turn game, age is based on wall-clock time.
 
+A player's overall evaporation rate will increase proportionally with the number of tiles they own.
+Different bonuses and special abilities can decrease the evaporation rate. 
+
 ### Custom Tile Skins
 Allow players to select custom textures, graphics and decorations for their tiles.
 
@@ -90,18 +93,26 @@ Custom graphics and special bonuses for use of words on the theme-list.
 
 Prizes and free stuff.
 
-## Special Game Mechanics for Infinite Boards
-
-Infinite-sized boards present both challenges and opportunities.
-
-One big challenge is that it is impossible to visualizing the entire board.
-
-A "map view" shows some sizable portion of it; players can move the map view around to see big areas of the game.
-
 ### Player Avatar
 Every player has a "player" avatar on the board. Players can interact when they are near.
 
 Players could have stats/attributes and this could evolve into a full-on MMORPG.... 
 
+### Structures and Terrain
+Not every tile has to have a letter.
+* Some tiles could be designated "public spaces", permanently blank and not claimable by any player.
+* Some tiles could be "walls" that separate different places on the board, and cannot be occupied by a player avatar.
+* Some tiles could be "water" or "lava" that cannot be occupied by a player avatar (or you take damage when you step there). 
+
+Different areas of the board could also have different shading to indicate different types of terrain.
+* Swamp would have a slight green shade. The letter distribution in the swamp is much harder than outside it
+* Beach would have a slight brown shade. The letter distribution in the swamp is easier than outside it
+
 ### Challenge Areas
 Portions of the board can be set aside as challenge areas for special games, or other special events
+
+### Map View for Large Boards
+
+Large and infinite-sized boards present a big challenge: it's impossible to visualize the entire board.
+So, we have a "map view" shows some sizable portion of it.
+Players can move the map view around to see big areas of the game.
