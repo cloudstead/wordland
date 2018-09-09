@@ -35,6 +35,7 @@ public class GameRoomSettings {
     public boolean hasMaxLetterDistance () { return maxLetterDistance != null; }
 
     @Getter @Setter private TurnPolicy[] turnPolicies;
+    public boolean hasTurnPolicies () { return !empty(turnPolicies); }
 
     @JsonIgnore public TurnPolicy getRoundRobinPolicy () {
         if (turnPolicies != null) {

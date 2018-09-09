@@ -57,21 +57,13 @@ public interface GameStateStorageService {
 
     long getTimeSinceLastJoin();
 
-    List<GameStateChange> getHistory();
-    List<GameStateChange> getHistory(Predicate<GameStateChange> p);
+    default List<GameStateChange> getHistory() { return getHistory(p->true); }
+    default List<GameStateChange> getHistory(Predicate<GameStateChange> p) { return getHistory(p, 0, 100); }
+    default List<GameStateChange> getHistory(GameStateChangeType changeType) { return getHistory(p->p.getStateChange() == changeType); }
+    List<GameStateChange> getHistory(Predicate<GameStateChange> p, Integer offset, Integer limit);
 
-    default List<GameStateChange> getHistory(GameStateChangeType changeType) {
-        final List<GameStateChange> changes = new ArrayList<>();
-        for (GameStateChange change : getHistory()) {
-            if (changeType == null || changeType.equals(change.getStateChange())) {
-                changes.add(change);
-            }
-        }
-        return changes;
-    }
-
-    default List<GameRuntimeEvent> getEvents (GameStateChangeType changeType) {
-        final List<GameStateChange> changes = getHistory(changeType);
+    default List<GameRuntimeEvent> getEvents (final GameStateChangeType changeType) {
+        final List<GameStateChange> changes = getHistory(p->p.getStateChange()==changeType);
         final List<GameRuntimeEvent> events = new ArrayList<>();
         for (GameStateChange change : changes) {
             if (changeType == null || changeType.equals(change.getStateChange())) {
@@ -81,6 +73,7 @@ public interface GameStateStorageService {
         return events;
     }
 
-    Collection<GameStateChange> timeoutInactivePlayers();
+    Collection<GameStateChange> checkForMissedTurns();
 
+    void checkCanPlay(GamePlayer player);
 }

@@ -13,6 +13,7 @@ import wordland.model.support.PlayedTile;
 import java.util.Collection;
 
 import static org.cobbzilla.util.daemon.ZillaRuntime.die;
+import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 
 @NoArgsConstructor @Accessors(chain=true)
 public class GameStateChange {
@@ -22,6 +23,10 @@ public class GameStateChange {
     @Getter @Setter private GameStateChangeType stateChange;
     @Getter @Setter private GamePlayer player;
     @Getter @Setter private JsonNode object;
+
+    @Getter @Setter private long ctime = now();
+    public long age() { return age(now()); }
+    public long age(long now) { return now - ctime; }
 
     public GameStateChange(long version, GameStateChangeType stateChange) {
         this.version = version;
@@ -79,4 +84,5 @@ public class GameStateChange {
         if (!changeType.turnPassed()) return die("turnPassed: invalid changeType: "+changeType);
         return new GameStateChange(version, changeType, player);
     }
+
 }

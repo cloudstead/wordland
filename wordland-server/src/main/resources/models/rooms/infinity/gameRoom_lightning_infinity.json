@@ -10,6 +10,7 @@
           "name": "daily_turn_limit",
           "type": "periodic_limit",
           "params": [
+            {"name": "max_turn_duration", "value": "5d"},
             {"name": "turn_duration", "value": "1d"},
             {"name": "max_turns", "value": "5000"}
           ]

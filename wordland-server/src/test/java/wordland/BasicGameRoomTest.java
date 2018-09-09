@@ -24,4 +24,6 @@ public class BasicGameRoomTest extends ApiModelTestBase {
 
     @Test public void testPassTurn () throws Exception { runScript("pass_turn"); }
 
+    @Test public void testPeriodicLimit () throws Exception { runScript("periodic_limit"); }
+
 }

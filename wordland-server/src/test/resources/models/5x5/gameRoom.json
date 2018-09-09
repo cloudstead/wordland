@@ -20,5 +20,28 @@
         "winnersJs": "board.topPlayersByCount"
       }]
     }
+  },
+  {
+    "name": "5x5_ffa",
+    "template": true,
+    "settings": {
+      "board": { "name": "5x5" },
+      "maxPlayers": 2,
+      "turnPolicies": [{
+        "name": "rapid_fire_limit",
+        "type": "periodic_limit",
+        "params": [
+          {"name": "turn_duration", "value": "1d"},
+          {"name": "max_turns", "value": "3"}
+        ]
+      }],
+      "missedTurnPolicy": "forfeit_game",
+      "winConditions": [{
+        "name": "controls_board",
+        "defaultMessage": "The winner has the most tiles after all tiles have been played",
+        "endJs": "board.allClaimed",
+        "winnersJs": "board.topPlayersByCount"
+      }]
+    }
   }
 ]

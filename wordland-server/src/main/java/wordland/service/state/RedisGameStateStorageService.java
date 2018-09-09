@@ -1,14 +1,13 @@
 package wordland.service.state;
 
-import edu.emory.mathcs.backport.java.util.Arrays;
-import edu.emory.mathcs.backport.java.util.Collections;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.cobbzilla.util.collection.SingletonList;
 import org.cobbzilla.wizard.cache.redis.RedisService;
-import wordland.model.GameBoardBlock;
-import wordland.model.GameRoom;
-import wordland.model.SymbolDistribution;
-import wordland.model.TurnPolicy;
+import wordland.model.*;
 import wordland.model.game.*;
 import wordland.model.game.score.PlayScore;
 import wordland.model.game.score.PlayScoreComponent;
@@ -21,7 +20,9 @@ import java.util.function.Predicate;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
+import static wordland.model.TurnPolicy.PARAM_MAX_TURNS;
 import static wordland.model.TurnPolicy.PARAM_MAX_TURN_DURATION;
+import static wordland.model.TurnPolicy.PARAM_TURN_DURATION;
 import static wordland.model.game.GameStateChange.*;
 
 @Slf4j
@@ -37,6 +38,7 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     public static final String K_JOIN_ORDER    = "joinOrder";
     public static final String K_LAST_JOIN     = "lastJoin";
     public static final String K_LAST_ACTIVITY = "lastActivity";
+    public static final String K_LAST_WORD_PLAY= "lastWordPlay";
     public static final String K_NEXT_PLAYER   = "nextPlayer";
     public static final String K_SCOREBOARD    = "scoreboard";
     public static final String K_WINNERS       = "winners";
@@ -250,18 +252,35 @@ public class RedisGameStateStorageService implements GameStateStorageService {
         switch (RoomState.valueOf(roomStateJson)) {
             case ended:
                 throw invalidEx("err.game.gameOver");
+
             case waiting:
               if (!rs.hasRoundRobinPolicy()) {
                   throw invalidEx("err.game.waiting");
               } else {
                   // allow new players to play once after joining a round-robin game that still needs more players to officially start
-                  final String currentPlayerId = getCurrentPlayerId();
-                  if (currentPlayerId == null || !currentPlayerId.equals(player.getId())) {
-                      throw invalidEx("err.game.notYourTurn");
-                  }
+                  checkRoundRobinPlayer(player);
               }
+              break;
+
+            case active:
+                if (rs.hasTurnPolicies()) {
+                    if (rs.hasRoundRobinPolicy()) {
+                        checkRoundRobinPlayer(player);
+                    } else {
+                        for (TurnPolicy p : rs.getTurnPolicies()) {
+                            final Long maxTurns = p.longParam(PARAM_MAX_TURNS);
+                        }
+                    }
+                }
         }
         return rs;
+    }
+
+    private void checkRoundRobinPlayer(GamePlayer player) {
+        final String currentPlayerId = getCurrentPlayerId();
+        if (currentPlayerId == null || !currentPlayerId.equals(player.getId())) {
+            throw invalidEx("err.game.notYourTurn");
+        }
     }
 
     private void incrementPlayerScore(PlayScore playScore) {
@@ -347,7 +366,12 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     protected GameStateChange nextState(GamePlayer player, GameStateChange stateChange) {
         log.info("nextState, player="+(player == null ? "null" : player.getId()+"/"+player.getName())+"\n"+json(stateChange));
         redis.rpush(K_LOG, json(stateChange));
-        if (player != null) redis.hset(K_LAST_ACTIVITY, player.getId(), ""+now());
+        if (player != null) {
+            redis.hset(K_LAST_ACTIVITY, player.getId(), ""+now());
+            if (stateChange.getStateChange().wordPlayed()) {
+                redis.hset(K_LAST_WORD_PLAY, player.getId(), ""+now());
+            }
+        }
         return stateChange;
     }
 
@@ -358,46 +382,146 @@ public class RedisGameStateStorageService implements GameStateStorageService {
     @Override public synchronized List<GameStateChange> getHistory() { return getHistory(p->true); }
 
     @Override public synchronized List<GameStateChange> getHistory(Predicate<GameStateChange> predicate) {
-        final List<String> json = redis.list(K_LOG);
-        final List<GameStateChange> events = new ArrayList<>();
+        return getHistory(predicate, null, null);
+    }
+
+    @Override public List<GameStateChange> getHistory(Predicate<GameStateChange> predicate, Integer offset, Integer limit) {
+        final int start = offset == null || offset == 0 ? -1 : (-1*offset)-1;
+        final int end = limit == null ? 0 : start - limit;
+        final List<String> json = redis.lrange(K_LOG, end, start);
+        if (empty(json)) return null;
+        final List<GameStateChange> changes = new ArrayList<>();
         for (String j : json) {
             final GameStateChange change = json(j, GameStateChange.class);
-            if (predicate.test(change)) events.add(change);
+            if (predicate.test(change)) changes.add(change);
         }
-        return events;
+        Collections.reverse(changes);
+        return changes;
     }
 
-    @Override public synchronized List<GameStateChange> getHistory(GameStateChangeType changeType) {
-        return getHistory(p->p.getStateChange() == changeType);
-    }
-
-    @Override public synchronized Collection<GameStateChange> timeoutInactivePlayers() {
+    @Override public synchronized Collection<GameStateChange> checkForMissedTurns() {
 
         final RoomState roomState = getRoomState();
         if (roomState != RoomState.active) {
-            log.warn("timeoutInactivePlayers: ignoring for room "+room.getName()+" with state "+ roomState);
+            log.warn("checkForMissedTurns: ignoring for room "+room.getName()+" with state "+ roomState);
             return Collections.emptySet();
         }
-        final Map<String, String> allPlayers = redis.hgetall(K_LAST_ACTIVITY);
-        if (allPlayers.size() <= 1) return Collections.emptySet();
 
-        final List<String> playersToBoot = new ArrayList<>();
-        for (Map.Entry<String, String> entry : allPlayers.entrySet()) {
-            final String playerId = entry.getKey();
-            final long lastActive = Long.parseLong(entry.getValue());
-            final TurnPolicy rrp = roomSettings().getRoundRobinPolicy();
-            if (rrp != null) {
-                if (!getCurrentPlayerId().equals(playerId)) continue;
-                if (now() - lastActive > rrp.durationParam(PARAM_MAX_TURN_DURATION)) {
-                    playersToBoot.add(playerId);
+        final GameRoomSettings rs = roomSettings();
+        final List<String> missedTurnPlayers = new ArrayList<>();
+
+        if (rs.hasTurnPolicies()) {
+            final Map<String, String> lastWords = redis.hgetall(K_LAST_WORD_PLAY);
+            if (lastWords.size() <= 1) return Collections.emptySet();
+
+            long minDuration = Long.MAX_VALUE;
+            for (TurnPolicy p : rs.getTurnPolicies()) {
+                final Long d = p.durationParam(PARAM_MAX_TURN_DURATION);
+                if (d != null && d < minDuration) minDuration = d;
+            }
+            if (minDuration == Long.MAX_VALUE) return Collections.emptySet();
+
+            // for round-robin, only enforce policy on current player, everyone else is waiting for them
+            if (rs.hasRoundRobinPolicy()) {
+                final String currentPlayerId = getCurrentPlayerId();
+                checkForMissedTurn(lastWords, currentPlayerId, minDuration, missedTurnPlayers);
+            } else {
+                for (Map.Entry<String, String> playerPlay : lastWords.entrySet()) {
+                    final String playerId = playerPlay.getKey();
+                    checkForMissedTurn(lastWords, playerId, minDuration, missedTurnPlayers);
                 }
             }
         }
 
         final List<GameStateChange> changes = new ArrayList<>();
-        for (String playerId : playersToBoot) {
+        for (String playerId : missedTurnPlayers) {
             changes.add(nextState(null, removePlayer(playerId)));
         }
         return changes;
+    }
+
+    protected void checkForMissedTurn(Map<String, String> lastWords, String currentPlayerId, long minDuration, List<String> missedTurnPlayers) {
+        final long lastPlay = Long.valueOf(lastWords.get(currentPlayerId));
+        if (now() - lastPlay > minDuration) missedTurnPlayers.add(currentPlayerId);
+    }
+
+    @Override public synchronized void checkCanPlay(GamePlayer player) {
+        final GameRoomSettings rs = roomSettings();
+        if (rs.hasTurnPolicies()) {
+            final long now = now();
+            final PlayLimitCounter counter = new PlayLimitCounter();
+            for (TurnPolicy turnPolicy : rs.getTurnPolicies()) {
+                switch (turnPolicy.getType()) {
+                    case round_robin:
+                        final String nextPlayerId = getCurrentPlayerId();
+                        if (nextPlayerId == null || !nextPlayerId.equals(player.getId())) throw new NotYourTurnException();
+                        break;
+
+                    case periodic_limit:
+                        final int maxTurns = turnPolicy.intParam(PARAM_MAX_TURNS, 1);
+                        final Long duration = turnPolicy.durationParam(PARAM_TURN_DURATION);
+                        if (duration != null) counter.addCheck(turnPolicy.getName(), duration, maxTurns);
+                        break;
+
+                    default:
+                        die("checkCanPlay: unrecognized TurnPolicyType: "+turnPolicy.getType());
+                }
+            }
+            if (counter.hasChecks()) {
+                counter.runChecks(player, now);
+            }
+        }
+    }
+
+    private class PlayLimitCounter {
+        public void runChecks(GamePlayer player, long now) {
+            // iterate over history, continue gathering history until we find something older than maxDuration
+            final int pageSize = 100;
+            int page = 0;
+            final Map<Long, Integer> durationCounters = new HashMap<>();
+            final Predicate<GameStateChange> wordsPlayedByPlayer = p -> p.getStateChange().wordPlayed() && p.getPlayer().getId().equals(player.getId());
+            List<GameStateChange> history = getHistory(wordsPlayedByPlayer, page * pageSize, pageSize);
+            boolean done = false;
+            while (!done && history != null) {
+                for (GameStateChange change : history) {
+                    final long age = change.age(now);
+                    if (age > maxDuration) {
+                        done = true;
+                        break;
+                    }
+                    for (PlayLimitCounterCheck check : checks) {
+                        if (age < check.duration) {
+                            final Integer counter = durationCounters.computeIfAbsent(check.duration, k -> 0);
+                            durationCounters.put(check.duration, counter + 1);
+                        }
+                    }
+                }
+                if (!done) {
+                    page++;
+                    history = getHistory(wordsPlayedByPlayer, page * pageSize, pageSize);
+                }
+            }
+
+            for (PlayLimitCounterCheck check : checks) {
+                final Integer counter = durationCounters.get(check.duration);
+                if (counter != null && counter >= check.maxTurns) {
+                    throw new PlayRateLimitException(check.name);
+                }
+            }
+        }
+
+        @NoArgsConstructor @AllArgsConstructor
+        private class PlayLimitCounterCheck {
+            @Getter @Setter private String name;
+            @Getter @Setter private long duration;
+            @Getter @Setter private int maxTurns;
+        }
+        private List<PlayLimitCounterCheck> checks = new ArrayList<>();
+        private long maxDuration;
+        public boolean hasChecks() { return !checks.isEmpty(); }
+        public void addCheck(String name, long duration, int maxTurns) {
+            checks.add(new PlayLimitCounterCheck(name, duration, maxTurns));
+            if (duration > maxDuration) maxDuration = duration;
+        }
     }
 }

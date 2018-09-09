@@ -1,0 +1,77 @@
+[
+  {
+    "include": "parts/start_2player_game",
+    "params": { "room": "5x5_ffa" }
+  },
+
+  // player 1 plays 3 times
+  {
+    "include": "parts/play_word",
+    "params": { "prefix": "first play" },
+    "after": "set-system-clock +6h"
+  },
+  {
+    "include": "parts/play_word",
+    "params": { "prefix": "second play" },
+    "after": "set-system-clock +12h"
+  },
+  {
+    "include": "parts/play_word",
+    "params": { "prefix": "third play" },
+    "after": "set-system-clock +18h"
+  },
+
+  // player 1 plays a 4th time, cannot play
+  {
+    "include": "parts/play_word",
+    "params": {
+      "prefix": "fourth play (should fail)",
+      "error": "err.game.slowYourRoll"
+    },
+    "after": "set-system-clock +25h"
+  },
+
+  // player 1 has waited a while, can now play a 4th time
+  {
+    "include": "parts/play_word",
+    "params": {
+      "prefix": "fourth play"
+    }
+  },
+
+  // player 1 plays a 5th time, cannot play
+  {
+    "include": "parts/play_word",
+    "params": {
+      "prefix": "fifth play (fails again)",
+      "error": "err.game.slowYourRoll"
+    },
+    "after": "set-system-clock +42h"
+  },
+
+  // player 1 waits a longer while, can now play a 5th time
+  {
+    "include": "parts/play_word",
+    "params": {
+      "prefix": "fifth play"
+    }
+  },
+
+  // player 1 plays a 6th time, OK
+  {
+    "include": "parts/play_word",
+    "params": {
+      "prefix": "sixth play"
+    }
+  },
+
+  // player 1 plays a 7th time, needs to wait again
+  {
+    "include": "parts/play_word",
+    "params": {
+      "prefix": "seventh play (fails again)",
+      "error": "err.game.slowYourRoll"
+    }
+  }
+
+]

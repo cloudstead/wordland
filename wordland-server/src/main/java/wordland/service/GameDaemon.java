@@ -87,7 +87,7 @@ public class GameDaemon extends SimpleDaemon {
                 break;
 
             case active:
-                final Collection<GameStateChange> boots = stateStorage.timeoutInactivePlayers();
+                final Collection<GameStateChange> boots = stateStorage.checkForMissedTurns();
                 if (!empty(boots)) {
                     for (GameStateChange boot : boots) broadcast(boot);
                 }

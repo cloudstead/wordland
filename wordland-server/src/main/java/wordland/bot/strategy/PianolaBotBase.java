@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.json.JsonUtil.json;
+import static wordland.model.game.GameStateChangeType.word_played;
 
 @AllArgsConstructor @Slf4j
 public abstract class PianolaBotBase extends SimpleDaemon implements PianolaBotStrategy {
@@ -53,7 +54,7 @@ public abstract class PianolaBotBase extends SimpleDaemon implements PianolaBotS
         if (shouldPlay) {
             // get a view of the board, where was the most recent play?
             final GameBoardState board;
-            final List<GameStateChange> history = stateStorage.getHistory(GameStateChangeType.word_played);
+            final List<GameStateChange> history = stateStorage.getHistory(word_played);
             final List<String> allWords = history.stream()
                     .map(h -> json(h.getObject(), GameRuntimeEvent.class).getWord())
                     .collect(Collectors.toList());

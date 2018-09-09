@@ -84,7 +84,9 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                 super.beforeCall(script, ctx);
                 if (script.hasBefore()) {
                     final String before = script.getBefore();
-                    if (before.startsWith(FIND_WORD_AND_TILES)) {
+                    if (before.startsWith(SET_SYSTEM_CLOCK)) {
+                        setSystemClock(before);
+                    } else if (before.startsWith(FIND_WORD_AND_TILES)) {
                         final List<String> parts = splitAndTrim(before, " ");
                         final String boardVar = parts.get(1);
                         final String playVar = parts.size() > 2 ? parts.get(2) : "play";
@@ -173,15 +175,7 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                 if (script.hasAfter()) {
                     final String after = script.getAfter();
                     if (after.startsWith(SET_SYSTEM_CLOCK)) {
-                        final List<String> parts = StringUtil.splitAndTrim(after, " ");
-                        final String arg = parts.get(1);
-                        if (arg.startsWith("+")) {
-                            final long duration = parseDuration(arg);
-                            setSystemTimeOffset(duration);
-                        } else {
-                            final long time = (long) TimeUtil.parse(arg);
-                            setSystemTimeOffset(time - ZillaRuntime.realNow());
-                        }
+                        setSystemClock(after);
 
                     } else if (after.startsWith(SAVE_BOARD_VIEW)) {
                         final String outFilePath = HandlebarsUtil.apply(getConfiguration().getHandlebars(), after.substring(SAVE_BOARD_VIEW.length()+1), ctx);
@@ -196,6 +190,18 @@ public abstract class ApiModelTestBase extends ApiClientTestBase {
                             die("afterCall: error writing file: " + e, e);
                         }
                     }
+                }
+            }
+
+            protected void setSystemClock(String after) {
+                final List<String> parts = StringUtil.splitAndTrim(after, " ");
+                final String arg = parts.get(1);
+                if (arg.startsWith("+")) {
+                    final long duration = parseDuration(arg);
+                    setSystemTimeOffset(duration);
+                } else {
+                    final long time = (long) TimeUtil.parse(arg);
+                    setSystemTimeOffset(time - ZillaRuntime.realNow());
                 }
             }
         };

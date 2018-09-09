@@ -1,0 +1,37 @@
+[
+  {
+    "comment": "declare default parameters for play_wrd test part",
+    "include": "_defaults",
+    "params": {
+      "session": "player1",
+      "room": "p1room",
+      "board": "board",
+      "word": "word",
+      "prefix": null,
+      "error": null
+    }
+  },
+
+  {
+    "comment": "<<#if prefix>><<prefix>>: <</if>><<session>> plays a word",
+    "before": "find-word-and-tiles <<board>> <<word>>",
+    "request": {
+      "session": "<<session>>",
+      "uri": "rooms/{{p1room.room}}/play",
+      "entity": {
+        "room": "{{<<room>>.room}}",
+        "stateChange": "word_played",
+        "id": "{{<<room>>.player.id}}",
+        "clientId": "{{<<room>>.player.id}}",
+        "apiToken": "{{<<room>>.player.apiToken}}",
+        "word": "{{<<word>>.word}}",
+        "tilesJson": "{{escaped_json <<word>>.tiles}}"
+      }
+    }<<#if error>>,
+    "response": {
+      "status": 422,
+      "check": [{"condition": "json.has('<<error>>')"}]
+    }
+    <</if>>
+  }
+]
