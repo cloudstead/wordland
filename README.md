@@ -105,8 +105,8 @@ Not every tile has to have a letter.
 * Some tiles could be "water" or "lava" that cannot be occupied by a player avatar (or the player takes damage when they step there).
 
 Different areas of the board could also have different shading to indicate different types of terrain.
-* Swamp would have a slight green shade. The letter distribution in the swamp is much harder than outside it
-* Beach would have a slight brown shade. The letter distribution in the swamp is easier than outside it
+* Swamp: slight green shade; letter distribution is much harder
+* Beach: slight brown shade; letter distribution is much easier
 
 ### Challenge Areas
 Portions of the board can be set aside as challenge areas for special games, or other special events
