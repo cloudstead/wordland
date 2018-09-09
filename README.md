@@ -83,6 +83,13 @@ Allow players to select custom textures, graphics and decorations for their tile
 
 Other players will see their tiles rendered with the custom skin.
 
+### Themed Areas
+Boards can have a special sponsored theme: Harry Potter, Star Wars, Lego, etc.
+
+Custom graphics and special bonuses for use of words on the theme-list.
+
+Prizes and free stuff.
+
 ## Special Game Mechanics for Infinite Boards
 
 Infinite-sized boards present both challenges and opportunities.
@@ -97,11 +104,4 @@ Every player has a "player" avatar on the board. Players can interact when they 
 Players could have stats/attributes and this could evolve into a full-on MMORPG.... 
 
 ### Challenge Areas
-Portions of the board can be set aside as challenge areas for special games
-
-### Themed Areas
-Portions have a special sponsored theme: Harry Potter, Star Wars, Lego, etc.
-
-Custom graphics and special bonuses for use of words on the theme-list.
-
-Prizes and free stuff.
+Portions of the board can be set aside as challenge areas for special games, or other special events
