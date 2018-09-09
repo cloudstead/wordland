@@ -97,13 +97,13 @@ Players could have stats/attributes and this could evolve into a full-on MMORPG.
 
 ### Structures and Terrain
 Not every tile has to have a letter.
-* Some tiles could be designated "public spaces", permanently blank and not claimable by any player.
-* Some tiles could be "walls" that separate different places on the board, and cannot be occupied by a player avatar.
-* Some tiles could be "water" or "lava" that cannot be occupied by a player avatar (or the player takes damage when they step there).
+* *Public Spaces* are permanently blank and not claimable by any player
+* *Walls* separate different places on the board, and cannot be occupied by a player
+* *Water* and *Lava* cannot be occupied by a player (or the player takes damage when they step there)
 
 Different areas of the board could also have different shading to indicate different types of terrain.
-* Swamp: slight green shade; letter distribution is much harder
-* Beach: slight brown shade; letter distribution is much easier
+* *Swamp*: slight green shade; letter distribution is much harder
+* *Beach*: slight brown shade; letter distribution is much easier
 
 ### Challenge Areas
 Portions of the board can be set aside as challenge areas for special games, or other special events
