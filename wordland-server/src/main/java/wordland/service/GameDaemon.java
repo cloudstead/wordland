@@ -15,9 +15,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 
 @SuppressWarnings("SpringJavaAutowiredMembersInspection")
@@ -41,15 +41,11 @@ public class GameDaemon extends SimpleDaemon {
         return new GameDaemon((GameRoom) new GameRoom().setTemplate(true).setName(room), null);
     }
 
-    public GameState getGameState () {
-        synchronized (gameState) {
-            return gameState.get();
-        }
-    }
+    public GameState getGameState () { synchronized (gameState) { return gameState.get(); } }
 
     protected GameStateStorageService getGameStateStorage() { return configuration.getGameStateStorage(room); }
 
-    private static final long SLEEP_TIME = TimeUnit.SECONDS.toMillis(5);
+    private static final long SLEEP_TIME = SECONDS.toMillis(5);
 
     @Override protected long getSleepTime() { return SLEEP_TIME; }
 
@@ -134,17 +130,11 @@ public class GameDaemon extends SimpleDaemon {
         return wasAdded;
     }
 
-    public GamePlayer findPlayer(GamePlayer player) {
-        return gameState.get() == null ? null : gameState.get().getPlayer(player.getId());
-    }
+    public GamePlayer findPlayer(GamePlayer player) { return gameState.get() == null ? null : gameState.get().getPlayer(player.getId()); }
 
-    public GamePlayer findPlayer(String uuid) {
-        return gameState.get().getPlayer(uuid);
-    }
+    public GamePlayer findPlayer(String uuid) { return gameState.get().getPlayer(uuid); }
 
-    public GamePlayer findCurrentOrFormerPlayer(String uuid) {
-        return gameState.get().getCurrentAndFormerPlayers().get(uuid);
-    }
+    public GamePlayer findCurrentOrFormerPlayer(String uuid) { return gameState.get().getCurrentAndFormerPlayers().get(uuid); }
 
     public GamePlayerExitStatus getPlayerExitStatus(String uuid) { return gameState.get().getPlayerExitStatus(uuid); }
 
