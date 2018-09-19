@@ -45,7 +45,7 @@ public class AuthResource {
         return ok();
     }
 
-    @GET @Path("/motd")
+    @GET @Path(EP_MOTD)
     public Response motd(@Context HttpContext ctx) {
         final AccountSession session = optionalUserPrincipal(ctx);
 
@@ -53,7 +53,7 @@ public class AuthResource {
         return ok(motd);
     }
 
-    @POST @Path("/motd")
+    @POST @Path(EP_MOTD)
     public Response motd(@Context HttpContext ctx, String motd) {
         final AccountSession session = requireAdmin(ctx);
         if (empty(motd)) return invalid("err.motd.required");

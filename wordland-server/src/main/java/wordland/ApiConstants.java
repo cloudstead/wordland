@@ -13,6 +13,7 @@ public class ApiConstants {
     public static final String EVENTS_API_TOKEN = "x-wordland-events-api-key";
 
     public static final String AUTH_ENDPOINT = "/auth";
+    public static final String EP_MOTD = "/motd";
     public static final String EP_LOGIN = "/login";
     public static final String EP_REGISTER = "/register";
     public static final String EP_LOGOUT = "/logout";
