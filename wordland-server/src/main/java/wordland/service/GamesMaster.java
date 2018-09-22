@@ -178,6 +178,8 @@ public class GamesMaster {
                             if (daemon.getGameState().getPlayer(player.getId()) == null) {
                                 joinResponse = addPlayerToRoom(daemon, player);
                             }
+                        } catch (RoomFullException e) {
+                            log.info("addPlayer: room full, trying another: "+daemon.getRoom().getName());
                         } catch (Exception e) {
                             log.warn("addPlayer: error adding to room: " + daemon.getRoom().getName() + ": " + e, e);
                         }
