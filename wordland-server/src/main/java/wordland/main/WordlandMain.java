@@ -10,8 +10,9 @@ import java.util.Map;
 public class WordlandMain {
 
     private static Map<String, Class<? extends MainBase>> mainClasses = MapBuilder.build(new Object[][]{
-            {"server", WordlandServer.class},
-            {"gen-player-css", GeneratePlayerCss.class}
+            {"server",         WordlandServer.class},
+            {"gen-player-css", GeneratePlayerCss.class},
+            {"tile-image",     TileImageMain.class}
     });
 
     public static void main(String[] args) throws Exception {
