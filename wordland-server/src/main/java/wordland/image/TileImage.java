@@ -40,6 +40,7 @@ public class TileImage {
 
         // draw symbol
         g2.setColor(new Color(settings.getFgColor()));
+        //g2.setFont(new Font());
         g2.drawString(settings.getSymbol().toUpperCase(), 0.2f*tileSize, 0.8f*tileSize);
 
         // return PNG bytes

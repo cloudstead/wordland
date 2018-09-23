@@ -4,6 +4,9 @@ import com.sun.jersey.api.core.HttpContext;
 import org.cobbzilla.util.collection.ArrayUtil;
 import wordland.model.support.AccountSession;
 
+import java.util.Map;
+
+import static org.cobbzilla.util.system.CommandShell.loadShellExportsOrDie;
 import static org.cobbzilla.wizard.resources.ResourceUtil.forbiddenEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.userPrincipal;
 
@@ -11,6 +14,7 @@ public class ApiConstants {
 
     public static final String API_TOKEN = "x-wordland-api-key";
     public static final String EVENTS_API_TOKEN = "x-wordland-events-api-key";
+    public static final String FIELD_API_TOKEN = "apiToken";
 
     public static final String AUTH_ENDPOINT = "/auth";
     public static final String EP_MOTD = "/motd";
@@ -24,6 +28,8 @@ public class ApiConstants {
     public static final String EP_REMOVE = "/remove";
 
     public static final String ENTITY_CONFIGS_ENDPOINT = "/entityConfigs";
+
+    public static final String SYMBOL_FONTS_ENDPOINT = "/fonts";
 
     public static final String SYMBOL_SETS_ENDPOINT = "/alphabets";
     public static final String EP_POINT_SYSTEMS = "/pointSystems";
@@ -110,4 +116,11 @@ public class ApiConstants {
         if (!session.getAccount().isAdmin()) throw forbiddenEx();
         return session;
     }
+
+    public static final String ENV_SUPERUSER = "WORDLAND_SUPERUSER";
+    public static final String ENV_SUPERUSER_PASS = "WORDLAND_SUPERUSER_PASS";
+    public static final String ENV_API_SERVER = "WL_API";
+
+    public static Map<String, String> wordlandEnv() { return loadShellExportsOrDie(".wordland.env"); }
+
 }

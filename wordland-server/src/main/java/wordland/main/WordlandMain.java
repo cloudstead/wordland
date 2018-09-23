@@ -12,6 +12,7 @@ public class WordlandMain {
     private static Map<String, Class<? extends MainBase>> mainClasses = MapBuilder.build(new Object[][]{
             {"server",         WordlandServer.class},
             {"gen-player-css", GeneratePlayerCss.class},
+            {"load-font",      LoadFontMain.class},
             {"tile-image",     TileImageMain.class}
     });
 

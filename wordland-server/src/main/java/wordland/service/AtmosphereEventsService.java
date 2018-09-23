@@ -36,6 +36,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.scrubStrings;
+import static wordland.ApiConstants.FIELD_API_TOKEN;
 
 @SuppressWarnings("SpringJavaAutowiredMembersInspection")
 @Slf4j
@@ -46,7 +47,7 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.scrubStrings;
 public class AtmosphereEventsService {
 
     public static final String URI_PREFIX = "/events/";
-    private static final String[] SCRUB_FIELDS = {"apiToken", "tilesJson"};
+    private static final String[] SCRUB_FIELDS = {FIELD_API_TOKEN, "tilesJson"};
     private static final ObjectMapper WEBSOCKET_MESSAGE_MAPPER = new ObjectMapper()
             .configure(SerializationFeature.INDENT_OUTPUT, false)
             .configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false)
