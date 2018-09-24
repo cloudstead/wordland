@@ -1,5 +1,6 @@
 package wordland.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,6 +12,8 @@ import org.cobbzilla.wizard.model.entityconfig.annotations.ECTypeURIs;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Transient;
+import java.awt.*;
 
 import static wordland.ApiConstants.SYMBOL_FONTS_ENDPOINT;
 
@@ -28,5 +31,9 @@ public class SymbolFont extends NamedIdentityBase {
 
     @Column(columnDefinition="TEXT")
     @Getter @Setter private String base64ttf;
+
+    @Getter @Setter private boolean system;
+
+    @JsonIgnore @Transient @Getter @Setter private Font font;
 
 }

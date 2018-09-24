@@ -8,6 +8,7 @@ import org.cobbzilla.wizard.resources.SendableResource;
 import org.cobbzilla.wizard.util.StreamStreamingOutput;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import wordland.dao.SymbolFontDAO;
 import wordland.dao.SymbolSetDAO;
 import wordland.image.TileImageSettings;
 import wordland.model.SymbolSet;
@@ -22,7 +23,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import static org.cobbzilla.util.http.HttpContentTypes.IMAGE_PNG;
-import static org.cobbzilla.util.http.HttpContentTypes.TEXT_PLAIN;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.send;
 import static wordland.ApiConstants.*;
@@ -32,6 +32,7 @@ import static wordland.ApiConstants.*;
 public class SymbolSetsResource extends NamedSystemResource<SymbolSet> {
 
     @Getter @Autowired private SymbolSetDAO dao;
+    @Autowired private SymbolFontDAO fontDAO;
     @Autowired private WordlandConfiguration configuration;
 
     @Path("/{name}" + EP_POINT_SYSTEMS)

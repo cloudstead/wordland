@@ -20,8 +20,12 @@ public class TileImageMain extends BaseMain<TileImageMainOptions> {
     public static void main (String[] args) { main(TileImageMain.class, args); }
 
     @Override protected void run() throws Exception {
+
         final TileImageMainOptions options = getOptions();
         final TileImageSettings settings = options.getSettings();
+
+        options.registerFont();
+
         if (options.hasSymbol()) {
             if (options.hasSymbolSet()) die("Cannot specify both "+OPT_SYMBOL+"/"+LONGOPT_SYMBOL+" and "+OPT_SYMBOL_SET+"/"+LONGOPT_SYMBOL_SET);
             final TileImage tileImage = new TileImage(settings);

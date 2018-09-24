@@ -1,13 +1,19 @@
 package wordland.main;
 
+import lombok.Cleanup;
 import lombok.Getter;
 import lombok.Setter;
 import org.cobbzilla.util.main.BaseMainOptions;
 import org.kohsuke.args4j.Option;
+import wordland.image.SymbolCaseMode;
 import wordland.image.TileImageSettings;
 
+import java.awt.*;
 import java.io.File;
+import java.io.FileInputStream;
 
+import static java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment;
+import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.daemon.ZillaRuntime.empty;
 import static org.cobbzilla.util.graphics.ColorUtil.parseRgb;
 
@@ -43,6 +49,31 @@ public class TileImageMainOptions extends BaseMainOptions {
     @Option(name=OPT_SIZE, aliases=LONGOPT_SIZE, usage=USAGE_SIZE)
     @Getter @Setter private int size = 64;
 
+    public static final String USAGE_FONT = "Name of the font to use, or path to a true-type font. Default is sans-serif";
+    public static final String OPT_FONT = "-f";
+    public static final String LONGOPT_FONT= "--font";
+    @Option(name=OPT_FONT, aliases=LONGOPT_FONT, usage=USAGE_FONT)
+    @Getter @Setter private String font;
+    public boolean hasFont() { return !empty(getFont()); }
+
+    public static final String USAGE_FONT_STYLE = "Name of the font style. Default is plain. Can be plain, bold, italic, or bold-italic";
+    public static final String OPT_FONT_STYLE = "-t";
+    public static final String LONGOPT_FONT_STYLE= "--font-style";
+    @Option(name=OPT_FONT_STYLE, aliases=LONGOPT_FONT_STYLE, usage=USAGE_FONT_STYLE)
+    @Getter @Setter private String fontStyle = "plain";
+
+    public static final String USAGE_NO_ANTI_ALIAS = "If set, disable anti-aliasing. Anti-aliasing is enabled by default.";
+    public static final String OPT_NO_ANTI_ALIAS = "-a";
+    public static final String LONGOPT_NO_ANTI_ALIAS= "--no-anti-alias";
+    @Option(name=OPT_NO_ANTI_ALIAS, aliases=LONGOPT_NO_ANTI_ALIAS, usage=USAGE_NO_ANTI_ALIAS)
+    @Getter @Setter private boolean noAntiAlias = false;
+
+    public static final String USAGE_CASE_MODE = "Case conversion mode for symbol(s). Default is to convert symbols to uppercase.";
+    public static final String OPT_CASE_MODE = "-c";
+    public static final String LONGOPT_CASE_MODE= "--case-mode";
+    @Option(name=OPT_CASE_MODE, aliases=LONGOPT_CASE_MODE, usage=USAGE_CASE_MODE)
+    @Getter @Setter private SymbolCaseMode caseMode = SymbolCaseMode.upper;
+
     public static final String USAGE_BORDER = "Border size in pixels. Default is 1";
     public static final String OPT_BORDER = "-b";
     public static final String LONGOPT_BORDER= "--border";
@@ -70,10 +101,39 @@ public class TileImageMainOptions extends BaseMainOptions {
     public TileImageSettings getSettings() {
         return new TileImageSettings()
                 .setSymbol(getSymbol())
+                .setFont(getFont())
+                .setFontStyle(getFontStyle())
+                .setAntiAlias(!isNoAntiAlias())
+                .setCaseMode(getCaseMode())
                 .setSize(getSize())
                 .setBorder(getBorder())
                 .setBorderColor(parseRgb(getBorderColor()))
                 .setFgColor(parseRgb(getForegroundColor()))
                 .setBgColor(parseRgb(getBackgroundColor()));
+    }
+
+    public void registerFont() throws Exception {
+        if (hasFont()) {
+            final GraphicsEnvironment ge = getLocalGraphicsEnvironment();
+            Font font = null;
+            for (Font f : ge.getAllFonts()) {
+                if (f.getName().equalsIgnoreCase(getFont())) {
+                    font = f;
+                    break;
+                }
+            }
+            if (font == null) {
+                final File fontFile = new File(getFont());
+                if (!fontFile.exists()) die("ERROR: registerFont: not a valid font name or path to ttf file: "+getFont());
+
+                @Cleanup final FileInputStream ttf = new FileInputStream(fontFile);
+                font = Font.createFont(Font.TRUETYPE_FONT, ttf);
+
+                if (!ge.registerFont(font)) out("WARNING: registerFont failed for font " + getFont());
+                setFont(font.getName());
+            }
+        } else {
+            setFont("SansSerif");
+        }
     }
 }

@@ -6,6 +6,7 @@ import org.cobbzilla.util.string.Base64;
 import org.cobbzilla.wizard.cache.redis.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import wordland.dao.SymbolFontDAO;
 import wordland.image.TileImage;
 import wordland.image.TileImageSettings;
 
@@ -18,6 +19,8 @@ public class TileImageService {
     @Autowired private RedisService redis;
     @Getter(lazy=true) private final RedisService tileCache = initTileCache();
     private RedisService initTileCache() { return redis.prefixNamespace(getClass().getSimpleName()); }
+
+    @Autowired private SymbolFontDAO fontDAO;
 
     public InputStream png (TileImageSettings settings) {
 
