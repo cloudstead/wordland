@@ -23,6 +23,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
 import static org.cobbzilla.util.http.HttpContentTypes.IMAGE_PNG;
+import static org.cobbzilla.util.json.JsonUtil.json;
+import static org.cobbzilla.wizard.resources.ResourceUtil.notFound;
 import static org.cobbzilla.wizard.resources.ResourceUtil.notFoundEx;
 import static org.cobbzilla.wizard.resources.ResourceUtil.send;
 import static wordland.ApiConstants.*;
@@ -61,9 +63,16 @@ public class SymbolSetsResource extends NamedSystemResource<SymbolSet> {
 
     @Autowired private TileImageService tileImageService;
 
-    @POST
+    @POST @Path("/{name}/tile.png")
     @Produces(IMAGE_PNG)
-    public Response tilePng (TileImageSettings settings) {
+    public Response tilePng (@Context HttpContext context,
+                             @PathParam("name") String name,
+                             TileImageSettings settings) {
+        final SymbolSet symbolSet = dao.findByName(name);
+        if (symbolSet == null) throw notFoundEx(name);
+        if (!symbolSet.getSymbols().contains(settings.getSymbol())) return notFound(settings.getSymbol());
+
+        log.info("tilePng generating image for: "+json(settings).replace("\n", ""));
         return send(new SendableResource(new StreamStreamingOutput(tileImageService.png(settings))));
     }
 }
