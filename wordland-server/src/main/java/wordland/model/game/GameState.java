@@ -36,6 +36,7 @@ import static org.cobbzilla.util.daemon.DaemonThreadFactory.fixedPool;
 import static org.cobbzilla.util.daemon.ZillaRuntime.*;
 import static org.cobbzilla.util.string.ValidationRegexes.UUID_PATTERN;
 import static org.cobbzilla.util.time.TimeUtil.DATE_FORMAT_YYYY_MM_DD_HH_mm_ss;
+import static org.cobbzilla.util.time.TimeUtil.SECOND;
 import static org.cobbzilla.util.time.TimeUtil.formatDuration;
 import static org.cobbzilla.wizard.resources.ResourceUtil.invalidEx;
 import static wordland.ApiConstants.MAX_BOARD_DETAIL_VIEW;
@@ -53,7 +54,7 @@ public class GameState {
     public static final int MAX_BOARD_IMAGE_HEIGHT = 1000;
     public static final int TILE_PIXEL_SIZE = 10;
     public static final double TILE_PIXEL_SIZE_DOUBLE = (double) TILE_PIXEL_SIZE;
-    public static final long BOARD_RENDER_TIMEOUT = 20 * TimeUtil.SECOND;
+    public static final long BOARD_RENDER_TIMEOUT = 20 * SECOND;
 
     public static final String CTX_PLAYER = "player";
     public static final String CTX_PLAYERS = "players";
@@ -167,7 +168,7 @@ public class GameState {
                 }));
             }
         }
-        awaitAll(futures, TILE_PIXEL_SIZE *TimeUtil.SECOND);
+        awaitAll(futures, TILE_PIXEL_SIZE*SECOND);
         final String duration = formatDuration(now() - start);
         log.info("mapping of blocks took "+ duration);
 
