@@ -1,5 +1,5 @@
 # Things in {{CURLIES}} will be read from the process environment when the server starts up.
-# The jrun launcher will typically load these from ~/.wordland.env
+# The jrun launcher will typically load these from ~/.wl.env
 
 serverName: wordland-api
 
@@ -80,13 +80,17 @@ redis:
   prefix: wordland
 
 assetStorage:
-  type: s3
+  type: local
   config:
-    accessKey: {{ASSETS_S3_ACCESS_KEY}}
-    secretKey: {{ASSETS_S3_SECRET_KEY}}
-    bucket: {{ASSETS_S3_BUCKET}}
-    prefix: {{ASSETS_S3_PREFIX}}
-    #localCache: {{ASSETS_LOCAL_CACHE_DIR}}
+    baseDir: /home/jonathan/tmp/wordland-assets
+
+#  type: s3
+#  config:
+#    accessKey: {{ASSETS_S3_ACCESS_KEY}}
+#    secretKey: {{ASSETS_S3_SECRET_KEY}}
+#    bucket: {{ASSETS_S3_BUCKET}}
+#    prefix: {{ASSETS_S3_PREFIX}}
+#    #localCache: {{ASSETS_LOCAL_CACHE_DIR}}
 
 recaptcha:
   publicKey: {{RECAPTCHA_PUBLIC_KEY}}

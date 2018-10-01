@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.cobbzilla.util.network.NetworkUtil.IPv4_ALL_ADDRS;
+import static wordland.ApiConstants.WL_SERVER_ENV_FILE;
 
 @NoArgsConstructor @Slf4j
 public class WordlandServer extends RestServerBase<WordlandConfiguration> {
@@ -34,7 +35,7 @@ public class WordlandServer extends RestServerBase<WordlandConfiguration> {
         Map<String, String> env = System.getenv();
         if (env.get("WORDLAND_DATAKEY") == null) {
             // use defaults
-            env = CommandShell.loadShellExports(".wordland.env");
+            env = CommandShell.loadShellExports(WL_SERVER_ENV_FILE);
         }
 
         // todo: in a clustered environment, only 1 server needs to seed the DB upon startup

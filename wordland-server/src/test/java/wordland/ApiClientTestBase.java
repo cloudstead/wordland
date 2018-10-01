@@ -36,7 +36,7 @@ import static wordland.ApiConstants.*;
 @Slf4j
 public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, WordlandServer> {
 
-    public static final String ENV_EXPORT_FILE = ".wordland-dev.env";
+    public static final String ENV_EXPORT_FILE = ".wl-dev.env";
 
     protected String getTestConfig() { return "wordland-config-test.yml"; }
 

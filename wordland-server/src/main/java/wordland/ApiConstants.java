@@ -98,6 +98,7 @@ public class ApiConstants {
     };
 
     public static final String SKIP_CAPTCHA_SECRET = "skipCaptcha";
+    public static final String WL_SERVER_ENV_FILE = ".wl.env";
 
     public static AccountSession accountPrincipal(HttpContext ctx) {
         final AccountSession session = userPrincipal(ctx);
@@ -121,6 +122,6 @@ public class ApiConstants {
     public static final String ENV_SUPERUSER_PASS = "WORDLAND_SUPERUSER_PASS";
     public static final String ENV_API_SERVER = "WL_API";
 
-    public static Map<String, String> wordlandEnv() { return loadShellExportsOrDie(".wordland.env"); }
+    public static Map<String, String> wordlandEnv() { return loadShellExportsOrDie(WL_SERVER_ENV_FILE); }
 
 }

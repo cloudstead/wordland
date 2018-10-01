@@ -5,8 +5,8 @@ if [[ $(basename ${BASE}) != "wordland-server" && -d "${BASE}/wordland-server" ]
   BASE="${BASE}/wordland-server"
 fi
 
-if [ -f ~/.wordland.env ] ; then
-  . ~/.wordland.env
+if [ -f ~/.wl.env ] ; then
+  . ~/.wl.env
 fi
 
 debug="${1}"

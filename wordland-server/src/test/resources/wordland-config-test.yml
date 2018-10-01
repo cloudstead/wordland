@@ -1,5 +1,5 @@
 # Things in {{CURLIES}} will be read from the process environment when the server starts up.
-# The jrun launcher will typically load these from ~/.wordland.env
+# The jrun launcher will typically load these from ~/.wl.env
 
 serverName: wordland-api
 
