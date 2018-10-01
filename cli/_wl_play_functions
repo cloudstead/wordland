@@ -388,7 +388,7 @@ function show_rooms {
           if [[ $(wl_exists "${WL_API}/rooms/${roomName}") == "true" ]] ; then
             exec ${SCRIPT_DIR}/wl_join "${roomName}"
           else
-            error "$(translate_message err_room_notFound)"
+            error "4 $(translate_message err_room_notFound): ${roomName}"
           fi
         ;;
       esac

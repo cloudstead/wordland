@@ -62,8 +62,8 @@ else
     exit $?
   fi
 
-  if [[ "$(wl_exists "$(room_dir ${ROOM})")" != "true" ]] ; then
-    error "$(translate_message err_room_notFound): ${ROOM}"
+  if [[ "$(wl_exists "${WL_API}/rooms/${ROOM}")" != "true" ]] ; then
+    error "3 $(translate_message err_room_notFound): ${ROOM}"
     exec ${SCRIPT_DIR}/wl_rooms
   fi
 
