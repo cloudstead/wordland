@@ -1,10 +1,7 @@
-package wordland.server;
+package wordland.server.listener;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.atmosphere.nettosphere.Config;
-import org.atmosphere.nettosphere.Nettosphere;
 import org.cobbzilla.util.reflect.ReflectionUtil;
 import org.cobbzilla.wizard.dao.DAO;
 import org.cobbzilla.wizard.model.HashedPassword;
@@ -19,7 +16,7 @@ import wordland.dao.AccountDAO;
 import wordland.model.Account;
 import wordland.model.GameBoard;
 import wordland.model.SymbolSet;
-import wordland.service.AtmosphereEventsService;
+import wordland.server.WordlandConfiguration;
 
 import java.util.Map;
 
@@ -31,7 +28,7 @@ import static org.cobbzilla.util.reflect.ReflectionUtil.arrayClass;
 import static org.cobbzilla.util.reflect.ReflectionUtil.forName;
 
 @Slf4j
-public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<WordlandConfiguration> {
+public class DbSeedLifecycleListener extends RestServerLifecycleListenerBase<WordlandConfiguration> {
 
     private static final Class<? extends Identifiable>[] SEED_CLASSES = new Class[]{
             SymbolSet.class,
@@ -39,22 +36,7 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
     };
     public static final String CREATE_SUPERUSER = "WORDLAND_CREATE_SUPERUSER";
 
-    @Getter private WordlandConfiguration configuration;
-
     @Override public void onStart(RestServer server) {
-
-        this.configuration = (WordlandConfiguration) server.getConfiguration();
-
-        // start nettosphere event server
-        final Nettosphere nettosphere = new Nettosphere.Builder().config(
-                new Config.Builder()
-                        .host("0.0.0.0")
-                        .port(configuration.getAtmospherePort())
-                        .resource(AtmosphereEventsService.class)
-                        .build())
-                .build();
-        nettosphere.start();
-
         seed(server, false);
     }
 
@@ -124,5 +106,4 @@ public class WordlandLifecycleListener extends RestServerLifecycleListenerBase<W
             }
         }
     }
-
 }

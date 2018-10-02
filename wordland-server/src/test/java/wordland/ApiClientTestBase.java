@@ -21,7 +21,6 @@ import wordland.model.json.GameRoomSettings;
 import wordland.model.support.AccountSession;
 import wordland.model.support.RegistrationRequest;
 import wordland.server.WordlandConfiguration;
-import wordland.server.WordlandLifecycleListener;
 import wordland.server.WordlandServer;
 
 import java.util.Arrays;
@@ -32,6 +31,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.die;
 import static org.cobbzilla.util.json.JsonUtil.*;
 import static org.cobbzilla.util.system.CommandShell.execScript;
 import static wordland.ApiConstants.*;
+import static wordland.server.WordlandServer.DB_SEED_LIFECYCLE_LISTENER;
 
 @Slf4j
 public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, WordlandServer> {
@@ -84,7 +84,7 @@ public class ApiClientTestBase extends ApiDocsResourceIT<WordlandConfiguration, 
         config.setRecaptcha(DummyRecaptchaConfig.instance);
 
         // seed data if we should
-        new WordlandLifecycleListener().seed(server, seedTestData());
+        DB_SEED_LIFECYCLE_LISTENER.seed(server, seedTestData());
 
         super.onStart(server);
     }

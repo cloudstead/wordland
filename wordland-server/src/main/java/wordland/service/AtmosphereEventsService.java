@@ -20,7 +20,6 @@ import wordland.model.game.GameStateChange;
 import wordland.model.support.AccountSession;
 import wordland.model.support.GameRuntimeEvent;
 import wordland.model.support.PlayedTile;
-import wordland.server.WordlandServer;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -37,6 +36,7 @@ import static org.cobbzilla.util.daemon.ZillaRuntime.now;
 import static org.cobbzilla.util.json.JsonUtil.json;
 import static org.cobbzilla.util.reflect.ReflectionUtil.scrubStrings;
 import static wordland.ApiConstants.FIELD_API_TOKEN;
+import static wordland.server.WordlandServer.ATMOSPHERE_LIFECYCLE_LISTENER;
 
 @SuppressWarnings("SpringJavaAutowiredMembersInspection")
 @Slf4j
@@ -56,12 +56,12 @@ public class AtmosphereEventsService {
 
     @Getter(lazy=true) private final GamesMaster gamesMaster = initGamesMaster();
     private GamesMaster initGamesMaster() {
-        return WordlandServer.WORDLAND_LIFECYCLE_LISTENER.getConfiguration().getBean(GamesMaster.class);
+        return ATMOSPHERE_LIFECYCLE_LISTENER.getConfiguration().getBean(GamesMaster.class);
     }
 
     @Getter(lazy=true) private final SessionDAO sessionDAO = initSessionDAO();
     private SessionDAO initSessionDAO() {
-        return WordlandServer.WORDLAND_LIFECYCLE_LISTENER.getConfiguration().getBean(SessionDAO.class);
+        return ATMOSPHERE_LIFECYCLE_LISTENER.getConfiguration().getBean(SessionDAO.class);
     }
 
     @PostConstruct public void registerWithGamesMaster () { getGamesMaster().setEventService(this); }

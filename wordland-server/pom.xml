@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-(c) Copyright 2016 cloudstead.io
+(c) Copyright 2018 Jonathan Cobb
 For personal or non-commercial use, this code is available under the GNU Affero General Public License, version 3:
   https://www.gnu.org/licenses/agpl-3.0.html
-For commercial use, please contact cloudstead.io
+For commercial use, please contact the author
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -21,10 +21,22 @@ For commercial use, please contact cloudstead.io
     <version>1.0.0-SNAPSHOT</version>
 
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+            <version>2.1.1</version>
+        </dependency>
         <dependency>
             <groupId>org.cobbzilla</groupId>
             <artifactId>wizard-server</artifactId>
             <version>1.0.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.elasticsearch</groupId>
+                    <artifactId>elasticsearch</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- RDBMS persistence -->
@@ -169,35 +181,29 @@ For commercial use, please contact cloudstead.io
             <version>${jedis.version}</version>
         </dependency>
 
-        <!-- for parsing wikipedia articles -->
         <dependency>
-            <groupId>org.antlr</groupId>
-            <artifactId>antlr4-runtime</artifactId>
-            <version>4.5.2-1</version>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-jaxb-annotations</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
-
-        <!-- GeoJSON -->
         <dependency>
-            <groupId>de.grundid.opendatalab</groupId>
-            <artifactId>geojson-jackson</artifactId>
-            <version>1.5.1</version>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-jaxrs2</artifactId>
+            <version>2.0.5</version>
             <exclusions>
+                <!--<exclusion>-->
+                    <!--<groupId>com.fasterxml.jackson.jaxrs</groupId>-->
+                    <!--<artifactId>jackson-jaxrs-base</artifactId>-->
+                <!--</exclusion>-->
                 <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-core</artifactId>
+                    <groupId>com.fasterxml.jackson.module</groupId>
+                    <artifactId>jackson-module-jaxb-annotations</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-databind</artifactId>
-                </exclusion>
+                <!--<exclusion>-->
+                    <!--<groupId>com.fasterxml.jackson.jaxrs</groupId>-->
+                    <!--<artifactId>jackson-jaxrs-json-provider</artifactId>-->
+                <!--</exclusion>-->
             </exclusions>
-        </dependency>
-
-        <!-- Google Places API -->
-        <dependency>
-            <groupId>se.walkercrou</groupId>
-            <artifactId>google-places-api-java</artifactId>
-            <version>2.1.2</version>
         </dependency>
 
         <dependency>
@@ -212,11 +218,6 @@ For commercial use, please contact cloudstead.io
             <version>1.0.0-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.cobbzilla</groupId>-->
-            <!--<artifactId>wizard-server-test</artifactId>-->
-            <!--<version>1.0.0-SNAPSHOT</version>-->
-        <!--</dependency>-->
 
     </dependencies>
 
@@ -228,19 +229,6 @@ For commercial use, please contact cloudstead.io
         </resources>
 
         <plugins>
-            <!-- generate parser using ANTLR -->
-            <plugin>
-                <groupId>org.antlr</groupId>
-                <artifactId>antlr4-maven-plugin</artifactId>
-                <version>4.3</version>
-                <executions>
-                    <execution>
-                        <id>antlr</id>
-                        <goals><goal>antlr4</goal></goals>
-                    </execution>
-                </executions>
-            </plugin>
-
             <!-- Building the executable uberjar -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -253,7 +241,7 @@ For commercial use, please contact cloudstead.io
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>cloudos.server.CloudOsServer</mainClass>
+                                    <mainClass>wordland.server.WordlandServer</mainClass>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>META-INF/spring.handlers</resource>

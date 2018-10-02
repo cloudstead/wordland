@@ -37,7 +37,8 @@ public class WordlandAuthFilter extends AuthFilter<AccountSession> {
     @Getter(lazy=true) private final Set<String> skipAuthPrefixes = initSkipAuthPrefixes();
     public Set<String> initSkipAuthPrefixes() {
         return prefixSet(new String[] {
-                AUTH_ENDPOINT
+                AUTH_ENDPOINT,
+                "/docs"
         });
     }
 

@@ -7,6 +7,8 @@ import org.cobbzilla.util.system.CommandShell;
 import org.cobbzilla.wizard.server.RestServerBase;
 import org.cobbzilla.wizard.server.RestServerLifecycleListener;
 import org.cobbzilla.wizard.server.config.factory.ConfigurationSource;
+import wordland.server.listener.AtmosphereLifecycleListener;
+import wordland.server.listener.DbSeedLifecycleListener;
 
 import java.util.List;
 import java.util.Map;
@@ -18,10 +20,13 @@ import static wordland.ApiConstants.WL_SERVER_ENV_FILE;
 public class WordlandServer extends RestServerBase<WordlandConfiguration> {
 
     public static final String[] API_CONFIG_YML = {"wordland-config.yml"};
-    public static final WordlandLifecycleListener WORDLAND_LIFECYCLE_LISTENER = new WordlandLifecycleListener();
+
+    public static final AtmosphereLifecycleListener ATMOSPHERE_LIFECYCLE_LISTENER = new AtmosphereLifecycleListener();
+    public static final DbSeedLifecycleListener DB_SEED_LIFECYCLE_LISTENER = new DbSeedLifecycleListener();
 
     private static final List<RestServerLifecycleListener> WORDLAND_LIFECYCLE_LISTENERS = Arrays.asList(new RestServerLifecycleListener[]{
-            WORDLAND_LIFECYCLE_LISTENER
+            ATMOSPHERE_LIFECYCLE_LISTENER,
+            DB_SEED_LIFECYCLE_LISTENER
     });
 
     //    @Override protected String getListenAddress() { return LOCALHOST; }
